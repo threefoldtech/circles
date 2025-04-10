@@ -1,8 +1,9 @@
 use eframe::egui;
 
+use crate::app::CircleApp;
 use crate::ui::app_layout::{create_action_button, create_content_frame, render_header};
 
-pub fn render_documents(ui: &mut egui::Ui) {
+pub fn render_documents(app: &CircleApp, ui: &mut egui::Ui) {
     render_header(ui, "📄", "Documents");
     ui.horizontal(|ui| {
         ui.add_space(8.0);

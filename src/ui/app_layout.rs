@@ -535,17 +535,17 @@ fn render_feature_content(app: &CircleApp, ctx: &egui::Context, app_layout: egui
     egui::CentralPanel::default()
         .frame(app_layout)
         .show(ctx, |ui| match app.active_feature {
-            ActiveFeature::Mail => mail::render_mail(ui),
-            ActiveFeature::Calendar => calendar::render_calendar(ui),
-            ActiveFeature::Chat => chat::render_chat(ui),
-            ActiveFeature::Documents => documents::render_documents(ui),
-            ActiveFeature::AITools => render_ai_tools(ui),
-            ActiveFeature::VideoConference => video_conf::render_video_conference(ui),
-            ActiveFeature::Settings => render_settings(ui),
+            ActiveFeature::Mail => mail::render_mail(app, ui),
+            ActiveFeature::Calendar => calendar::render_calendar(app, ui),
+            ActiveFeature::Chat => chat::render_chat(app, ui),
+            ActiveFeature::Documents => documents::render_documents(app, ui),
+            ActiveFeature::AITools => render_ai_tools(app, ui),
+            ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
+            ActiveFeature::Settings => render_settings(app, ui),
         });
 }
 
-fn render_ai_tools(ui: &mut egui::Ui) {
+fn render_ai_tools(app: &CircleApp, ui: &mut egui::Ui) {
     render_header(ui, "🤖", "AI Tools");
     ui.add_space(16.0);
     create_content_frame().show(ui, |ui| {
@@ -557,7 +557,7 @@ fn render_ai_tools(ui: &mut egui::Ui) {
     });
 }
 
-fn render_settings(ui: &mut egui::Ui) {
+fn render_settings(app: &CircleApp, ui: &mut egui::Ui) {
     render_header(ui, "⚙️", "Settings");
     ui.add_space(16.0);
     create_content_frame().show(ui, |ui| {

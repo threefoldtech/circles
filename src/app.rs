@@ -1,6 +1,8 @@
 use crate::models::circle::{Circle, CircleType};
+use crate::models::dummy_data::{self, CircleFeatureData};
 use crate::models::user::User;
 use crate::ui::app_layout;
+use std::collections::HashMap;
 use uuid::Uuid;
 
 /// Main application state with an elegant and modern design approach
@@ -16,6 +18,10 @@ pub struct CircleApp {
     pub active_feature: ActiveFeature,
     /// Search query for filtering circles
     pub search_query: String,
+    /// Feature data for each circle
+    pub circle_feature_data: HashMap<Uuid, CircleFeatureData>,
+    /// Currently active feature data
+    pub active_feature_data: Option<CircleFeatureData>,
 }
 
 /// Enum representing available features in the application
@@ -66,8 +72,25 @@ impl CircleApp {
             ),
         ];
 
+        // Create a HashMap to store feature data for each circle
+        let mut circle_feature_data = HashMap::new();
+
+        // Generate dummy data for each circle
+        for circle in &circles {
+            let feature_data = dummy_data::generate_dummy_data_for_circle(
+                circle.id,
+                &circle.name,
+                circle.circle_type,
+            );
+            circle_feature_data.insert(circle.id, feature_data);
+        }
+
         // Elegantly select the first circle as active
         let active_circle_id = circles.first().map(|c| c.id);
+
+        // Get the active feature data
+        let active_feature_data =
+            active_circle_id.and_then(|id| circle_feature_data.get(&id).cloned());
 
         Self {
             user,
@@ -75,6 +98,8 @@ impl CircleApp {
             active_circle_id,
             active_feature: ActiveFeature::default(),
             search_query: String::new(),
+            circle_feature_data,
+            active_feature_data,
         }
     }
 
@@ -84,9 +109,26 @@ impl CircleApp {
             .and_then(|id| self.circles.iter().find(|c| c.id == id))
     }
 
-    /// Gracefully set the active circle
+    /// Gracefully set the active circle and load its feature data
     pub fn set_active_circle(&mut self, circle_id: Uuid) {
         self.active_circle_id = Some(circle_id);
+
+        // Load the feature data for the selected circle
+        self.active_feature_data = self.circle_feature_data.get(&circle_id).cloned();
+
+        // If the circle doesn't have feature data yet, generate it
+        if self.active_feature_data.is_none() {
+            if let Some(circle) = self.circles.iter().find(|c| c.id == circle_id) {
+                let feature_data = dummy_data::generate_dummy_data_for_circle(
+                    circle_id,
+                    &circle.name,
+                    circle.circle_type,
+                );
+                self.circle_feature_data
+                    .insert(circle_id, feature_data.clone());
+                self.active_feature_data = Some(feature_data);
+            }
+        }
     }
 
     /// Smoothly transition to a new active feature
