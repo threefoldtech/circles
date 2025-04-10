@@ -1,0 +1,172 @@
+use serde::{Deserialize, Serialize};
+
+// We'll implement these modules later
+// pub mod calendar;
+// pub mod chat;
+// pub mod documents;
+// pub mod mail;
+
+/// Features available in a circle
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Features {
+    /// Mail feature
+    pub mail: MailFeature,
+    /// Calendar feature
+    pub calendar: CalendarFeature,
+    /// Chat feature
+    pub chat: ChatFeature,
+    /// Documents feature
+    pub documents: DocumentFeature,
+    /// AI tools feature
+    pub ai_tools: AIToolsFeature,
+    /// Video conferencing feature
+    pub video_conf: VideoConfFeature,
+}
+
+/// Mail feature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MailFeature {
+    /// Whether the feature is enabled
+    pub enabled: bool,
+    /// Feature settings
+    pub settings: MailSettings,
+}
+
+/// Calendar feature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CalendarFeature {
+    /// Whether the feature is enabled
+    pub enabled: bool,
+    /// Feature settings
+    pub settings: CalendarSettings,
+}
+
+/// Chat feature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatFeature {
+    /// Whether the feature is enabled
+    pub enabled: bool,
+    /// Feature settings
+    pub settings: ChatSettings,
+}
+
+/// Documents feature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DocumentFeature {
+    /// Whether the feature is enabled
+    pub enabled: bool,
+    /// Feature settings
+    pub settings: DocumentSettings,
+}
+
+/// AI tools feature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AIToolsFeature {
+    /// Whether the feature is enabled
+    pub enabled: bool,
+    /// Feature settings
+    pub settings: AIToolsSettings,
+}
+
+/// Video conferencing feature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoConfFeature {
+    /// Whether the feature is enabled
+    pub enabled: bool,
+    /// Feature settings
+    pub settings: VideoConfSettings,
+}
+
+/// Mail settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MailSettings {
+    /// Whether to show mail notifications
+    pub show_notifications: bool,
+}
+
+/// Calendar settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CalendarSettings {
+    /// Default view (day, week, month)
+    pub default_view: String,
+    /// Whether to show calendar notifications
+    pub show_notifications: bool,
+}
+
+/// Chat settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatSettings {
+    /// Whether to show chat notifications
+    pub show_notifications: bool,
+    /// Whether to show read receipts
+    pub show_read_receipts: bool,
+}
+
+/// Document settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DocumentSettings {
+    /// Default view (list, grid)
+    pub default_view: String,
+}
+
+/// AI tools settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AIToolsSettings {
+    /// Whether to enable AI suggestions
+    pub enable_suggestions: bool,
+}
+
+/// Video conferencing settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoConfSettings {
+    /// Whether to automatically mute on join
+    pub auto_mute: bool,
+    /// Whether to automatically enable video on join
+    pub auto_video: bool,
+}
+
+impl Default for Features {
+    fn default() -> Self {
+        Self {
+            mail: MailFeature {
+                enabled: true,
+                settings: MailSettings {
+                    show_notifications: true,
+                },
+            },
+            calendar: CalendarFeature {
+                enabled: true,
+                settings: CalendarSettings {
+                    default_view: "week".to_string(),
+                    show_notifications: true,
+                },
+            },
+            chat: ChatFeature {
+                enabled: true,
+                settings: ChatSettings {
+                    show_notifications: true,
+                    show_read_receipts: true,
+                },
+            },
+            documents: DocumentFeature {
+                enabled: true,
+                settings: DocumentSettings {
+                    default_view: "list".to_string(),
+                },
+            },
+            ai_tools: AIToolsFeature {
+                enabled: true,
+                settings: AIToolsSettings {
+                    enable_suggestions: true,
+                },
+            },
+            video_conf: VideoConfFeature {
+                enabled: true,
+                settings: VideoConfSettings {
+                    auto_mute: true,
+                    auto_video: false,
+                },
+            },
+        }
+    }
+}
