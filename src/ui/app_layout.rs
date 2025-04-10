@@ -78,8 +78,8 @@ fn render_top_panel(app: &CircleApp, ctx: &egui::Context, app_layout: egui::Fram
                 .rounding(Rounding {
                     nw: 0.0,
                     ne: 0.0,
-                    sw: 8.0,
-                    se: 8.0,
+                    sw: 0.0,
+                    se: 0.0,
                 }),
         )
         .show(ctx, |ui| {
