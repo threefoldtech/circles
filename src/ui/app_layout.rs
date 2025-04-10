@@ -62,8 +62,8 @@ fn apply_rounding(style: &mut egui::Style) {
         extrusion: 6.0,
         color: Color32::from_black_alpha(25),
     };
-    style.visuals.window_rounding = Rounding::same(10.0);
-    style.visuals.menu_rounding = Rounding::same(8.0);
+    style.visuals.window_rounding = Rounding::same(0.0);
+    style.visuals.menu_rounding = Rounding::same(0.0);
 }
 
 fn render_top_panel(app: &CircleApp, ctx: &egui::Context, app_layout: egui::Frame) {
@@ -190,10 +190,13 @@ fn create_nav_button(
             .stroke(Stroke::NONE)
     };
 
-    let response = ui.add(button).on_hover_ui(|ui| {
-        ui.style_mut().visuals.widgets.hovered.bg_fill = Color32::from_rgb(66, 133, 244);
-        ui.label(RichText::new(text).size(12.0).color(Color32::WHITE));
-    });
+    let response = ui
+        .add(button)
+        .on_hover_ui(|ui| {
+            ui.style_mut().visuals.widgets.hovered.bg_fill = Color32::from_rgb(66, 133, 244);
+            ui.label(RichText::new(text).size(12.0).color(Color32::WHITE));
+        })
+        .on_hover_cursor(egui::CursorIcon::PointingHand); // Added pointer cursor
 
     if response.hovered() {
         ui.ctx().request_repaint();
@@ -211,8 +214,8 @@ fn render_status_bar(app: &CircleApp, ctx: &egui::Context, app_layout: egui::Fra
                     color: Color32::from_black_alpha(20),
                 })
                 .rounding(Rounding {
-                    nw: 8.0,
-                    ne: 8.0,
+                    nw: 0.0,
+                    ne: 0.0,
                     sw: 0.0,
                     se: 0.0,
                 }),
@@ -250,9 +253,9 @@ fn render_circle_selector(app: &mut CircleApp, ctx: &egui::Context, app_layout: 
                 })
                 .rounding(Rounding {
                     nw: 0.0,
-                    ne: 8.0,
+                    ne: 0.0,
                     sw: 0.0,
-                    se: 8.0,
+                    se: 0.0,
                 }),
         )
         .show(ctx, |ui| {
@@ -269,25 +272,28 @@ fn render_circle_selector(app: &mut CircleApp, ctx: &egui::Context, app_layout: 
 }
 
 fn render_circle_header(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
+    // Use a horizontal layout with centered alignment for consistent vertical positioning
+    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
         ui.add_space(8.0);
-        // Heading with consistent typography
-        ui.heading(
-            RichText::new("Circles")
-                .size(18.0)
-                .strong()
-                .color(Color32::from_rgb(40, 50, 60)),
-        );
 
-        // Flexible spacer to push button to the right
-        // ui.add_space(ui.available_width()); // Button width + padding
+        // Heading on the left with top margin
+        ui.vertical(|ui| {
+            ui.add_space(5.0); // Add 15px top margin to the Circles text
+            ui.heading(
+                RichText::new("Circles")
+                    .size(18.0)
+                    .strong()
+                    .color(Color32::from_rgb(40, 50, 60)),
+            );
+        });
 
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            // ui.add_space(8.0);
+        // Fill remaining space to push button to the right
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+            // Button on the right
             let add_button =
                 egui::Button::new(RichText::new("➕").size(16.0).color(Color32::WHITE))
                     .min_size(Vec2::new(32.0, 32.0))
-                    .rounding(Rounding::same(8.0)) // Slightly larger rounding for elegance
+                    .rounding(Rounding::same(8.0))
                     .fill(Color32::from_rgb(66, 133, 244))
                     .stroke(Stroke::new(1.0, Color32::from_rgb(45, 100, 200)));
 
@@ -298,6 +304,7 @@ fn render_circle_header(ui: &mut egui::Ui) {
                         .size(12.0)
                         .color(Color32::WHITE),
                 )
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
                 .clicked()
             {
                 // TODO: Implement circle creation
@@ -305,8 +312,6 @@ fn render_circle_header(ui: &mut egui::Ui) {
         });
     });
 
-    // Separator with consistent styling
-    // ui.add_space(8.0);
     ui.painter().hline(
         ui.available_rect_before_wrap().x_range(),
         ui.cursor().top(),
@@ -562,7 +567,7 @@ pub fn render_header(ui: &mut egui::Ui, icon: &str, title: &str) {
         ui.add_space(8.0);
         egui::Frame::none()
             .fill(Color32::from_rgb(235, 240, 245))
-            .rounding(Rounding::same(6.0))
+            .rounding(Rounding::same(0.0))
             .inner_margin(egui::Margin::symmetric(12.0, 8.0))
             .show(ui, |ui| {
                 ui.label(
@@ -592,7 +597,7 @@ pub fn create_content_frame() -> egui::Frame {
     egui::Frame::none()
         .fill(Color32::WHITE)
         .stroke(Stroke::new(1.0, Color32::from_rgb(230, 235, 240)))
-        .rounding(Rounding::same(10.0))
+        .rounding(Rounding::same(0.0))
         .inner_margin(egui::Margin::same(16.0))
         .shadow(egui::epaint::Shadow {
             extrusion: 4.0,
