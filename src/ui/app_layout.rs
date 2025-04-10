@@ -439,51 +439,75 @@ fn render_circle_list(ui: &mut egui::Ui, app: &mut CircleApp) {
                             }
                         };
 
-                        let response = ui.add(egui::SelectableLabel::new(
-                            is_active,
-                            RichText::new(" ").color(Color32::TRANSPARENT), // Invisible text for height
-                        ));
+                        // Create a frame for the entire circle item that takes full width
+                        let circle_frame = egui::Frame::none()
+                            .fill(if is_active {
+                                Color32::from_rgb(235, 240, 250) // Light blue background for active circle
+                            } else {
+                                Color32::TRANSPARENT
+                            })
+                            .inner_margin(egui::Margin::symmetric(8.0, 6.0))
+                            .rounding(Rounding::same(4.0));
 
-                        ui.horizontal(|ui| {
-                            let icon_frame = egui::Frame::none()
-                                .fill(if is_active {
-                                    color
-                                } else {
-                                    Color32::from_rgb(230, 235, 240)
+                        // Make the entire circle item clickable
+                        let response =
+                            circle_frame
+                                .show(ui, |ui| {
+                                    // Use available width for the horizontal layout
+                                    ui.horizontal(|ui| {
+                                        ui.set_min_width(ui.available_width());
+
+                                        // Icon with colored background
+                                        let icon_frame = egui::Frame::none()
+                                            .fill(if is_active {
+                                                color
+                                            } else {
+                                                Color32::from_rgb(230, 235, 240)
+                                            })
+                                            .rounding(Rounding::same(12.0))
+                                            .inner_margin(egui::Margin::same(6.0));
+
+                                        icon_frame.show(ui, |ui| {
+                                            ui.label(RichText::new(icon).size(16.0).color(
+                                                if is_active { Color32::WHITE } else { color },
+                                            ));
+                                        });
+
+                                        ui.add_space(12.0);
+
+                                        // Circle name and type
+                                        ui.vertical(|ui| {
+                                            ui.label(
+                                                RichText::new(&name).size(14.0).strong().color(
+                                                    if is_active {
+                                                        Color32::from_rgb(66, 133, 244)
+                                                    } else {
+                                                        Color32::from_rgb(40, 50, 60)
+                                                    },
+                                                ),
+                                            );
+                                            ui.label(
+                                                RichText::new(format!(
+                                                    "{} Circle",
+                                                    circle_type_name(circle_type)
+                                                ))
+                                                .size(12.0)
+                                                .color(Color32::from_rgb(100, 110, 120)),
+                                            );
+                                        });
+                                    });
                                 })
-                                .rounding(Rounding::same(12.0))
-                                .inner_margin(egui::Margin::same(6.0));
-                            icon_frame.show(ui, |ui| {
-                                ui.label(RichText::new(icon).size(16.0).color(if is_active {
-                                    Color32::WHITE
-                                } else {
-                                    color
-                                }));
-                            });
-                            ui.add_space(12.0);
-                            ui.vertical(|ui| {
-                                ui.label(RichText::new(&name).size(14.0).strong().color(
-                                    if is_active {
-                                        Color32::from_rgb(66, 133, 244)
-                                    } else {
-                                        Color32::from_rgb(40, 50, 60)
-                                    },
-                                ));
-                                ui.label(
-                                    RichText::new(format!(
-                                        "{} Circle",
-                                        circle_type_name(circle_type)
-                                    ))
-                                    .size(12.0)
-                                    .color(Color32::from_rgb(100, 110, 120)),
-                                );
-                            });
-                        });
+                                .response;
 
-                        if response.clicked() {
+                        // Add hover and click effects
+                        if response
+                            .on_hover_cursor(egui::CursorIcon::PointingHand)
+                            .clicked()
+                        {
                             app.set_active_circle(id);
                         }
-                        ui.add_space(8.0);
+
+                        ui.add_space(4.0); // Reduced spacing between circles
                     }
                 });
             }
