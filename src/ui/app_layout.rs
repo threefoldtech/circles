@@ -407,114 +407,120 @@ fn render_circle_list(ui: &mut egui::Ui, app: &mut CircleApp) {
     ui.add_space(6.0); // Reduced spacing between sections
 
     // ALL CIRCLES section - now contains the circles list
-    ui.collapsing(
-        RichText::new("ALL CIRCLES")
-            .size(14.0)
-            .strong()
-            .color(Color32::from_rgb(66, 133, 244)),
-        |ui| {
-            ui.add_space(8.0);
+    // Default to open if there are circles
+    let all_circles_header = RichText::new("ALL CIRCLES")
+        .size(14.0)
+        .strong()
+        .color(Color32::from_rgb(66, 133, 244));
 
-            if !has_circles {
-                // Only show "No current circles" if there are no circles
-                ui.label(
-                    RichText::new("No current circles yet")
-                        .size(13.0)
-                        .color(Color32::from_rgb(100, 110, 120)),
-                );
-            } else {
-                // Show circles list inside the ALL CIRCLES section
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    for (id, name, circle_type) in circles {
-                        let is_active = active_circle_id.map_or(false, |active_id| active_id == id);
-                        let (icon, color) = match circle_type {
-                            crate::models::circle::CircleType::Personal => {
-                                ("👤", Color32::from_rgb(76, 175, 80))
-                            }
-                            crate::models::circle::CircleType::Team => {
-                                ("👥", Color32::from_rgb(33, 150, 243))
-                            }
-                            crate::models::circle::CircleType::Private => {
-                                ("🔒", Color32::from_rgb(156, 39, 176))
-                            }
-                        };
+    ui.collapsing(all_circles_header, |ui| {
+        ui.add_space(8.0);
 
-                        // Create a frame for the entire circle item that takes full width
-                        let circle_frame = egui::Frame::none()
-                            .fill(if is_active {
-                                Color32::from_rgb(235, 240, 250) // Light blue background for active circle
-                            } else {
-                                Color32::TRANSPARENT
-                            })
-                            .inner_margin(egui::Margin::symmetric(8.0, 6.0))
-                            .rounding(Rounding::same(4.0));
-
-                        // Make the entire circle item clickable
-                        let response =
-                            circle_frame
-                                .show(ui, |ui| {
-                                    // Use available width for the horizontal layout
-                                    ui.horizontal(|ui| {
-                                        ui.set_min_width(ui.available_width());
-
-                                        // Icon with colored background
-                                        let icon_frame = egui::Frame::none()
-                                            .fill(if is_active {
-                                                color
-                                            } else {
-                                                Color32::from_rgb(230, 235, 240)
-                                            })
-                                            .rounding(Rounding::same(12.0))
-                                            .inner_margin(egui::Margin::same(6.0));
-
-                                        icon_frame.show(ui, |ui| {
-                                            ui.label(RichText::new(icon).size(16.0).color(
-                                                if is_active { Color32::WHITE } else { color },
-                                            ));
-                                        });
-
-                                        ui.add_space(12.0);
-
-                                        // Circle name and type
-                                        ui.vertical(|ui| {
-                                            ui.label(
-                                                RichText::new(&name).size(14.0).strong().color(
-                                                    if is_active {
-                                                        Color32::from_rgb(66, 133, 244)
-                                                    } else {
-                                                        Color32::from_rgb(40, 50, 60)
-                                                    },
-                                                ),
-                                            );
-                                            ui.label(
-                                                RichText::new(format!(
-                                                    "{} Circle",
-                                                    circle_type_name(circle_type)
-                                                ))
-                                                .size(12.0)
-                                                .color(Color32::from_rgb(100, 110, 120)),
-                                            );
-                                        });
-                                    });
-                                })
-                                .response;
-
-                        // Add hover and click effects
-                        if response
-                            .on_hover_cursor(egui::CursorIcon::PointingHand)
-                            .clicked()
-                        {
-                            app.set_active_circle(id);
+        if !has_circles {
+            // Only show "No current circles" if there are no circles
+            ui.label(
+                RichText::new("No current circles yet")
+                    .size(13.0)
+                    .color(Color32::from_rgb(100, 110, 120)),
+            );
+        } else {
+            // Show circles list inside the ALL CIRCLES section
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                for (id, name, circle_type) in circles {
+                    let is_active = active_circle_id.map_or(false, |active_id| active_id == id);
+                    let (icon, color) = match circle_type {
+                        crate::models::circle::CircleType::Personal => {
+                            ("👤", Color32::from_rgb(76, 175, 80))
                         }
+                        crate::models::circle::CircleType::Team => {
+                            ("👥", Color32::from_rgb(33, 150, 243))
+                        }
+                        crate::models::circle::CircleType::Private => {
+                            ("🔒", Color32::from_rgb(156, 39, 176))
+                        }
+                    };
 
-                        ui.add_space(4.0); // Reduced spacing between circles
+                    // Create a clickable area for the entire circle item
+                    let circle_rect = ui.available_rect_before_wrap();
+
+                    // Create a frame for the entire circle item that takes full width
+                    let circle_frame = egui::Frame::none()
+                        .fill(if is_active {
+                            Color32::from_rgb(235, 240, 250) // Light blue background for active circle
+                        } else {
+                            Color32::TRANSPARENT
+                        })
+                        .inner_margin(egui::Margin::symmetric(8.0, 6.0))
+                        .rounding(Rounding::same(4.0));
+
+                    // Display the circle content
+                    circle_frame.show(ui, |ui| {
+                        // Use available width for the horizontal layout
+                        ui.horizontal(|ui| {
+                            ui.set_min_width(ui.available_width());
+
+                            // Icon with colored background
+                            let icon_frame = egui::Frame::none()
+                                .fill(if is_active {
+                                    color
+                                } else {
+                                    Color32::from_rgb(230, 235, 240)
+                                })
+                                .rounding(Rounding::same(12.0))
+                                .inner_margin(egui::Margin::same(6.0));
+
+                            icon_frame.show(ui, |ui| {
+                                ui.label(RichText::new(icon).size(16.0).color(if is_active {
+                                    Color32::WHITE
+                                } else {
+                                    color
+                                }));
+                            });
+
+                            ui.add_space(12.0);
+
+                            // Circle name and type
+                            ui.vertical(|ui| {
+                                ui.label(RichText::new(&name).size(14.0).strong().color(
+                                    if is_active {
+                                        Color32::from_rgb(66, 133, 244)
+                                    } else {
+                                        Color32::from_rgb(40, 50, 60)
+                                    },
+                                ));
+                                ui.label(
+                                    RichText::new(format!(
+                                        "{} Circle",
+                                        circle_type_name(circle_type)
+                                    ))
+                                    .size(12.0)
+                                    .color(Color32::from_rgb(100, 110, 120)),
+                                );
+                            });
+                        });
+                    });
+
+                    // Make the entire area clickable after rendering the content
+                    let response = ui.interact(
+                        circle_rect,
+                        ui.id().with(id), // Use a unique ID for this interaction
+                        egui::Sense::click(),
+                    );
+
+                    // Handle click and hover
+                    if response.clicked() {
+                        app.set_active_circle(id);
                     }
-                });
-            }
 
-            ui.add_space(8.0);
-        },
-    );
+                    response.on_hover_cursor(egui::CursorIcon::PointingHand);
+
+                    ui.add_space(4.0); // Reduced spacing between circles
+                }
+            });
+        }
+
+        ui.add_space(8.0);
+    });
 }
 
 fn circle_type_name(circle_type: crate::models::circle::CircleType) -> &'static str {
