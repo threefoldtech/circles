@@ -2,6 +2,7 @@
 
 use egui::Color32;
 
+#[allow(dead_code)]
 // Constants for styling and layout
 pub struct Theme {
     pub accent: Color32,

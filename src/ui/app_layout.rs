@@ -63,21 +63,21 @@ fn setup_style(ctx: &Context, theme: &Theme, config: &LayoutConfig) {
     ctx.set_style(style);
 }
 
-fn apply_strokes(style: &mut egui::Style, theme: &Theme) {
-    style.visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0, theme.border);
-    style.visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, theme.border);
-    style.visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, theme.accent);
-    style.visuals.widgets.hovered.fg_stroke = Stroke::new(1.5, theme.accent);
-    style.visuals.widgets.active.bg_stroke = Stroke::new(1.5, theme.accent);
-    style.visuals.widgets.active.fg_stroke = Stroke::new(1.5, theme.accent);
-    style.visuals.selection.stroke = Stroke::new(1.0, Color32::WHITE);
+fn apply_strokes(style: &mut egui::Style, _: &Theme) {
+    // Remove all strokes/borders
+    style.visuals.widgets.noninteractive.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.inactive.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.hovered.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.hovered.fg_stroke = Stroke::NONE;
+    style.visuals.widgets.active.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.active.fg_stroke = Stroke::NONE;
+    style.visuals.selection.stroke = Stroke::NONE;
 }
 
 fn apply_rounding(style: &mut egui::Style) {
-    style.visuals.window_shadow = egui::epaint::Shadow {
-        extrusion: 6.0,
-        color: Color32::from_black_alpha(25),
-    };
+    // Remove window shadows
+    style.visuals.window_shadow = egui::epaint::Shadow::NONE;
+    style.visuals.popup_shadow = egui::epaint::Shadow::NONE;
     style.visuals.window_rounding = Rounding::same(0.0);
     style.visuals.menu_rounding = Rounding::same(0.0);
 }
@@ -100,15 +100,7 @@ fn render_circle_selector(
     SidePanel::left("circle_selector")
         .resizable(false)
         .exact_width(config.sidebar_width)
-        .frame(
-            app_layout
-                .clone()
-                .shadow(egui::epaint::Shadow {
-                    extrusion: 6.0,
-                    color: Color32::from_black_alpha(25),
-                })
-                .rounding(Rounding::same(0.0)),
-        )
+        .frame(app_layout.clone())
         .show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.add_space(16.0);
@@ -139,7 +131,7 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
                 .min_size(Vec2::new(32.0, 32.0))
                 .rounding(Rounding::same(8.0))
                 .fill(theme.accent)
-                .stroke(Stroke::new(1.0, Color32::from_rgb(45, 100, 200)));
+                .stroke(Stroke::NONE);
 
             if ui
                 .add(add_button)
@@ -155,11 +147,7 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
             }
         });
     });
-    ui.painter().hline(
-        ui.available_rect_before_wrap().x_range(),
-        ui.cursor().top(),
-        Stroke::new(1.0, theme.border),
-    );
+    // Remove horizontal line
 }
 
 fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
@@ -167,7 +155,7 @@ fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         .fill(theme.hover)
         .rounding(Rounding::same(20.0))
         .inner_margin(Margin::same(10.0))
-        .stroke(Stroke::new(1.0, theme.border));
+        .stroke(Stroke::NONE);
 
     ui.horizontal(|ui| {
         ui.add_space(16.0);
@@ -338,7 +326,11 @@ fn render_circle_item(
         ui.horizontal(|ui| {
             ui.set_min_width(ui.available_width());
             let icon_frame = Frame::none()
-                .fill(if is_active { color } else { theme.border })
+                .fill(if is_active {
+                    color
+                } else {
+                    Color32::from_rgb(230, 235, 240)
+                })
                 .rounding(Rounding::same(12.0))
                 .inner_margin(Margin::same(6.0));
 
@@ -473,18 +465,14 @@ pub fn create_action_button<'a>(text: &'a str, icon: &'a str) -> Button<'a> {
     )
     .rounding(Rounding::same(20.0))
     .fill(Color32::from_rgb(66, 133, 244))
-    .stroke(Stroke::new(1.0, Color32::from_rgb(45, 100, 200)))
+    .stroke(Stroke::NONE)
     .min_size(Vec2::new(100.0, 36.0))
 }
 
 pub fn create_content_frame() -> Frame {
     Frame::none()
         .fill(Color32::WHITE)
-        .stroke(Stroke::new(1.0, Color32::from_rgb(230, 235, 240)))
+        .stroke(Stroke::NONE)
         .rounding(Rounding::same(0.0))
         .inner_margin(Margin::same(16.0))
-        .shadow(egui::epaint::Shadow {
-            extrusion: 4.0,
-            color: Color32::from_black_alpha(20),
-        })
 }

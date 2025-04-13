@@ -1,22 +1,12 @@
 use crate::app::CircleApp;
 use crate::utils::config::Theme;
-use eframe::egui::{
-    self, Align, Color32, Context, Frame, Layout, RichText, Rounding, TopBottomPanel,
-};
+use eframe::egui::{Align, Color32, Context, Frame, Layout, RichText, Rounding, TopBottomPanel};
 
 // Footer rendering function
-pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
+pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, _: &Theme) {
     TopBottomPanel::bottom("status_bar")
         .exact_height(40.0)
-        .frame(
-            app_layout
-                .clone()
-                .shadow(egui::epaint::Shadow {
-                    extrusion: 4.0,
-                    color: theme.shadow,
-                })
-                .rounding(Rounding::same(0.0)),
-        )
+        .frame(app_layout.clone().rounding(Rounding::same(0.0)))
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.add_space(16.0);

@@ -1,8 +1,8 @@
 use crate::app::{ActiveFeature, CircleApp};
 use crate::utils::config::Theme;
 use eframe::egui::{
-    self, Align, Button, Color32, Context, CursorIcon, Frame, Layout, RichText, Rounding, Sense,
-    Stroke, TopBottomPanel, Ui, Vec2,
+    Align, Button, Color32, Context, CursorIcon, Frame, Layout, RichText, Rounding, Sense, Stroke,
+    TopBottomPanel, Ui, Vec2,
 };
 
 #[allow(dead_code)]
@@ -28,15 +28,7 @@ impl LayoutConfig {
 pub fn render_top_panel(app: &CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
     TopBottomPanel::top("top_panel")
         .exact_height(60.0)
-        .frame(
-            app_layout
-                .clone()
-                .shadow(egui::epaint::Shadow {
-                    extrusion: 6.0,
-                    color: Color32::from_black_alpha(25),
-                })
-                .rounding(Rounding::same(0.0)),
-        )
+        .frame(app_layout.clone().rounding(Rounding::same(0.0)))
         .show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.add_space(8.0);
@@ -106,19 +98,22 @@ pub fn render_navigation_bar(
 
     TopBottomPanel::top("navigation_bar")
         .exact_height(get_layout_config().panel_height)
-        .frame(app_layout.clone().shadow(egui::epaint::Shadow {
-            extrusion: 4.0,
-            color: theme.shadow,
-        }))
+        .frame(app_layout.clone())
         .show(ctx, |ui| {
-            ui.horizontal_centered(|ui| {
-                ui.style_mut().spacing.item_spacing = Vec2::new(8.0, 0.0);
-                ui.style_mut().visuals.widgets.hovered.expansion = 1.0;
-                for (text, feature) in NAV_ITEMS {
-                    if create_nav_button(ui, text, *feature, app.active_feature, theme) {
-                        app.set_active_feature(*feature);
+            // Center the buttons by adding flexible space on both sides
+            ui.horizontal(|ui| {
+                // Add flexible space before buttons to push them toward center
+                ui.add_space(ui.available_width() * 0.5 - 315.0); // Approximate half of total button width
+
+                ui.horizontal_centered(|ui| {
+                    ui.style_mut().spacing.item_spacing = Vec2::new(8.0, 0.0);
+                    ui.style_mut().visuals.widgets.hovered.expansion = 1.0;
+                    for (text, feature) in NAV_ITEMS {
+                        if create_nav_button(ui, text, *feature, app.active_feature, theme) {
+                            app.set_active_feature(*feature);
+                        }
                     }
-                }
+                });
             });
         });
 }
@@ -145,11 +140,7 @@ fn create_nav_button(
     } else {
         Color32::from_rgb(230, 235, 240)
     })
-    .stroke(if is_active {
-        Stroke::new(1.0, Color32::from_rgb(45, 100, 200))
-    } else {
-        Stroke::NONE
-    });
+    .stroke(Stroke::NONE);
 
     let response = ui
         .add(button)
