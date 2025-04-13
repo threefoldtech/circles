@@ -4,11 +4,9 @@ use egui::RichText;
 
 use crate::app::CircleApp;
 use crate::models::dummy_data::Email;
-use crate::ui::app_layout::{create_action_button, create_content_frame, render_header};
+use crate::ui::app_layout::{create_action_button, create_content_frame};
 
 pub fn render_mail(app: &CircleApp, ui: &mut egui::Ui) {
-    render_header(ui, "📧", "Mail");
-
     // Get the active circle name
     let circle_name = app
         .active_circle()

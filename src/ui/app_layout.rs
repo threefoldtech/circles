@@ -34,13 +34,24 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
     setup_style(ctx, &theme, &config);
     let app_layout = create_app_layout(&theme);
 
+    // Render the navbar at the top with app name/logo on right and active circle on left
     navbar::render_top_panel(app, ctx, &app_layout, &theme);
+
+    // Render the navigation bar with feature buttons
     if !app.is_first_time {
         navbar::render_navigation_bar(app, ctx, &app_layout, &theme);
     }
-    footer::render_status_bar(app, ctx, &app_layout, &theme);
-    render_circle_selector(app, ctx, &app_layout, &theme, &config);
+
+    // Render the sidebar with available circles
+    render_sidebar(app, ctx, &app_layout, &theme, &config);
+
+    // Render the main content area
     render_feature_content(app, ctx, &app_layout);
+
+    // Render the footer with connection status, user status, date, and notifications
+    footer::render_status_bar(app, ctx, &app_layout, &theme);
+
+    // Render the circle dialog if open
     render_circle_dialog(app, ctx);
 }
 
@@ -89,21 +100,23 @@ fn create_app_layout(theme: &Theme) -> Frame {
 }
 
 // Panel rendering functions
-// Circle selector and related functions
-fn render_circle_selector(
+// Sidebar with circle selector
+fn render_sidebar(
     app: &mut CircleApp,
     ctx: &Context,
     app_layout: &Frame,
     theme: &Theme,
     config: &LayoutConfig,
 ) {
-    SidePanel::left("circle_selector")
+    SidePanel::left("sidebar")
         .resizable(false)
         .exact_width(config.sidebar_width)
         .frame(app_layout.clone())
         .show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.add_space(16.0);
+
+                // Circle selector
                 render_circle_header(ui, app, theme);
                 ui.add_space(12.0);
                 render_search_box(ui, app, theme);
@@ -312,7 +325,6 @@ fn render_circle_item(
         crate::models::circle::CircleType::Private => ("🔒", theme.private),
     };
 
-    let circle_rect = ui.available_rect_before_wrap();
     let circle_frame = Frame::none()
         .fill(if is_active {
             theme.hover
@@ -321,6 +333,8 @@ fn render_circle_item(
         })
         .inner_margin(Margin::symmetric(8.0, 6.0))
         .rounding(Rounding::same(4.0));
+
+    let mut clicked = false;
 
     circle_frame.show(ui, |ui| {
         ui.horizontal(|ui| {
@@ -334,7 +348,8 @@ fn render_circle_item(
                 .rounding(Rounding::same(12.0))
                 .inner_margin(Margin::same(6.0));
 
-            icon_frame.show(ui, |ui| {
+            // Allocate space for the icon and get its rectangle
+            let icon_response = icon_frame.show(ui, |ui| {
                 ui.label(RichText::new(icon).size(16.0).color(if is_active {
                     Color32::WHITE
                 } else {
@@ -343,7 +358,7 @@ fn render_circle_item(
             });
 
             ui.add_space(12.0);
-            ui.vertical(|ui| {
+            let text_response = ui.vertical(|ui| {
                 ui.label(RichText::new(name).size(14.0).strong().color(if is_active {
                     theme.accent
                 } else {
@@ -355,11 +370,25 @@ fn render_circle_item(
                         .color(Color32::from_rgb(100, 110, 120)),
                 );
             });
+
+            // Create a rectangle that encompasses the icon and text for interaction
+            let icon_rect = icon_response.response.rect;
+            let text_rect = text_response.response.rect;
+            let clickable_rect = icon_rect.union(text_rect);
+
+            // Interact only with the clickable rectangle
+            let response = ui.interact(clickable_rect, ui.id().with(id), Sense::click());
+            if response.clicked() {
+                clicked = true;
+            }
+            if response.hovered() {
+                ui.output_mut(|o| o.cursor_icon = CursorIcon::PointingHand);
+            }
         });
     });
 
-    let response = ui.interact(circle_rect, ui.id().with(id), Sense::click());
-    if response.clicked() {
+    // Perform circle selection only if the specific clickable area was clicked
+    if clicked {
         app.set_active_circle(id);
         match name {
             "CirclesBot" => app.set_active_feature(ActiveFeature::BotChannel),
@@ -374,7 +403,6 @@ fn render_circle_item(
             }
         }
     }
-    response.on_hover_cursor(CursorIcon::PointingHand);
     ui.add_space(4.0);
 }
 
@@ -390,16 +418,42 @@ fn circle_type_name(circle_type: crate::models::circle::CircleType) -> &'static 
 fn render_feature_content(app: &mut CircleApp, ctx: &Context, app_layout: &Frame) {
     CentralPanel::default()
         .frame(app_layout.clone())
-        .show(ctx, |ui| match app.active_feature {
-            ActiveFeature::Mail => mail::render_mail(app, ui),
-            ActiveFeature::Calendar => calendar::render_calendar(app, ui),
-            ActiveFeature::Chat => chat::render_chat(app, ui),
-            ActiveFeature::Documents => documents::render_documents(app, ui),
-            ActiveFeature::AITools => render_ai_tools(app, ui),
-            ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
-            ActiveFeature::Settings => settings::render_settings(app, ui),
-            ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui), // Updated to use the new module
-            ActiveFeature::BotChannel => bot_channel::render_bot_channel(app, ui),
+        .show(ctx, |ui| {
+            // Content header with feature title
+            let feature_title = match app.active_feature {
+                ActiveFeature::Mail => "📧 Mail",
+                ActiveFeature::Calendar => "📅 Calendar",
+                ActiveFeature::Chat => "💬 Chat",
+                ActiveFeature::Documents => "📄 Documents",
+                ActiveFeature::AITools => "🤖 AI Tools",
+                ActiveFeature::VideoConference => "📹 Video Conference",
+                ActiveFeature::Settings => "⚙️ Settings",
+                ActiveFeature::Welcome => "👋 Welcome",
+                ActiveFeature::BotChannel => "🤖 Bot Channel",
+            };
+
+            ui.add_space(8.0);
+            ui.heading(
+                RichText::new(feature_title)
+                    .size(20.0)
+                    .strong()
+                    .color(Color32::from_rgb(40, 50, 60)),
+            );
+            ui.separator();
+            ui.add_space(16.0);
+
+            // Render the actual feature content
+            match app.active_feature {
+                ActiveFeature::Mail => mail::render_mail(app, ui),
+                ActiveFeature::Calendar => calendar::render_calendar(app, ui),
+                ActiveFeature::Chat => chat::render_chat(app, ui),
+                ActiveFeature::Documents => documents::render_documents(app, ui),
+                ActiveFeature::AITools => render_ai_tools(app, ui),
+                ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
+                ActiveFeature::Settings => settings::render_settings(app, ui),
+                ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui),
+                ActiveFeature::BotChannel => bot_channel::render_bot_channel(app, ui),
+            }
         });
 }
 
