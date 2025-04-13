@@ -1,8 +1,6 @@
 // File: src/ui/features/welcome.rs
 use crate::app::CircleApp;
-use eframe::egui::{
-    Button, Color32, CursorIcon, Frame, Margin, RichText, Rounding, Stroke, Ui, Vec2,
-};
+use eframe::egui::{Color32, Frame, Margin, RichText, Ui};
 
 // Renders the welcome screen for the Circle Collaboration System
 pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui) {
@@ -28,7 +26,7 @@ pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui) {
                     .size(18.0)
                     .color(Color32::from_rgb(70, 80, 90)),
             );
-            ui.add_space(40.0);
+            ui.add_space(60.0);
             ui.label(
                 RichText::new("To get started:")
                     .size(16.0)
@@ -52,21 +50,6 @@ pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui) {
                 );
                 ui.add_space(8.0);
             }
-
-            ui.add_space(40.0);
-            let get_started_button = Button::new(
-                RichText::new("Get Started")
-                    .size(18.0)
-                    .color(Color32::WHITE),
-            )
-            .min_size(Vec2::new(180.0, 50.0))
-            .rounding(Rounding::same(8.0))
-            .fill(Color32::from_rgb(66, 133, 244))
-            .stroke(Stroke::new(1.0, Color32::from_rgb(45, 100, 200)));
-
-            ui.add(get_started_button)
-                .on_hover_cursor(CursorIcon::PointingHand);
-            ui.add_space(available_height * 0.15);
         });
     });
 }

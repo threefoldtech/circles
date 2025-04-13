@@ -601,7 +601,7 @@ fn circle_type_name(circle_type: crate::models::circle::CircleType) -> &'static 
 }
 
 // Feature content rendering
-fn render_feature_content(app: &CircleApp, ctx: &Context, app_layout: &Frame) {
+fn render_feature_content(app: &mut CircleApp, ctx: &Context, app_layout: &Frame) {
     CentralPanel::default()
         .frame(app_layout.clone())
         .show(ctx, |ui| match app.active_feature {
