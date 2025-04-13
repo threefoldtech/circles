@@ -626,13 +626,6 @@ fn render_feature_content(app: &CircleApp, ctx: &egui::Context, app_layout: egui
             ActiveFeature::Settings => render_settings(app, ui),
             ActiveFeature::Welcome => render_welcome_screen(app, ui),
             ActiveFeature::BotChannel => render_bot_channel(app, ui),
-            // // Special case: if the active circle is the Circles Bot Channel, show the bot channel UI
-            // _ if app
-            //     .active_circle()
-            //     .map_or(false, |c| c.name == "Circles Bot Channel") =>
-            // {
-            //     bot_channel::render_bot_channel(app, ui)
-            // }
         });
 }
 
