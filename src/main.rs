@@ -1,5 +1,6 @@
 use eframe::egui;
-use env_logger;
+// Using a more specific import to avoid warnings
+use env_logger::init as init_logger;
 
 mod app;
 mod egui_app;
@@ -12,7 +13,7 @@ use egui_app::EguiApp;
 
 fn main() -> eframe::Result<()> {
     // Initialize logger
-    env_logger::init();
+    init_logger();
 
     // Set up native options
     let native_options = eframe::NativeOptions {

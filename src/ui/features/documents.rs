@@ -3,6 +3,7 @@ use eframe::egui;
 use crate::app::CircleApp;
 use crate::ui::app_layout::{create_action_button, create_content_frame, render_header};
 
+#[allow(unused_variables)]
 pub fn render_documents(app: &CircleApp, ui: &mut egui::Ui) {
     render_header(ui, "📄", "Documents");
     ui.horizontal(|ui| {

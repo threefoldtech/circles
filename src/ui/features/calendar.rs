@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Timelike, Utc};
+use chrono::{Datelike, Timelike};
 use eframe::egui;
 use egui::RichText;
 
@@ -74,15 +74,16 @@ pub fn render_calendar(app: &CircleApp, ui: &mut egui::Ui) {
                                         let day_num = week * 7 + day;
                                         if day_num <= 30 {
                                             // Check if there are events on this day
-                                            let has_events = feature_data
-                                                .calendar_data
-                                                .events
-                                                .iter()
-                                                .any(|event| {
-                                                    let event_day = event.start_time.date().day();
-                                                    event_day == day_num as u32
-                                                        && event.start_time.date().month() == 4
-                                                });
+                                            let has_events =
+                                                feature_data.calendar_data.events.iter().any(
+                                                    |event| {
+                                                        let event_day =
+                                                            event.start_time.date_naive().day();
+                                                        event_day == day_num as u32
+                                                            && event.start_time.date_naive().month()
+                                                                == 4
+                                                    },
+                                                );
 
                                             let text = RichText::new(format!("{}", day_num)).color(
                                                 if has_events {
@@ -152,7 +153,7 @@ fn render_event(ui: &mut egui::Ui, event: &Event) {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let date = format!(
                         "{} {}",
-                        match event.start_time.date().month() {
+                        match event.start_time.date_naive().month() {
                             1 => "Jan",
                             2 => "Feb",
                             3 => "Mar",
@@ -167,7 +168,7 @@ fn render_event(ui: &mut egui::Ui, event: &Event) {
                             12 => "Dec",
                             _ => "???",
                         },
-                        event.start_time.date().day()
+                        event.start_time.date_naive().day()
                     );
                     ui.label(date);
                 });

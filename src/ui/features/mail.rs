@@ -3,7 +3,7 @@ use eframe::egui;
 use egui::RichText;
 
 use crate::app::CircleApp;
-use crate::models::dummy_data::{Email, Folder};
+use crate::models::dummy_data::Email;
 use crate::ui::app_layout::{create_action_button, create_content_frame, render_header};
 
 pub fn render_mail(app: &CircleApp, ui: &mut egui::Ui) {
@@ -58,7 +58,7 @@ pub fn render_mail(app: &CircleApp, ui: &mut egui::Ui) {
                             format!("{} ", get_folder_icon(&folder.name))
                         } + &folder.name;
 
-                        ui.selectable_value(&mut (), (), folder_text);
+                        let _ = ui.selectable_label(false, folder_text);
                     }
                 });
 

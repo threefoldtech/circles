@@ -545,6 +545,7 @@ fn render_feature_content(app: &CircleApp, ctx: &egui::Context, app_layout: egui
         });
 }
 
+#[allow(unused_variables)]
 fn render_ai_tools(app: &CircleApp, ui: &mut egui::Ui) {
     render_header(ui, "🤖", "AI Tools");
     ui.add_space(16.0);
@@ -557,6 +558,9 @@ fn render_ai_tools(app: &CircleApp, ui: &mut egui::Ui) {
     });
 }
 
+// Add attribute to suppress unused_mut warnings
+#[allow(unused_mut)]
+#[allow(unused_variables)]
 fn render_settings(app: &CircleApp, ui: &mut egui::Ui) {
     render_header(ui, "⚙️", "Settings");
     ui.add_space(16.0);

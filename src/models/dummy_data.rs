@@ -124,6 +124,7 @@ pub struct AITool {
 
 /// Dummy data for all features in a circle
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct CircleFeatureData {
     pub mail_data: MailData,
     pub calendar_data: CalendarData,
@@ -152,7 +153,7 @@ pub fn generate_dummy_data_for_circle(
     }
 }
 
-fn generate_personal_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFeatureData {
+fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
     // Generate inbox folder
     let inbox_id = Uuid::new_v4();
     let sent_id = Uuid::new_v4();
@@ -337,7 +338,7 @@ fn generate_personal_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFe
     }
 }
 
-fn generate_team_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFeatureData {
+fn generate_team_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
     // Generate inbox folder
     let inbox_id = Uuid::new_v4();
     let sent_id = Uuid::new_v4();
@@ -502,7 +503,7 @@ fn generate_team_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFeatur
     }
 }
 
-fn generate_private_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFeatureData {
+fn generate_private_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
     // Generate inbox folder
     let inbox_id = Uuid::new_v4();
     let sent_id = Uuid::new_v4();
