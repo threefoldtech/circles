@@ -1,20 +1,47 @@
 use crate::app::{ActiveFeature, CircleApp};
+use crate::ui::components::circle_dialog;
+use crate::ui::features::bot_channel;
 use crate::ui::features::calendar;
 use crate::ui::features::chat;
 use crate::ui::features::documents;
 use crate::ui::features::mail;
 use crate::ui::features::video_conf;
 use eframe::egui::{self, Color32, RichText, Rounding, Stroke, Vec2};
+use uuid::Uuid;
 
+use super::features::bot_channel::render_bot_channel;
 pub fn render(app: &mut CircleApp, ctx: &egui::Context) {
     setup_style(ctx);
     let app_layout = create_app_layout(ctx);
 
+    // Always render the top panel
     render_top_panel(app, ctx, app_layout);
-    render_navigation_bar(app, ctx, app_layout);
+
+    // Only render the navigation bar if it's not the first time
+    if !app.is_first_time {
+        render_navigation_bar(app, ctx, app_layout);
+    }
+
+    // Always render the status bar
     render_status_bar(app, ctx, app_layout);
+
+    // Always render the circle selector
     render_circle_selector(app, ctx, app_layout);
+
+    // Always render the feature content
     render_feature_content(app, ctx, app_layout);
+    render_feature_content(app, ctx, app_layout);
+
+    // Render the circle creation dialog if it's open
+    if app.circle_dialog_state.is_open {
+        if let Some(user) = &app.user {
+            if let Some(new_circle) =
+                circle_dialog::render_circle_dialog(&mut app.circle_dialog_state, ctx, user.id)
+            {
+                app.add_circle(new_circle);
+            }
+        }
+    }
 }
 
 fn create_app_layout(_ctx: &egui::Context) -> egui::Frame {
@@ -155,13 +182,14 @@ fn render_navigation_bar(app: &mut CircleApp, ctx: &egui::Context, app_layout: e
 }
 
 const NAV_ITEMS: &[(&str, ActiveFeature)] = &[
-    ("Mail", ActiveFeature::Mail),
+    // Ordered alphabetically
+    ("AI Tools", ActiveFeature::AITools),
     ("Calendar", ActiveFeature::Calendar),
     ("Chat", ActiveFeature::Chat),
     ("Documents", ActiveFeature::Documents),
-    ("AI Tools", ActiveFeature::AITools),
-    ("Video", ActiveFeature::VideoConference),
+    ("Mail", ActiveFeature::Mail),
     ("Settings", ActiveFeature::Settings),
+    ("Video", ActiveFeature::VideoConference),
 ];
 
 fn create_nav_button(
@@ -261,7 +289,7 @@ fn render_circle_selector(app: &mut CircleApp, ctx: &egui::Context, app_layout: 
         .show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.add_space(16.0);
-                render_circle_header(ui);
+                render_circle_header(ui, app);
                 ui.add_space(12.0);
                 render_search_box(ui, app);
                 ui.add_space(16.0);
@@ -271,7 +299,7 @@ fn render_circle_selector(app: &mut CircleApp, ctx: &egui::Context, app_layout: 
         });
 }
 
-fn render_circle_header(ui: &mut egui::Ui) {
+fn render_circle_header(ui: &mut egui::Ui, app: &mut CircleApp) {
     // Use a horizontal layout with centered alignment for consistent vertical positioning
     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
         ui.add_space(8.0);
@@ -307,7 +335,7 @@ fn render_circle_header(ui: &mut egui::Ui) {
                 .on_hover_cursor(egui::CursorIcon::PointingHand)
                 .clicked()
             {
-                // TODO: Implement circle creation
+                app.open_circle_dialog();
             }
         });
     });
@@ -362,13 +390,58 @@ fn render_search_box(ui: &mut egui::Ui, app: &mut CircleApp) {
 
 fn render_circle_list(ui: &mut egui::Ui, app: &mut CircleApp) {
     // Get circles data
-    let circles = app
+    let all_circles = app
         .circles
         .iter()
         .map(|c| (c.id, c.name.clone(), c.circle_type))
         .collect::<Vec<_>>();
+
+    // Separate default circles (Welcome and Bot) from user circles
+    let default_circles: Vec<_> = all_circles
+        .iter()
+        .filter(|(_, name, _)| name == "Welcome to Circles" || name == "Circles Bot Channel")
+        .cloned()
+        .collect();
+
+    let user_circles: Vec<_> = all_circles
+        .iter()
+        .filter(|(_, name, _)| name != "Welcome to Circles" && name != "Circles Bot Channel")
+        .cloned()
+        .collect();
+
     let active_circle_id = app.active_circle_id;
-    let has_circles = !circles.is_empty();
+    let _has_circles = !all_circles.is_empty(); // Prefix with underscore to indicate intentional non-use
+    let has_user_circles = !user_circles.is_empty();
+
+    // ALL CIRCLES section - now contains only user-created circles
+    ui.collapsing(
+        RichText::new("ALL CIRCLES")
+            .size(14.0)
+            .strong()
+            .color(Color32::from_rgb(66, 133, 244)),
+        |ui| {
+            ui.add_space(8.0);
+
+            if !has_user_circles {
+                // Only show "No current circles" if there are no user circles
+                ui.label(
+                    RichText::new("No circles yet. Click the + button to create one.")
+                        .size(13.0)
+                        .color(Color32::from_rgb(100, 110, 120)),
+                );
+            } else {
+                // Show user circles list inside the ALL CIRCLES section
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    for (id, name, circle_type) in &user_circles {
+                        render_circle_item(ui, *id, name, *circle_type, active_circle_id, app);
+                    }
+                });
+            }
+
+            ui.add_space(8.0);
+        },
+    );
+    ui.add_space(6.0); // Reduced spacing between sections
 
     // FAVORITES section
     ui.collapsing(
@@ -406,121 +479,130 @@ fn render_circle_list(ui: &mut egui::Ui, app: &mut CircleApp) {
     );
     ui.add_space(6.0); // Reduced spacing between sections
 
-    // ALL CIRCLES section - now contains the circles list
-    // Default to open if there are circles
-    let all_circles_header = RichText::new("ALL CIRCLES")
-        .size(14.0)
-        .strong()
-        .color(Color32::from_rgb(66, 133, 244));
-
-    ui.collapsing(all_circles_header, |ui| {
+    // OTHERS section - contains default circles (Welcome and Bot)
+    // Create a collapsing header that's open by default
+    egui::CollapsingHeader::new(
+        RichText::new("OTHERS")
+            .size(14.0)
+            .strong()
+            .color(Color32::from_rgb(66, 133, 244)),
+    )
+    .default_open(true) // This makes it open by default
+    .show(ui, |ui| {
         ui.add_space(8.0);
 
-        if !has_circles {
-            // Only show "No current circles" if there are no circles
+        if default_circles.is_empty() {
             ui.label(
-                RichText::new("No current circles yet")
+                RichText::new("No system circles available")
                     .size(13.0)
                     .color(Color32::from_rgb(100, 110, 120)),
             );
         } else {
-            // Show circles list inside the ALL CIRCLES section
+            // Show default circles
             egui::ScrollArea::vertical().show(ui, |ui| {
-                for (id, name, circle_type) in circles {
-                    let is_active = active_circle_id.map_or(false, |active_id| active_id == id);
-                    let (icon, color) = match circle_type {
-                        crate::models::circle::CircleType::Personal => {
-                            ("👤", Color32::from_rgb(76, 175, 80))
-                        }
-                        crate::models::circle::CircleType::Team => {
-                            ("👥", Color32::from_rgb(33, 150, 243))
-                        }
-                        crate::models::circle::CircleType::Private => {
-                            ("🔒", Color32::from_rgb(156, 39, 176))
-                        }
-                    };
-
-                    // Create a clickable area for the entire circle item
-                    let circle_rect = ui.available_rect_before_wrap();
-
-                    // Create a frame for the entire circle item that takes full width
-                    let circle_frame = egui::Frame::none()
-                        .fill(if is_active {
-                            Color32::from_rgb(235, 240, 250) // Light blue background for active circle
-                        } else {
-                            Color32::TRANSPARENT
-                        })
-                        .inner_margin(egui::Margin::symmetric(8.0, 6.0))
-                        .rounding(Rounding::same(4.0));
-
-                    // Display the circle content
-                    circle_frame.show(ui, |ui| {
-                        // Use available width for the horizontal layout
-                        ui.horizontal(|ui| {
-                            ui.set_min_width(ui.available_width());
-
-                            // Icon with colored background
-                            let icon_frame = egui::Frame::none()
-                                .fill(if is_active {
-                                    color
-                                } else {
-                                    Color32::from_rgb(230, 235, 240)
-                                })
-                                .rounding(Rounding::same(12.0))
-                                .inner_margin(egui::Margin::same(6.0));
-
-                            icon_frame.show(ui, |ui| {
-                                ui.label(RichText::new(icon).size(16.0).color(if is_active {
-                                    Color32::WHITE
-                                } else {
-                                    color
-                                }));
-                            });
-
-                            ui.add_space(12.0);
-
-                            // Circle name and type
-                            ui.vertical(|ui| {
-                                ui.label(RichText::new(&name).size(14.0).strong().color(
-                                    if is_active {
-                                        Color32::from_rgb(66, 133, 244)
-                                    } else {
-                                        Color32::from_rgb(40, 50, 60)
-                                    },
-                                ));
-                                ui.label(
-                                    RichText::new(format!(
-                                        "{} Circle",
-                                        circle_type_name(circle_type)
-                                    ))
-                                    .size(12.0)
-                                    .color(Color32::from_rgb(100, 110, 120)),
-                                );
-                            });
-                        });
-                    });
-
-                    // Make the entire area clickable after rendering the content
-                    let response = ui.interact(
-                        circle_rect,
-                        ui.id().with(id), // Use a unique ID for this interaction
-                        egui::Sense::click(),
-                    );
-
-                    // Handle click and hover
-                    if response.clicked() {
-                        app.set_active_circle(id);
-                    }
-
-                    response.on_hover_cursor(egui::CursorIcon::PointingHand);
-
-                    ui.add_space(4.0); // Reduced spacing between circles
+                for (id, name, circle_type) in &default_circles {
+                    render_circle_item(ui, *id, name, *circle_type, active_circle_id, app);
                 }
             });
         }
 
         ui.add_space(8.0);
     });
+    ui.add_space(6.0); // Reduced spacing between sections
+}
+
+/// Render a single circle item in the list
+fn render_circle_item(
+    ui: &mut egui::Ui,
+    id: Uuid,
+    name: &str,
+    circle_type: crate::models::circle::CircleType,
+    active_circle_id: Option<Uuid>,
+    app: &mut CircleApp,
+) {
+    let is_active = active_circle_id.map_or(false, |active_id| active_id == id);
+    let (icon, color) = match circle_type {
+        crate::models::circle::CircleType::Personal => ("👤", Color32::from_rgb(76, 175, 80)),
+        crate::models::circle::CircleType::Team => ("👥", Color32::from_rgb(33, 150, 243)),
+        crate::models::circle::CircleType::Private => ("🔒", Color32::from_rgb(156, 39, 176)),
+    };
+
+    // Create a clickable area for the entire circle item
+    let circle_rect = ui.available_rect_before_wrap();
+
+    // Create a frame for the entire circle item that takes full width
+    let circle_frame = egui::Frame::none()
+        .fill(if is_active {
+            Color32::from_rgb(235, 240, 250) // Light blue background for active circle
+        } else {
+            Color32::TRANSPARENT
+        })
+        .inner_margin(egui::Margin::symmetric(8.0, 6.0))
+        .rounding(Rounding::same(4.0));
+
+    // Display the circle content
+    circle_frame.show(ui, |ui| {
+        // Use available width for the horizontal layout
+        ui.horizontal(|ui| {
+            ui.set_min_width(ui.available_width());
+
+            // Icon with colored background
+            let icon_frame = egui::Frame::none()
+                .fill(if is_active {
+                    color
+                } else {
+                    Color32::from_rgb(230, 235, 240)
+                })
+                .rounding(Rounding::same(12.0))
+                .inner_margin(egui::Margin::same(6.0));
+
+            icon_frame.show(ui, |ui| {
+                ui.label(RichText::new(icon).size(16.0).color(if is_active {
+                    Color32::WHITE
+                } else {
+                    color
+                }));
+            });
+
+            ui.add_space(12.0);
+
+            // Circle name and type
+            ui.vertical(|ui| {
+                ui.label(RichText::new(name).size(14.0).strong().color(if is_active {
+                    Color32::from_rgb(66, 133, 244)
+                } else {
+                    Color32::from_rgb(40, 50, 60)
+                }));
+                ui.label(
+                    RichText::new(format!("{} Circle", circle_type_name(circle_type)))
+                        .size(12.0)
+                        .color(Color32::from_rgb(100, 110, 120)),
+                );
+            });
+        });
+    });
+
+    // Make the entire area clickable after rendering the content
+    let response = ui.interact(
+        circle_rect,
+        ui.id().with(id), // Use a unique ID for this interaction
+        egui::Sense::click(),
+    );
+
+    // Handle click and hover
+    if response.clicked() {
+        app.set_active_circle(id);
+
+        // If the user clicks on the Circles Bot Channel, set the active feature to something other than Welcome
+        // This ensures the bot channel UI is rendered instead of the welcome screen
+        if name == "Circles Bot Channel" && app.active_feature == ActiveFeature::Welcome {
+            app.set_active_feature(ActiveFeature::Mail); // Set to any feature that's not Welcome
+        }
+    }
+
+    response.on_hover_cursor(egui::CursorIcon::PointingHand);
+
+    ui.add_space(4.0); // Reduced spacing between circles
 }
 
 fn circle_type_name(circle_type: crate::models::circle::CircleType) -> &'static str {
@@ -542,7 +624,108 @@ fn render_feature_content(app: &CircleApp, ctx: &egui::Context, app_layout: egui
             ActiveFeature::AITools => render_ai_tools(app, ui),
             ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
             ActiveFeature::Settings => render_settings(app, ui),
+            ActiveFeature::Welcome => render_welcome_screen(app, ui),
+            ActiveFeature::BotChannel => render_bot_channel(app, ui),
+            // // Special case: if the active circle is the Circles Bot Channel, show the bot channel UI
+            // _ if app
+            //     .active_circle()
+            //     .map_or(false, |c| c.name == "Circles Bot Channel") =>
+            // {
+            //     bot_channel::render_bot_channel(app, ui)
+            // }
         });
+}
+
+/// Render the welcome screen for first-time users
+fn render_welcome_screen(_app: &CircleApp, ui: &mut egui::Ui) {
+    // Create a frame that takes the full available height
+    let available_height = ui.available_height();
+
+    // Create a custom frame that takes full height
+    let welcome_frame = egui::Frame::none()
+        .fill(Color32::WHITE)
+        .inner_margin(egui::Margin::same(0.0))
+        .outer_margin(egui::Margin::same(0.0));
+
+    welcome_frame.show(ui, |ui| {
+        // Use the full available height
+        ui.set_min_height(available_height);
+
+        // Center the content vertically and horizontally
+        ui.vertical_centered(|ui| {
+            ui.add_space(available_height * 0.15); // Add space at the top (15% of height)
+
+            // Welcome header
+            ui.heading(
+                RichText::new("Welcome to Circles")
+                    .size(32.0)
+                    .strong()
+                    .color(Color32::from_rgb(66, 133, 244)),
+            );
+
+            ui.add_space(20.0);
+
+            // Welcome message
+            ui.label(
+                RichText::new("Your new collaboration platform for teams and individuals")
+                    .size(18.0)
+                    .color(Color32::from_rgb(70, 80, 90)),
+            );
+
+            ui.add_space(40.0);
+
+            // Instructions
+            ui.label(
+                RichText::new("To get started:")
+                    .size(16.0)
+                    .strong()
+                    .color(Color32::from_rgb(40, 50, 60)),
+            );
+
+            ui.add_space(10.0);
+
+            let instructions = [
+                "• Check out the 'Welcome to Circles' guide in the OTHERS section",
+                "• Explore the different features using the navigation bar above",
+                "• Create your own circles using the + button in the sidebar",
+                "• Stay updated with the Circles Bot Channel in the OTHERS section",
+            ];
+
+            for instruction in instructions {
+                ui.label(
+                    RichText::new(instruction)
+                        .size(16.0)
+                        .color(Color32::from_rgb(70, 80, 90)),
+                );
+                ui.add_space(8.0);
+            }
+
+            ui.add_space(40.0);
+
+            // Get started button
+            let get_started_button = egui::Button::new(
+                RichText::new("Get Started")
+                    .size(18.0)
+                    .color(Color32::WHITE),
+            )
+            .min_size(Vec2::new(180.0, 50.0))
+            .rounding(Rounding::same(8.0))
+            .fill(Color32::from_rgb(66, 133, 244))
+            .stroke(Stroke::new(1.0, Color32::from_rgb(45, 100, 200)));
+
+            if ui
+                .add(get_started_button)
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .clicked()
+            {
+                // This would need to be handled in the app state
+                // For now, we'll just show this button for demonstration
+            }
+
+            // Add space at the bottom to balance the layout
+            ui.add_space(available_height * 0.15); // Add space at the bottom (15% of height)
+        });
+    });
 }
 
 #[allow(unused_variables)]

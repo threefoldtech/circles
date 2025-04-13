@@ -1,4 +1,4 @@
-use crate::models::circle::{Circle, CircleType};
+use crate::models::circle::Circle;
 use crate::models::dummy_data::{self, CircleFeatureData};
 use crate::models::user::User;
 use crate::ui::app_layout;
@@ -22,6 +22,10 @@ pub struct CircleApp {
     pub circle_feature_data: HashMap<Uuid, CircleFeatureData>,
     /// Currently active feature data
     pub active_feature_data: Option<CircleFeatureData>,
+    /// Circle creation dialog state
+    pub circle_dialog_state: crate::ui::components::circle_dialog::CircleDialogState,
+    /// Flag to track if this is the first time the user is opening the app
+    pub is_first_time: bool,
 }
 
 /// Enum representing available features in the application
@@ -34,6 +38,10 @@ pub enum ActiveFeature {
     AITools,
     VideoConference,
     Settings,
+    /// Special welcome screen for first-time users
+    Welcome,
+    /// Special feature for the Circles Bot Channel
+    BotChannel,
 }
 
 impl Default for ActiveFeature {
@@ -46,61 +54,120 @@ impl CircleApp {
     /// Initialize a new instance of the application with elegant defaults
     pub fn new(_: &eframe::CreationContext<'_>) -> Self {
         // Initialize with a sophisticated default user
+        let user_id = Uuid::new_v4();
         let user = Some(User {
-            id: Uuid::new_v4(),
+            id: user_id,
             name: "Default User".to_string(), // More polished default name
             email: "user@circleapp.com".to_string(), // Branded email
             created_at: chrono::Utc::now(),
         });
 
-        // Curated demo circles with meaningful names
-        let circles = vec![
-            Circle::new(
-                "My Personal Space".to_string(),
-                CircleType::Personal,
-                user.as_ref().unwrap().id, // Safe unwrap since user is Some
-            ),
-            Circle::new(
-                "Team Collaboration".to_string(),
-                CircleType::Team,
-                user.as_ref().unwrap().id,
-            ),
-            Circle::new(
-                "Private Thoughts".to_string(),
-                CircleType::Private,
-                user.as_ref().unwrap().id,
-            ),
-        ];
+        // Start with an empty circles list
+        let mut circles = Vec::new();
 
         // Create a HashMap to store feature data for each circle
         let mut circle_feature_data = HashMap::new();
 
-        // Generate dummy data for each circle
-        for circle in &circles {
-            let feature_data = dummy_data::generate_dummy_data_for_circle(
-                circle.id,
-                &circle.name,
-                circle.circle_type,
-            );
-            circle_feature_data.insert(circle.id, feature_data);
-        }
+        // Create default circles for new users
+        let welcome_circle = Self::create_welcome_circle(user_id);
+        let bot_circle = Self::create_bot_circle(user_id);
 
-        // Elegantly select the first circle as active
-        let active_circle_id = circles.first().map(|c| c.id);
+        // Generate feature data for default circles
+        let welcome_feature_data = dummy_data::generate_dummy_data_for_circle(
+            welcome_circle.id,
+            &welcome_circle.name,
+            welcome_circle.circle_type,
+        );
 
-        // Get the active feature data
-        let active_feature_data =
-            active_circle_id.and_then(|id| circle_feature_data.get(&id).cloned());
+        let bot_feature_data = dummy_data::generate_dummy_data_for_circle(
+            bot_circle.id,
+            &bot_circle.name,
+            bot_circle.circle_type,
+        );
+
+        // Add feature data to the map
+        circle_feature_data.insert(welcome_circle.id, welcome_feature_data);
+        circle_feature_data.insert(bot_circle.id, bot_feature_data);
+
+        // Add default circles to the list
+        circles.push(welcome_circle);
+        circles.push(bot_circle);
+
+        // Set active circle to the welcome circle
+        let active_circle_id = Some(circles[0].id);
+        let active_feature_data = circle_feature_data.get(&circles[0].id).cloned();
+
+        // For first-time users, we'll show a welcome screen instead of the default mail feature
+        let is_first_time = true; // Always true for new instances
 
         Self {
             user,
             circles,
             active_circle_id,
-            active_feature: ActiveFeature::default(),
+            // For first-time users, we'll use a special Welcome feature instead of the default Mail
+            active_feature: if is_first_time {
+                ActiveFeature::Welcome
+            } else {
+                ActiveFeature::default()
+            },
             search_query: String::new(),
             circle_feature_data,
             active_feature_data,
+            circle_dialog_state: crate::ui::components::circle_dialog::CircleDialogState::new(),
+            is_first_time,
         }
+    }
+
+    /// Create a welcome circle with instructions for new users
+    fn create_welcome_circle(creator_id: Uuid) -> Circle {
+        use crate::models::circle::{
+            Circle, CircleType, JoinPolicy, NotificationSettings, Visibility,
+        };
+
+        let mut circle = Circle::new(
+            "Welcome to Circles".to_string(),
+            CircleType::Private,
+            creator_id,
+        );
+
+        // We'll customize the welcome circle data in the dummy_data generation
+        // The document will be added there
+
+        circle.settings.visibility = Visibility::Private;
+        circle.settings.join_policy = JoinPolicy::InviteOnly;
+        circle.settings.notification_settings = NotificationSettings {
+            email_notifications: true,
+            push_notifications: true,
+            in_app_notifications: true,
+        };
+
+        circle
+    }
+
+    /// Create a bot circle for system updates
+    fn create_bot_circle(creator_id: Uuid) -> Circle {
+        use crate::models::circle::{
+            Circle, CircleType, JoinPolicy, NotificationSettings, Visibility,
+        };
+
+        let mut circle = Circle::new(
+            "Circles Bot Channel".to_string(),
+            CircleType::Private,
+            creator_id,
+        );
+
+        // We'll customize the bot circle data in the dummy_data generation
+        // The chat messages will be added there
+
+        circle.settings.visibility = Visibility::Private;
+        circle.settings.join_policy = JoinPolicy::InviteOnly;
+        circle.settings.notification_settings = NotificationSettings {
+            email_notifications: true,
+            push_notifications: true,
+            in_app_notifications: true,
+        };
+
+        circle
     }
 
     /// Retrieve the currently active circle in a refined manner
@@ -134,6 +201,29 @@ impl CircleApp {
     /// Smoothly transition to a new active feature
     pub fn set_active_feature(&mut self, feature: ActiveFeature) {
         self.active_feature = feature;
+    }
+
+    /// Add a new circle to the application
+    pub fn add_circle(&mut self, circle: Circle) {
+        // Generate feature data for the new circle
+        let feature_data =
+            dummy_data::generate_dummy_data_for_circle(circle.id, &circle.name, circle.circle_type);
+
+        // Add the feature data to the map
+        self.circle_feature_data.insert(circle.id, feature_data);
+
+        // Add the circle to the list
+        self.circles.push(circle);
+
+        // If this is the first circle, make it active
+        if self.active_circle_id.is_none() && !self.circles.is_empty() {
+            self.set_active_circle(self.circles[0].id);
+        }
+    }
+
+    /// Open the circle creation dialog
+    pub fn open_circle_dialog(&mut self) {
+        self.circle_dialog_state.is_open = true;
     }
 }
 

@@ -1,3 +1,4 @@
+pub mod bot_channel;
 pub mod calendar;
 pub mod chat;
 pub mod documents;

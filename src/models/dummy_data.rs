@@ -134,12 +134,20 @@ pub struct CircleFeatureData {
     pub ai_tools_data: AIToolsData,
 }
 
-/// Generate dummy data for a circle based on its type
+/// Generate dummy data for a circle based on its type and name
 pub fn generate_dummy_data_for_circle(
     circle_id: Uuid,
     circle_name: &str,
     circle_type: crate::models::circle::CircleType,
 ) -> CircleFeatureData {
+    // Special handling for default circles
+    if circle_name == "Welcome to Circles" {
+        return generate_welcome_circle_data(circle_id, circle_name);
+    } else if circle_name == "Circles Bot Channel" {
+        return generate_bot_circle_data(circle_id, circle_name);
+    }
+
+    // Regular handling based on circle type
     match circle_type {
         crate::models::circle::CircleType::Personal => {
             generate_personal_circle_data(circle_id, circle_name)
@@ -151,6 +159,78 @@ pub fn generate_dummy_data_for_circle(
             generate_private_circle_data(circle_id, circle_name)
         }
     }
+}
+
+/// Generate data for the welcome circle with instructions
+fn generate_welcome_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFeatureData {
+    // Start with basic private circle data
+    let mut data = generate_private_circle_data(circle_id, circle_name);
+
+    // Create welcome document
+    let welcome_doc = Document {
+        id: Uuid::new_v4(),
+        name: "welcome_guide.md".to_string(),
+        content: "# Welcome to Circles\n\n\
+                 ## Getting Started\n\n\
+                 Circles is a collaboration platform that helps you organize your work and personal life.\n\n\
+                 ### Key Features:\n\n\
+                 - **Mail**: Send and receive messages within your circles\n\
+                 - **Calendar**: Schedule events and meetings\n\
+                 - **Chat**: Real-time communication with circle members\n\
+                 - **Documents**: Create and share documents\n\
+                 - **Video Conference**: Hold virtual meetings\n\
+                 - **AI Tools**: Use AI to enhance your productivity\n\n\
+                 ### Creating Circles\n\n\
+                 Click the + button in the Circles panel to create a new circle.\n\
+                 You can create different types of circles:\n\n\
+                 - **Personal**: For individual use or one-on-one collaboration\n\
+                 - **Team**: For group collaboration\n\
+                 - **Private**: For your personal content\n\n\
+                 Enjoy using Circles!".to_string(),
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+        created_by: "Circles System".to_string(),
+        folder_id: None,
+    };
+
+    // Add welcome document to documents
+    data.document_data.documents.push(welcome_doc);
+
+    data
+}
+
+/// Generate data for the bot circle with system messages
+fn generate_bot_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFeatureData {
+    // Start with basic private circle data
+    let mut data = generate_private_circle_data(circle_id, circle_name);
+
+    // Create bot conversation
+    let bot_conversation = Conversation {
+        id: Uuid::new_v4(),
+        name: "Circles Bot".to_string(),
+        participants: vec!["Circles Bot".to_string(), "Me".to_string()],
+        messages: vec![
+            Message {
+                id: Uuid::new_v4(),
+                sender: "Circles Bot".to_string(),
+                content: "Welcome to the Circles Bot Channel! You'll receive system updates and announcements here.".to_string(),
+                timestamp: Utc::now(),
+                read: true,
+            },
+            Message {
+                id: Uuid::new_v4(),
+                sender: "Circles Bot".to_string(),
+                content: "🔔 System Update: Circles v1.0 has been released with new collaboration features!".to_string(),
+                timestamp: Utc::now().checked_add_signed(chrono::Duration::minutes(5)).unwrap(),
+                read: true,
+            },
+        ],
+    };
+
+    // Replace existing conversations with our bot conversation
+    data.chat_data.conversations = vec![bot_conversation];
+
+    data
 }
 
 fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {

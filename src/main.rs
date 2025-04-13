@@ -18,8 +18,9 @@ fn main() -> eframe::Result<()> {
     // Set up native options
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1024.0, 768.0])
-            .with_min_inner_size([800.0, 600.0]),
+            .with_inner_size([1920.0, 1080.0]) // Larger default size
+            .with_min_inner_size([800.0, 600.0])
+            .with_maximized(true), // Start maximized (full screen)
         // No centered option in newer egui versions
         ..Default::default()
     };
