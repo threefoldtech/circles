@@ -1,49 +1,19 @@
 use crate::app::{ActiveFeature, CircleApp};
 use crate::ui::components::circle_dialog;
-use crate::ui::features::{bot_channel, calendar, chat, documents, mail, video_conf, welcome}; // Added welcome
+use crate::ui::features::{bot_channel, calendar, chat, documents, mail, video_conf, welcome};
+use crate::ui::footer;
+use crate::ui::navbar;
+use crate::utils::config::Theme; // Added welcome
 use eframe::egui::{
     self, Align, Button, CentralPanel, Color32, Context, CursorIcon, Frame, Layout, Margin,
-    RichText, Rounding, ScrollArea, Sense, SidePanel, Stroke, TopBottomPanel, Ui, Vec2,
+    RichText, Rounding, ScrollArea, Sense, SidePanel, Stroke, Ui, Vec2,
 };
 use uuid::Uuid;
 
-// Constants for styling and layout
-struct Theme {
-    accent: Color32,
-    background: Color32,
-    panel: Color32,
-    text: Color32,
-    border: Color32,
-    active: Color32,
-    hover: Color32,
-    shadow: Color32,
-    success: Color32,
-    team: Color32,
-    private: Color32,
-}
-
-impl Theme {
-    fn new() -> Self {
-        Self {
-            accent: Color32::from_rgb(66, 133, 244),
-            background: Color32::from_rgb(245, 247, 250),
-            panel: Color32::WHITE,
-            text: Color32::from_rgb(40, 50, 60),
-            border: Color32::from_rgb(230, 235, 240),
-            active: Color32::from_rgb(220, 230, 240),
-            hover: Color32::from_rgb(235, 240, 245),
-            shadow: Color32::from_black_alpha(20),
-            success: Color32::from_rgb(76, 175, 80),
-            team: Color32::from_rgb(33, 150, 243),
-            private: Color32::from_rgb(156, 39, 176),
-        }
-    }
-}
+use super::features::settings;
 
 struct LayoutConfig {
     spacing: f32,
-    panel_height: f32,
-    button_size: Vec2,
     sidebar_width: f32,
 }
 
@@ -51,8 +21,6 @@ impl LayoutConfig {
     fn new() -> Self {
         Self {
             spacing: 12.0,
-            panel_height: 50.0,
-            button_size: Vec2::new(90.0, 40.0),
             sidebar_width: 260.0,
         }
     }
@@ -66,11 +34,11 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
     setup_style(ctx, &theme, &config);
     let app_layout = create_app_layout(&theme);
 
-    render_top_panel(app, ctx, &app_layout, &theme);
+    navbar::render_top_panel(app, ctx, &app_layout, &theme);
     if !app.is_first_time {
-        render_navigation_bar(app, ctx, &app_layout, &theme, &config);
+        navbar::render_navigation_bar(app, ctx, &app_layout, &theme);
     }
-    render_status_bar(app, ctx, &app_layout, &theme);
+    footer::render_status_bar(app, ctx, &app_layout, &theme);
     render_circle_selector(app, ctx, &app_layout, &theme, &config);
     render_feature_content(app, ctx, &app_layout);
     render_circle_dialog(app, ctx);
@@ -121,180 +89,6 @@ fn create_app_layout(theme: &Theme) -> Frame {
 }
 
 // Panel rendering functions
-fn render_top_panel(app: &CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
-    TopBottomPanel::top("top_panel")
-        .exact_height(60.0)
-        .frame(
-            app_layout
-                .clone()
-                .shadow(egui::epaint::Shadow {
-                    extrusion: 6.0,
-                    color: Color32::from_black_alpha(25),
-                })
-                .rounding(Rounding::same(0.0)),
-        )
-        .show(ctx, |ui| {
-            ui.vertical(|ui| {
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    ui.add_space(16.0);
-                    ui.heading(
-                        RichText::new("Circle Collaboration System")
-                            .size(20.0)
-                            .strong()
-                            .color(theme.text),
-                    );
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        ui.add_space(16.0);
-                        let circle_text = app
-                            .active_circle()
-                            .map_or("No circle selected".to_string(), |c| {
-                                format!("Active: {}", c.name)
-                            });
-                        let circle_label = ui
-                            .label(
-                                RichText::new(circle_text)
-                                    .size(14.0)
-                                    .color(Color32::from_rgb(70, 80, 90)),
-                            )
-                            .on_hover_ui(|ui| {
-                                ui.label(
-                                    RichText::new("Current active circle")
-                                        .size(12.0)
-                                        .color(Color32::from_rgb(100, 110, 120)),
-                                );
-                            });
-                        if app.active_circle().is_some() {
-                            ui.add_space(6.0);
-                            ui.painter().circle_filled(
-                                circle_label.rect.left_center() + Vec2::new(-12.0, 0.0),
-                                4.0,
-                                theme.success,
-                            );
-                        }
-                    });
-                });
-                ui.add_space(8.0);
-                ui.painter().hline(
-                    ui.available_rect_before_wrap().x_range(),
-                    ui.cursor().top(),
-                    Stroke::new(1.0, theme.border),
-                );
-            });
-        });
-}
-
-fn render_navigation_bar(
-    app: &mut CircleApp,
-    ctx: &Context,
-    app_layout: &Frame,
-    theme: &Theme,
-    config: &LayoutConfig,
-) {
-    const NAV_ITEMS: &[(&str, ActiveFeature)] = &[
-        ("AI Tools", ActiveFeature::AITools),
-        ("Calendar", ActiveFeature::Calendar),
-        ("Chat", ActiveFeature::Chat),
-        ("Documents", ActiveFeature::Documents),
-        ("Mail", ActiveFeature::Mail),
-        ("Settings", ActiveFeature::Settings),
-        ("Video", ActiveFeature::VideoConference),
-    ];
-
-    TopBottomPanel::top("navigation_bar")
-        .exact_height(config.panel_height)
-        .frame(app_layout.clone().shadow(egui::epaint::Shadow {
-            extrusion: 4.0,
-            color: theme.shadow,
-        }))
-        .show(ctx, |ui| {
-            ui.horizontal_centered(|ui| {
-                ui.style_mut().spacing.item_spacing = Vec2::new(8.0, 0.0);
-                ui.style_mut().visuals.widgets.hovered.expansion = 1.0;
-                for (text, feature) in NAV_ITEMS {
-                    if create_nav_button(ui, text, *feature, app.active_feature, theme, config) {
-                        app.set_active_feature(*feature);
-                    }
-                }
-            });
-        });
-}
-
-fn create_nav_button(
-    ui: &mut Ui,
-    text: &str,
-    feature: ActiveFeature,
-    active_feature: ActiveFeature,
-    theme: &Theme,
-    config: &LayoutConfig,
-) -> bool {
-    let is_active = active_feature == feature;
-    let button = Button::new(RichText::new(text).size(14.0).color(if is_active {
-        Color32::WHITE
-    } else {
-        Color32::from_rgb(70, 80, 90)
-    }))
-    .min_size(config.button_size)
-    .rounding(Rounding::same(6.0))
-    .sense(Sense::click_and_drag())
-    .fill(if is_active {
-        theme.accent
-    } else {
-        Color32::from_rgb(230, 235, 240)
-    })
-    .stroke(if is_active {
-        Stroke::new(1.0, Color32::from_rgb(45, 100, 200))
-    } else {
-        Stroke::NONE
-    });
-
-    let response = ui
-        .add(button)
-        .on_hover_ui(|ui| {
-            ui.style_mut().visuals.widgets.hovered.bg_fill = theme.accent;
-            ui.label(RichText::new(text).size(12.0).color(Color32::WHITE));
-        })
-        .on_hover_cursor(CursorIcon::PointingHand);
-
-    if response.hovered() {
-        ui.ctx().request_repaint();
-    }
-    response.clicked()
-}
-
-fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
-    TopBottomPanel::bottom("status_bar")
-        .exact_height(40.0)
-        .frame(
-            app_layout
-                .clone()
-                .shadow(egui::epaint::Shadow {
-                    extrusion: 4.0,
-                    color: theme.shadow,
-                })
-                .rounding(Rounding::same(0.0)),
-        )
-        .show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.add_space(16.0);
-                ui.label(
-                    RichText::new("Status: Connected")
-                        .size(13.0)
-                        .color(Color32::from_rgb(70, 80, 90)),
-                );
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add_space(16.0);
-                    let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
-                    ui.label(
-                        RichText::new(format!("User: {}", user_name))
-                            .size(13.0)
-                            .color(Color32::from_rgb(70, 80, 90)),
-                    );
-                });
-            });
-        });
-}
-
 // Circle selector and related functions
 fn render_circle_selector(
     app: &mut CircleApp,
@@ -611,7 +405,7 @@ fn render_feature_content(app: &mut CircleApp, ctx: &Context, app_layout: &Frame
             ActiveFeature::Documents => documents::render_documents(app, ui),
             ActiveFeature::AITools => render_ai_tools(app, ui),
             ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
-            ActiveFeature::Settings => render_settings(app, ui),
+            ActiveFeature::Settings => settings::render_settings(app, ui),
             ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui), // Updated to use the new module
             ActiveFeature::BotChannel => bot_channel::render_bot_channel(app, ui),
         });
@@ -649,68 +443,6 @@ fn render_ai_tools(app: &CircleApp, ui: &mut Ui) {
                 .color(Color32::from_rgb(100, 110, 120)),
         );
     });
-}
-
-#[allow(unused_mut)]
-#[allow(unused_variables)]
-fn render_settings(app: &CircleApp, ui: &mut Ui) {
-    render_header(ui, "⚙️", "Settings");
-    ui.add_space(16.0);
-    create_content_frame().show(ui, |ui| {
-        ui.vertical(|ui| {
-            render_settings_section(
-                ui,
-                "User Settings",
-                &[
-                    (true, "Enable notifications"),
-                    (false, "Dark mode"),
-                    (true, "Auto-save"),
-                ],
-            );
-            ui.add_space(16.0);
-            render_settings_section(
-                ui,
-                "Circle Settings",
-                &[(true, "Show all circles"), (false, "Auto-join new circles")],
-            );
-            ui.add_space(16.0);
-            if ui
-                .add(
-                    Button::new(
-                        RichText::new("Save Settings")
-                            .size(14.0)
-                            .color(Color32::WHITE),
-                    )
-                    .fill(Color32::from_rgb(66, 133, 244))
-                    .rounding(Rounding::same(6.0))
-                    .min_size(Vec2::new(120.0, 36.0)),
-                )
-                .clicked()
-            {
-                // TODO: Implement save settings
-            }
-        });
-    });
-}
-
-fn render_settings_section(ui: &mut Ui, title: &str, settings: &[(bool, &str)]) {
-    let theme = Theme::new();
-    ui.label(RichText::new(title).size(16.0).strong().color(theme.text));
-    ui.add_space(8.0);
-    ui.painter().hline(
-        ui.available_rect_before_wrap().x_range(),
-        ui.cursor().top(),
-        Stroke::new(1.0, theme.border),
-    );
-    ui.add_space(12.0);
-    for (mut value, text) in settings.iter() {
-        ui.checkbox(
-            &mut value,
-            RichText::new(*text)
-                .size(14.0)
-                .color(Color32::from_rgb(70, 80, 90)),
-        );
-    }
 }
 
 // Utility functions
