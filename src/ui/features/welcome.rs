@@ -17,7 +17,7 @@ pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui) {
         ui.vertical_centered(|ui| {
             ui.add_space(available_height * 0.15);
             ui.heading(
-                RichText::new("Welcome to Circles")
+                RichText::new("WelcomeBot")
                     .size(32.0)
                     .strong()
                     .color(Color32::from_rgb(66, 133, 244)),

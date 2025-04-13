@@ -141,9 +141,9 @@ pub fn generate_dummy_data_for_circle(
     circle_type: crate::models::circle::CircleType,
 ) -> CircleFeatureData {
     // Special handling for default circles
-    if circle_name == "Welcome to Circles" {
+    if circle_name == "WelcomeBot" {
         return generate_welcome_circle_data(circle_id, circle_name);
-    } else if circle_name == "Circles Bot Channel" {
+    } else if circle_name == "CirclesBot" {
         return generate_bot_circle_data(circle_id, circle_name);
     }
 

@@ -124,11 +124,7 @@ impl CircleApp {
             Circle, CircleType, JoinPolicy, NotificationSettings, Visibility,
         };
 
-        let mut circle = Circle::new(
-            "Welcome to Circles".to_string(),
-            CircleType::Private,
-            creator_id,
-        );
+        let mut circle = Circle::new("WelcomeBot".to_string(), CircleType::Private, creator_id);
 
         // We'll customize the welcome circle data in the dummy_data generation
         // The document will be added there
@@ -150,11 +146,7 @@ impl CircleApp {
             Circle, CircleType, JoinPolicy, NotificationSettings, Visibility,
         };
 
-        let mut circle = Circle::new(
-            "Circles Bot Channel".to_string(),
-            CircleType::Private,
-            creator_id,
-        );
+        let mut circle = Circle::new("CirclesBot".to_string(), CircleType::Private, creator_id);
 
         // We'll customize the bot circle data in the dummy_data generation
         // The chat messages will be added there

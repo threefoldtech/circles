@@ -418,14 +418,14 @@ fn render_circle_list(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
 
     let (default_circles, user_circles): (Vec<_>, Vec<_>) = all_circles
         .into_iter()
-        .partition(|(_, name, _)| name == "Welcome to Circles" || name == "Circles Bot Channel");
+        .partition(|(_, name, _)| name == "WelcomeBot" || name == "CirclesBot");
 
     let active_circle_id = app.active_circle_id;
 
     // ALL CIRCLES section
     render_circle_section(
         ui,
-        "ALL CIRCLES",
+        "ALL",
         &user_circles,
         active_circle_id,
         app,
@@ -436,23 +436,12 @@ fn render_circle_list(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
     // FAVORITES section
     render_circle_section(
         ui,
-        "FAVORITES",
+        "FAVORITE",
         &[],
         active_circle_id,
         app,
         theme,
         "No favorites yet",
-    );
-
-    // MY CIRCLES section
-    render_circle_section(
-        ui,
-        "MY CIRCLES",
-        &[],
-        active_circle_id,
-        app,
-        theme,
-        "No circles yet",
     );
 
     // OTHERS section
@@ -585,8 +574,8 @@ fn render_circle_item(
     if response.clicked() {
         app.set_active_circle(id);
         match name {
-            "Circles Bot Channel" => app.set_active_feature(ActiveFeature::BotChannel),
-            "Welcome to Circles" => app.set_active_feature(ActiveFeature::Welcome),
+            "CirclesBot" => app.set_active_feature(ActiveFeature::BotChannel),
+            "WelcomeBot" => app.set_active_feature(ActiveFeature::Welcome),
             _ => {
                 if matches!(
                     app.active_feature,
