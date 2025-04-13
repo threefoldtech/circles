@@ -431,6 +431,7 @@ fn render_circle_list(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         app,
         theme,
         "No circles yet. Click the + button to create one.",
+        true, // Expand if there are circles
     );
 
     // FAVORITES section
@@ -442,6 +443,7 @@ fn render_circle_list(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         app,
         theme,
         "No favorites yet",
+        true, // Not expanded by default
     );
 
     // OTHERS section
@@ -480,10 +482,11 @@ fn render_circle_section(
     app: &mut CircleApp,
     theme: &Theme,
     empty_message: &str,
+    default_open: bool,
 ) {
-    ui.collapsing(
-        RichText::new(title).size(14.0).strong().color(theme.accent),
-        |ui| {
+    egui::CollapsingHeader::new(RichText::new(title).size(14.0).strong().color(theme.accent))
+        .default_open(default_open)
+        .show(ui, |ui| {
             ui.add_space(8.0);
             if circles.is_empty() {
                 ui.label(
@@ -507,8 +510,7 @@ fn render_circle_section(
                 });
             }
             ui.add_space(8.0);
-        },
-    );
+        });
     ui.add_space(6.0);
 }
 
@@ -621,7 +623,16 @@ fn render_circle_dialog(app: &mut CircleApp, ctx: &Context) {
             if let Some(new_circle) =
                 circle_dialog::render_circle_dialog(&mut app.circle_dialog_state, ctx, user.id)
             {
-                app.add_circle(new_circle);
+                app.add_circle(new_circle.clone());
+
+                // Set the newly created circle as the active circle
+                app.set_active_circle(new_circle.id);
+
+                // Ensure the navbar is displayed by setting is_first_time to false
+                app.is_first_time = false;
+
+                // Set the active feature to the default (Mail) instead of Welcome
+                app.set_active_feature(crate::app::ActiveFeature::default());
             }
         }
     }
