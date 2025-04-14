@@ -28,6 +28,10 @@ pub struct CircleApp {
     pub is_first_time: bool,
     /// ID of the currently selected mail folder
     pub active_mail_folder_id: Option<Uuid>,
+    /// ID of the currently selected email for viewing in dialog
+    pub selected_email_id: Option<Uuid>,
+    /// Flag to track if the email dialog is open
+    pub email_dialog_open: bool,
 }
 
 /// Enum representing available features in the application
@@ -127,6 +131,8 @@ impl CircleApp {
             circle_dialog_state: crate::ui::components::circle_dialog::CircleDialogState::new(),
             is_first_time,
             active_mail_folder_id,
+            selected_email_id: None,
+            email_dialog_open: false,
         }
     }
 
