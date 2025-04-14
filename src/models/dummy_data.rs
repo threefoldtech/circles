@@ -242,6 +242,7 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
 
     // Generate emails
     let emails = vec![
+        // Inbox emails
         Email {
             id: Uuid::new_v4(),
             sender: "friend@example.com".to_string(),
@@ -264,6 +265,18 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
         },
         Email {
             id: Uuid::new_v4(),
+            sender: "newsletter@tech.com".to_string(),
+            recipients: vec!["me@example.com".to_string()],
+            subject: "Weekly Tech Digest".to_string(),
+            content: "Here are this week's top tech stories and updates you shouldn't miss!".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 10, 8, 0, 0).unwrap(),
+            read: false,
+            folder_id: inbox_id,
+        },
+        
+        // Sent emails
+        Email {
+            id: Uuid::new_v4(),
             sender: "me@example.com".to_string(),
             recipients: vec!["colleague@example.com".to_string()],
             subject: "Personal project ideas".to_string(),
@@ -273,6 +286,60 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
             read: true,
             folder_id: sent_id,
         },
+        Email {
+            id: Uuid::new_v4(),
+            sender: "me@example.com".to_string(),
+            recipients: vec!["friend@example.com".to_string()],
+            subject: "Re: Coffee this weekend?".to_string(),
+            content: "Yes, I'd love to! How about Saturday at 2pm at our usual spot?".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 9, 15, 45, 0).unwrap(),
+            read: true,
+            folder_id: sent_id,
+        },
+        Email {
+            id: Uuid::new_v4(),
+            sender: "me@example.com".to_string(),
+            recipients: vec!["family@example.com".to_string()],
+            subject: "Re: Family dinner next week".to_string(),
+            content: "I'll be there! Should I bring anything?".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 8, 11, 30, 0).unwrap(),
+            read: true,
+            folder_id: sent_id,
+        },
+        
+        // Drafts emails
+        Email {
+            id: Uuid::new_v4(),
+            sender: "me@example.com".to_string(),
+            recipients: vec!["boss@example.com".to_string()],
+            subject: "Vacation Request".to_string(),
+            content: "I would like to request vacation days for the following dates...".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 5, 16, 20, 0).unwrap(),
+            read: true,
+            folder_id: drafts_id,
+        },
+        
+        // Trash emails
+        Email {
+            id: Uuid::new_v4(),
+            sender: "spam@example.com".to_string(),
+            recipients: vec!["me@example.com".to_string()],
+            subject: "You've won a prize!".to_string(),
+            content: "Congratulations! You've been selected as the winner of our monthly giveaway...".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 3, 7, 15, 0).unwrap(),
+            read: true,
+            folder_id: trash_id,
+        },
+        Email {
+            id: Uuid::new_v4(),
+            sender: "old-subscription@example.com".to_string(),
+            recipients: vec!["me@example.com".to_string()],
+            subject: "Your subscription is about to expire".to_string(),
+            content: "Your subscription will expire in 3 days. Renew now to continue enjoying our services!".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 2, 14, 45, 0).unwrap(),
+            read: true,
+            folder_id: trash_id,
+        },
     ];
 
     // Generate folders
@@ -280,7 +347,7 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
         Folder {
             id: inbox_id,
             name: "Inbox".to_string(),
-            unread_count: 1,
+            unread_count: 2, // Two unread emails in inbox
         },
         Folder {
             id: sent_id,
@@ -427,6 +494,7 @@ fn generate_team_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
 
     // Generate emails
     let emails = vec![
+        // Inbox emails
         Email {
             id: Uuid::new_v4(),
             sender: "manager@company.com".to_string(),
@@ -447,6 +515,62 @@ fn generate_team_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
             read: true,
             folder_id: inbox_id,
         },
+        Email {
+            id: Uuid::new_v4(),
+            sender: "hr@company.com".to_string(),
+            recipients: vec!["all-staff@company.com".to_string()],
+            subject: "New Company Policy".to_string(),
+            content: "Please review the attached document outlining our new remote work policy.".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 10, 9, 15, 0).unwrap(),
+            read: false,
+            folder_id: inbox_id,
+        },
+        
+        // Sent emails
+        Email {
+            id: Uuid::new_v4(),
+            sender: "me@company.com".to_string(),
+            recipients: vec!["manager@company.com".to_string()],
+            subject: "Weekly Status Report".to_string(),
+            content: "Here's my status report for this week. All tasks are on track.".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 7, 16, 30, 0).unwrap(),
+            read: true,
+            folder_id: sent_id,
+        },
+        Email {
+            id: Uuid::new_v4(),
+            sender: "me@company.com".to_string(),
+            recipients: vec!["team@company.com".to_string()],
+            subject: "Team Lunch Next Week".to_string(),
+            content: "Would anyone be interested in a team lunch next Wednesday?".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 9, 11, 45, 0).unwrap(),
+            read: true,
+            folder_id: sent_id,
+        },
+        
+        // Drafts emails
+        Email {
+            id: Uuid::new_v4(),
+            sender: "me@company.com".to_string(),
+            recipients: vec!["client@example.com".to_string()],
+            subject: "Project Proposal".to_string(),
+            content: "Dear Client, I'm writing to propose a solution for your requirements...".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 6, 14, 20, 0).unwrap(),
+            read: true,
+            folder_id: drafts_id,
+        },
+        
+        // Trash emails
+        Email {
+            id: Uuid::new_v4(),
+            sender: "marketing@competitor.com".to_string(),
+            recipients: vec!["me@company.com".to_string()],
+            subject: "Join our webinar".to_string(),
+            content: "We're hosting a webinar on industry trends. Register now!".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 3, 10, 0, 0).unwrap(),
+            read: true,
+            folder_id: trash_id,
+        },
     ];
 
     // Generate folders
@@ -454,7 +578,7 @@ fn generate_team_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
         Folder {
             id: inbox_id,
             name: "Inbox".to_string(),
-            unread_count: 1,
+            unread_count: 2, // Two unread emails in inbox
         },
         Folder {
             id: sent_id,

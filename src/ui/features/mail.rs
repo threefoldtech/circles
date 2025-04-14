@@ -72,6 +72,8 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                         ui.add_space(4.0);
 
                         for folder in folders {
+                            let is_active = app.active_mail_folder_id == Some(folder.id);
+
                             let folder_text = if folder.unread_count > 0 {
                                 format!(
                                     "{} {} ({})",
@@ -82,13 +84,22 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                             } else {
                                 format!("{} {}", get_folder_icon(&folder.name), folder.name)
                             };
+
+                            // Use different colors for active folder
+                            let button_fill = if is_active {
+                                Color32::from_rgb(100, 150, 255) // Darker blue for active folder
+                            } else {
+                                theme.accent
+                            };
+
                             let folder_label = RichText::new(folder_text.clone())
                                 .font(FontId::new(12.0, FontFamily::Proportional))
                                 .color(theme.background); // White text
+
                             let button = ui
                                 .add(
                                     egui::Button::new(folder_label)
-                                        .fill(theme.accent)
+                                        .fill(button_fill)
                                         .rounding(Rounding::same(4.0))
                                         .min_size(Vec2::new(32.0, 32.0))
                                         .min_size(egui::vec2(ui.available_width(), 24.0))
@@ -106,6 +117,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                                     );
                                 })
                                 .on_hover_cursor(egui::CursorIcon::PointingHand);
+
                             if button.hovered() {
                                 ui.painter().rect_filled(
                                     button.rect,
@@ -121,8 +133,10 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                                     Color32::from_rgb(255, 255, 255), // White text
                                 );
                             }
+
                             if button.clicked() {
-                                println!("Folder clicked: {}", folder.name); // TODO: Select folder
+                                println!("Folder clicked: {}", folder.name);
+                                app.active_mail_folder_id = Some(folder.id);
                             }
                         }
                     });
@@ -132,8 +146,15 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                     // Emails (main area)
                     ui.vertical(|ui| {
                         ui.set_min_width(400.0);
+
+                        // Get the active folder name for the header
+                        let active_folder_name = app
+                            .active_mail_folder_id
+                            .and_then(|id| folders.iter().find(|f| f.id == id))
+                            .map_or("Messages".to_string(), |f| format!("{} Messages", f.name));
+
                         ui.label(
-                            RichText::new("Messages")
+                            RichText::new(active_folder_name)
                                 .font(FontId::new(14.0, FontFamily::Proportional))
                                 .color(Color32::from_rgb(100, 100, 120))
                                 .strong(),
@@ -141,16 +162,27 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                         ui.add_space(4.0);
                         ui.separator();
 
-                        if emails.is_empty() {
+                        // Filter emails by the active folder
+                        let filtered_emails: Vec<&Email> =
+                            if let Some(folder_id) = app.active_mail_folder_id {
+                                emails
+                                    .iter()
+                                    .filter(|email| email.folder_id == folder_id)
+                                    .collect()
+                            } else {
+                                emails.iter().collect()
+                            };
+
+                        if filtered_emails.is_empty() {
                             ui.centered_and_justified(|ui| {
                                 ui.label(
-                                    RichText::new("No messages")
+                                    RichText::new("No messages in this folder")
                                         .font(FontId::new(13.0, FontFamily::Proportional))
                                         .color(Color32::from_rgb(120, 120, 140)),
                                 );
                             });
                         } else {
-                            for email in emails {
+                            for email in filtered_emails {
                                 // Pass a reference to avoid borrowing conflicts
                                 render_email_ui(ui, email);
                                 ui.add_space(8.0);

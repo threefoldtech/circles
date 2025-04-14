@@ -26,6 +26,8 @@ pub struct CircleApp {
     pub circle_dialog_state: crate::ui::components::circle_dialog::CircleDialogState,
     /// Flag to track if this is the first time the user is opening the app
     pub is_first_time: bool,
+    /// ID of the currently selected mail folder
+    pub active_mail_folder_id: Option<Uuid>,
 }
 
 /// Enum representing available features in the application
@@ -100,6 +102,15 @@ impl CircleApp {
         // For first-time users, we'll show a welcome screen instead of the default mail feature
         let is_first_time = true; // Always true for new instances
 
+        // Set active mail folder to inbox if available
+        let active_mail_folder_id = active_feature_data.as_ref().and_then(|data| {
+            data.mail_data
+                .folders
+                .iter()
+                .find(|folder| folder.name == "Inbox")
+                .map(|folder| folder.id)
+        });
+
         Self {
             user,
             circles,
@@ -115,6 +126,7 @@ impl CircleApp {
             active_feature_data,
             circle_dialog_state: crate::ui::components::circle_dialog::CircleDialogState::new(),
             is_first_time,
+            active_mail_folder_id,
         }
     }
 
@@ -188,6 +200,15 @@ impl CircleApp {
                 self.active_feature_data = Some(feature_data);
             }
         }
+
+        // Set active mail folder to inbox if available
+        self.active_mail_folder_id = self.active_feature_data.as_ref().and_then(|data| {
+            data.mail_data
+                .folders
+                .iter()
+                .find(|folder| folder.name == "Inbox")
+                .map(|folder| folder.id)
+        });
     }
 
     /// Smoothly transition to a new active feature
