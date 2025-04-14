@@ -35,70 +35,67 @@ pub fn render_top_panel(app: &CircleApp, ctx: &Context, app_layout: &Frame, them
                 ui.horizontal(|ui| {
                     // Left side - Active circle with status indicator
                     ui.add_space(16.0);
-                    let circle_text = app
-                        .active_circle()
-                        .map_or("No circle selected".to_string(), |c| {
-                            format!("Active: {}", c.name)
-                        });
 
-                    let circle_frame = Frame::none()
-                        .fill(Color32::from_rgb(240, 245, 250))
-                        .rounding(Rounding::same(20.0))
-                        .inner_margin(egui::Margin::symmetric(12.0, 6.0))
-                        .show(ui, |ui| {
-                            ui.horizontal(|ui| {
-                                if app.active_circle().is_some() {
-                                    ui.painter().circle_filled(
-                                        ui.min_rect().left_center() + Vec2::new(6.0, 0.0),
-                                        6.0,
-                                        theme.success,
-                                    );
-                                    ui.add_space(16.0);
-                                }
+                    // Logo circle
+                    let logo_size = 28.0;
+                    let (_, logo_rect) = ui.allocate_space(Vec2::new(logo_size, logo_size));
+                    ui.painter()
+                        .circle_filled(logo_rect.center(), logo_size / 2.0, theme.accent);
+                    ui.painter().text(
+                        logo_rect.center(),
+                        egui::Align2::CENTER_CENTER,
+                        "C",
+                        egui::FontId::proportional(18.0),
+                        Color32::WHITE,
+                    );
 
-                                ui.label(
-                                    RichText::new(circle_text)
-                                        .size(14.0)
-                                        .strong()
-                                        .color(Color32::from_rgb(40, 50, 60)),
-                                );
-                            });
-                        });
-
-                    if circle_frame.response.hovered() {
-                        ui.output_mut(|o| o.cursor_icon = CursorIcon::PointingHand);
-                    }
+                    // App logo and name
+                    ui.horizontal(|ui| {
+                        ui.heading(
+                            RichText::new("Circle Collaboration System")
+                                .size(20.0)
+                                .strong()
+                                .color(theme.text),
+                        );
+                        ui.add_space(8.0);
+                    });
 
                     // Right side - App logo/name
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         ui.add_space(16.0);
+                        let circle_text = app
+                            .active_circle()
+                            .map_or("No circle selected".to_string(), |c| {
+                                format!("Active: {}", c.name)
+                            });
 
-                        // App logo and name
-                        ui.horizontal(|ui| {
-                            ui.heading(
-                                RichText::new("Circle Collaboration System")
-                                    .size(20.0)
-                                    .strong()
-                                    .color(theme.text),
-                            );
-                            ui.add_space(8.0);
+                        let circle_frame = Frame::none()
+                            .fill(Color32::from_rgb(240, 245, 250))
+                            .rounding(Rounding::same(20.0))
+                            .inner_margin(egui::Margin::symmetric(12.0, 6.0))
+                            .show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    if app.active_circle().is_some() {
+                                        ui.painter().circle_filled(
+                                            ui.min_rect().left_center() + Vec2::new(6.0, 0.0),
+                                            6.0,
+                                            theme.success,
+                                        );
+                                        ui.add_space(16.0);
+                                    }
 
-                            // Logo circle
-                            let logo_size = 28.0;
-                            let (_, logo_rect) = ui.allocate_space(Vec2::new(logo_size, logo_size));
-                            ui.painter().circle_filled(
-                                logo_rect.center(),
-                                logo_size / 2.0,
-                                theme.accent,
-                            );
-                            ui.painter().text(
-                                logo_rect.center(),
-                                egui::Align2::CENTER_CENTER,
-                                "C",
-                                egui::FontId::proportional(18.0),
-                                Color32::WHITE,
-                            );
-                        });
+                                    ui.label(
+                                        RichText::new(circle_text)
+                                            .size(14.0)
+                                            .strong()
+                                            .color(Color32::from_rgb(40, 50, 60)),
+                                    );
+                                });
+                            });
+
+                        if circle_frame.response.hovered() {
+                            ui.output_mut(|o| o.cursor_icon = CursorIcon::PointingHand);
+                        }
                     });
                 });
                 ui.add_space(8.0);
