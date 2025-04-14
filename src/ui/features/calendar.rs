@@ -1,6 +1,6 @@
 use chrono::{DateTime, Datelike, Duration, Local, Timelike, Utc};
 use eframe::egui;
-use egui::{Color32, RichText, Stroke, Ui};
+use egui::{Button, Color32, RichText, Rounding, Stroke, Ui, Vec2};
 use icalendar::{Calendar, Component, Event as IcalEvent};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -207,21 +207,32 @@ fn render_toolbar(ui: &mut Ui, calendar_state: &mut CalendarState) {
 
         ui.add_space(8.0);
 
-        // Simple view selector dropdown
-        ui.menu_button("View", |ui| {
-            if ui.button("Month").clicked() {
-                calendar_state.view_mode = CalendarViewMode::Month;
-                ui.close_menu();
-            }
-            if ui.button("Week").clicked() {
-                calendar_state.view_mode = CalendarViewMode::Week;
-                ui.close_menu();
-            }
-            if ui.button("Day").clicked() {
-                calendar_state.view_mode = CalendarViewMode::Day;
-                ui.close_menu();
-            }
-        })
+        // View selector using the same style as other buttons
+        if ui
+            .add(app_layout::create_action_button("View", "👁️"))
+            .clicked()
+        {
+            // Toggle between view modes when clicked
+            calendar_state.view_mode = match calendar_state.view_mode {
+                CalendarViewMode::Month => CalendarViewMode::Week,
+                CalendarViewMode::Week => CalendarViewMode::Day,
+                CalendarViewMode::Day => CalendarViewMode::Month,
+            };
+        }
+
+        // Show current view mode
+        ui.label(
+            RichText::new(format!(
+                "Current: {}",
+                match calendar_state.view_mode {
+                    CalendarViewMode::Month => "Month",
+                    CalendarViewMode::Week => "Week",
+                    CalendarViewMode::Day => "Day",
+                }
+            ))
+            .size(14.0)
+            .color(PRIMARY_COLOR),
+        );
     });
 }
 
