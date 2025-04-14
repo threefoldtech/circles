@@ -3,7 +3,7 @@ use crate::ui::components::circle_dialog;
 use crate::ui::features::{bot_channel, calendar, chat, documents, mail, video_conf, welcome};
 use crate::ui::footer;
 use crate::ui::navbar;
-use crate::utils::config::Theme; // Added welcome
+use crate::utils::config::Theme;
 use eframe::egui::{
     self, Align, Button, CentralPanel, Color32, Context, CursorIcon, Frame, Layout, Margin,
     RichText, Rounding, ScrollArea, Sense, SidePanel, Stroke, Ui, Vec2,
