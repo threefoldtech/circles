@@ -10,13 +10,15 @@ pub fn render_bot_channel(_app: &CircleApp, ui: &mut egui::Ui) {
     create_content_frame().show(ui, |ui| {
         ui.vertical(|ui| {
             // Message history area
-            let available_height = ui.available_height() - 80.0; // Reserve space for the bottom info
+            // Use a much smaller height to ensure messages are visible above the footer
+            let available_height = ui.available_height() - 100.0; // Reserve more space for the bottom
             
             // Create a scrollable area for messages
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                .stick_to_bottom(true)
+                .stick_to_bottom(false) // Don't stick to bottom to show messages from the top
                 .max_height(available_height)
+                .id_source("bot_messages_scroll_area") // Add a unique ID for the scroll area
                 .show(ui, |ui| {
                     // Display bot messages
                     render_bot_messages(ui);
