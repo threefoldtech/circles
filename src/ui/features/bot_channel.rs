@@ -1,11 +1,10 @@
 use crate::app::CircleApp;
-use crate::ui::app_layout::{create_content_frame, render_header};
+use crate::ui::app_layout::create_content_frame;
 use crate::ui::components::bot_message::{BotMessage, BotMessageType};
 use eframe::egui::{self, Color32, RichText, Rounding};
 
 /// Render the bot channel UI
 pub fn render_bot_channel(_app: &CircleApp, ui: &mut egui::Ui) {
-    render_header(ui, "🤖", "Circles Bot Channel");
     ui.add_space(16.0);
     
     create_content_frame().show(ui, |ui| {
