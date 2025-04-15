@@ -32,6 +32,15 @@ pub struct MailFeature {
     pub settings: MailSettings,
 }
 
+// ComposeDraft
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComposeDraft {
+    pub subject: String,
+    pub body: String,
+    pub attachments: Vec<String>,
+    pub to: String,
+}
+
 /// Calendar feature
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CalendarFeature {

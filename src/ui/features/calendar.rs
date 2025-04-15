@@ -1,10 +1,10 @@
 use chrono::{DateTime, Datelike, Duration, Local, Timelike, Utc};
 use eframe::egui;
-use egui::{Button, Color32, RichText, Rounding, Stroke, Ui, Vec2};
-use icalendar::{Calendar, Component, Event as IcalEvent};
-use reqwest::Client;
+use egui::{Color32, RichText, Stroke, Ui};
+// use icalendar::{Calendar, Component, Event as IcalEvent};
+// use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+// use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::app::CircleApp;
@@ -55,79 +55,79 @@ fn get_default_calendar_state() -> CalendarState {
     }
 }
 
-/// Client for interacting with CalDAV servers
-struct CalDavClient {
-    client: Client,
-    config: CalDavConfig,
-}
+// /// Client for interacting with CalDAV servers
+// struct CalDavClient {
+//     client: Client,
+//     config: CalDavConfig,
+// }
 
-impl CalDavClient {
-    async fn new(config: CalDavConfig) -> Self {
-        CalDavClient {
-            client: Client::new(),
-            config,
-        }
-    }
+// impl CalDavClient {
+//     async fn new(config: CalDavConfig) -> Self {
+//         CalDavClient {
+//             client: Client::new(),
+//             config,
+//         }
+//     }
 
-    async fn fetch_events(&self, calendar_url: &str) -> Result<Vec<Event>, String> {
-        let response = self
-            .client
-            .get(calendar_url)
-            .basic_auth(&self.config.username, Some(&self.config.password))
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
+//     async fn fetch_events(&self, calendar_url: &str) -> Result<Vec<Event>, String> {
+//         let response = self
+//             .client
+//             .get(calendar_url)
+//             .basic_auth(&self.config.username, Some(&self.config.password))
+//             .send()
+//             .await
+//             .map_err(|e| e.to_string())?;
 
-        let ical_text = response.text().await.map_err(|e| e.to_string())?;
-        let calendar = Calendar::from_str(&ical_text).map_err(|e| e.to_string())?;
+//         let ical_text = response.text().await.map_err(|e| e.to_string())?;
+//         let calendar = Calendar::from_str(&ical_text).map_err(|e| e.to_string())?;
 
-        let mut events = Vec::new();
-        for component in calendar.components {
-            if let Some(ical_event) = component.as_event() {
-                let event = Event {
-                    id: uuid::Uuid::new_v4(),
-                    title: ical_event.get_summary().unwrap_or_default().to_string(),
-                    start_time: chrono::Utc::now(), // Default to current time
-                    end_time: chrono::Utc::now() + chrono::Duration::hours(1), // Default to 1 hour later
-                    description: ical_event.get_description().unwrap_or_default().to_string(),
-                    location: None, // Simplified
-                    attendees: Vec::new(),
-                };
-                events.push(event);
-            }
-        }
-        Ok(events)
-    }
+//         let mut events = Vec::new();
+//         for component in calendar.components {
+//             if let Some(ical_event) = component.as_event() {
+//                 let event = Event {
+//                     id: uuid::Uuid::new_v4(),
+//                     title: ical_event.get_summary().unwrap_or_default().to_string(),
+//                     start_time: chrono::Utc::now(), // Default to current time
+//                     end_time: chrono::Utc::now() + chrono::Duration::hours(1), // Default to 1 hour later
+//                     description: ical_event.get_description().unwrap_or_default().to_string(),
+//                     location: None, // Simplified
+//                     attendees: Vec::new(),
+//                 };
+//                 events.push(event);
+//             }
+//         }
+//         Ok(events)
+//     }
 
-    async fn push_event(&self, calendar_url: &str, event: &Event) -> Result<(), String> {
-        let mut ical_event = IcalEvent::new();
-        ical_event.summary(&event.title);
-        // Use the EventLike trait methods properly
-        ical_event.add_property("DTSTART", event.start_time.to_rfc3339());
-        ical_event.add_property("DTEND", event.end_time.to_rfc3339());
-        ical_event.description(&event.description);
-        if let Some(location) = &event.location {
-            ical_event.add_property("LOCATION", location);
-        }
-        for attendee in &event.attendees {
-            ical_event.add_property("ATTENDEE", attendee);
-        }
-        ical_event.uid(&event.id.to_string());
+//     async fn push_event(&self, calendar_url: &str, event: &Event) -> Result<(), String> {
+//         let mut ical_event = IcalEvent::new();
+//         ical_event.summary(&event.title);
+//         // Use the EventLike trait methods properly
+//         ical_event.add_property("DTSTART", event.start_time.to_rfc3339());
+//         ical_event.add_property("DTEND", event.end_time.to_rfc3339());
+//         ical_event.description(&event.description);
+//         if let Some(location) = &event.location {
+//             ical_event.add_property("LOCATION", location);
+//         }
+//         for attendee in &event.attendees {
+//             ical_event.add_property("ATTENDEE", attendee);
+//         }
+//         ical_event.uid(&event.id.to_string());
 
-        let calendar = Calendar::new().push(ical_event).done();
-        let ical_text = calendar.to_string();
+//         let calendar = Calendar::new().push(ical_event).done();
+//         let ical_text = calendar.to_string();
 
-        self.client
-            .put(format!("{}/{}", calendar_url, event.id))
-            .basic_auth(&self.config.username, Some(&self.config.password))
-            .body(ical_text)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
+//         self.client
+//             .put(format!("{}/{}", calendar_url, event.id))
+//             .basic_auth(&self.config.username, Some(&self.config.password))
+//             .body(ical_text)
+//             .send()
+//             .await
+//             .map_err(|e| e.to_string())?;
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
 
 /// Main calendar rendering function
 ///
@@ -199,7 +199,7 @@ fn render_toolbar(ui: &mut Ui, calendar_state: &mut CalendarState) {
             .add(app_layout::create_action_button("Sync", "🔄"))
             .clicked()
         {
-            if let Some(config) = &calendar_state.caldav_config {
+            if let Some(_) = &calendar_state.caldav_config {
                 println!("CalDAV sync would happen here");
                 calendar_state.last_sync = Some(Utc::now());
             }

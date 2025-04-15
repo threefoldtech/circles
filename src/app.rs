@@ -32,6 +32,10 @@ pub struct CircleApp {
     pub selected_email_id: Option<Uuid>,
     /// Flag to track if the email dialog is open
     pub email_dialog_open: bool,
+    /// Flag to track if the compose dialog is open
+    pub compose_dialog_open: bool,
+    /// Draft for the compose dialog
+    pub compose_draft: Option<crate::models::features::ComposeDraft>,
 }
 
 /// Enum representing available features in the application
@@ -133,6 +137,8 @@ impl CircleApp {
             active_mail_folder_id,
             selected_email_id: None,
             email_dialog_open: false,
+            compose_dialog_open: false,
+            compose_draft: None,
         }
     }
 
