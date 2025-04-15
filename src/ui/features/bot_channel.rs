@@ -1,7 +1,8 @@
 use crate::app::CircleApp;
 use crate::ui::app_layout::create_content_frame;
 use crate::ui::components::bot_message::{BotMessage, BotMessageType};
-use eframe::egui::{self, Color32, RichText, Rounding};
+use eframe::egui::{self, Color32};
+use egui::RichText;
 
 /// Render the bot channel UI
 pub fn render_bot_channel(_app: &CircleApp, ui: &mut egui::Ui) {
@@ -11,14 +12,14 @@ pub fn render_bot_channel(_app: &CircleApp, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             // Message history area
             // Use a much smaller height to ensure messages are visible above the footer
-            let available_height = ui.available_height() - 100.0; // Reserve more space for the bottom
+            let available_height = ui.available_height() - 100.0;
             
             // Create a scrollable area for messages
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                .stick_to_bottom(false) // Don't stick to bottom to show messages from the top
+                .stick_to_bottom(false)
                 .max_height(available_height)
-                .id_source("bot_messages_scroll_area") // Add a unique ID for the scroll area
+                .id_salt("bot_messages_scroll_area")
                 .show(ui, |ui| {
                     // Display bot messages
                     render_bot_messages(ui);
@@ -34,10 +35,10 @@ pub fn render_bot_channel(_app: &CircleApp, ui: &mut egui::Ui) {
                 ui.spacing_mut().item_spacing.x = 10.0;
                 
                 // Bot status indicator
-                let bot_status_frame = egui::Frame::none()
+                let bot_status_frame = egui::Frame::new()
                     .fill(Color32::from_rgb(76, 175, 80)) // Green for active
-                    .rounding(Rounding::same(4.0))
-                    .inner_margin(egui::Margin::same(4.0));
+                    .corner_radius(4)
+                    .inner_margin(egui::Margin::same(4));
                 
                 bot_status_frame.show(ui, |ui| {
                     ui.label(

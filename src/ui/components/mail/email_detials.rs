@@ -1,14 +1,14 @@
 use crate::{models::dummy_data::Email, utils::config::Theme};
-use egui::{Color32, FontFamily, FontId, Margin, RichText, Rounding, Stroke, Vec2};
+use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, Vec2};
 
 #[allow(dead_code)]
 /// Render the email details
 pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
     ui.vertical(|ui| {
-        egui::Frame::none()
+        egui::Frame::new()
             .fill(theme.secondary_background)
-            .rounding(Rounding::same(8.0))
-            .inner_margin(Margin::same(12.0))
+            .corner_radius(0.8)
+            .inner_margin(Margin::same(12))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(
@@ -76,10 +76,10 @@ pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
 
         ui.add_space(16.0);
 
-        egui::Frame::none()
+        egui::Frame::new()
             .fill(Color32::from_rgb(255, 255, 255))
-            .rounding(Rounding::same(8.0))
-            .inner_margin(Margin::same(16.0))
+            .corner_radius(8)
+            .inner_margin(Margin::same(16))
             .stroke(Stroke::new(1.0, Color32::from_rgb(220, 220, 230)))
             .show(ui, |ui| {
                 egui::ScrollArea::vertical()
@@ -103,7 +103,7 @@ pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
                         .color(theme.background),
                 )
                 .fill(theme.accent)
-                .rounding(Rounding::same(4.0))
+                .corner_radius(4)
                 .min_size(Vec2::new(80.0, 32.0));
 
                 if ui.add(reply_button).clicked() {
@@ -116,7 +116,7 @@ pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
                         .color(theme.background),
                 )
                 .fill(theme.accent)
-                .rounding(Rounding::same(4.0))
+                .corner_radius(4)
                 .min_size(Vec2::new(80.0, 32.0));
 
                 if ui.add(forward_button).clicked() {

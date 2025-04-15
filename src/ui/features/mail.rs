@@ -1,5 +1,5 @@
 use eframe::{egui, epaint};
-use egui::{Color32, FontFamily, FontId, Margin, RichText, Rounding, Sense};
+use egui::{Color32, FontFamily, FontId, Margin, RichText, Sense};
 
 use crate::app::CircleApp;
 use crate::models::dummy_data::Email;
@@ -17,7 +17,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
         ui.add_space(12.0);
         let compose_button = create_action_button("Compose", "✏️")
             .fill(theme.accent)
-            .rounding(Rounding::same(6.0));
+            .corner_radius(6);
         if ui.add(compose_button).clicked() {
             // Open compose dialog
             open_compose_dialog(app, ui);
@@ -25,7 +25,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
         ui.add_space(10.0);
         let refresh_button = create_action_button("Refresh", "🔄")
             .fill(theme.accent)
-            .rounding(Rounding::same(6.0));
+            .corner_radius(6);
         if ui.add(refresh_button).clicked() {
             println!("Refresh clicked"); // TODO: Implement
         }
@@ -38,8 +38,8 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
     if let Some(feature_data) = &mut app.active_feature_data.clone() {
         create_content_frame()
             .fill(theme.secondary_background)
-            .rounding(Rounding::same(8.0))
-            .inner_margin(Margin::same(12.0))
+            .corner_radius(8.0)
+            .inner_margin(Margin::same(12))
             .show(ui, |ui| {
                 // Compose dialog
                 if app.compose_dialog_open {
@@ -61,7 +61,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                                     .color(theme.accent),
                             )
                             .fill(theme.background)
-                            .rounding(Rounding::same(4.0));
+                            .corner_radius(4);
                             if ui.add(back_button).clicked() {
                                 app.email_dialog_open = false;
                                 app.selected_email_id = None;
@@ -133,7 +133,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                                     .add(
                                         egui::Button::new(folder_label)
                                             .fill(button_fill)
-                                            .rounding(Rounding::same(4.0))
+                                            .corner_radius(4)
                                             .min_size(egui::vec2(ui.available_width(), 24.0))
                                             .sense(Sense::click()),
                                     )
@@ -151,11 +151,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                                     .on_hover_cursor(egui::CursorIcon::PointingHand);
 
                                 if button.hovered() {
-                                    ui.painter().rect_filled(
-                                        button.rect,
-                                        Rounding::same(4.0),
-                                        theme.accent,
-                                    );
+                                    ui.painter().rect_filled(button.rect, 4, theme.accent);
                                     ui.painter().text(
                                         button.rect.center(),
                                         egui::Align2::CENTER_CENTER,
@@ -229,8 +225,8 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
     } else {
         create_content_frame()
             .fill(theme.secondary_background)
-            .rounding(Rounding::same(8.0))
-            .inner_margin(Margin::same(12.0))
+            .corner_radius(8.0)
+            .inner_margin(Margin::same(12))
             .show(ui, |ui| {
                 ui.centered_and_justified(|ui| {
                     ui.label(

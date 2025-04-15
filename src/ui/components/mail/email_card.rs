@@ -1,6 +1,6 @@
 use crate::{app::CircleApp, models::dummy_data::Email};
 use chrono::{DateTime, Utc};
-use egui::{epaint, Color32, FontFamily, FontId, Margin, RichText, Rounding, Stroke};
+use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, epaint};
 
 #[allow(dead_code)]
 /// Renders an email card, the email card is a card that contains the email subject and the email body used in the mail feature to list the emails
@@ -12,12 +12,12 @@ pub fn render_email_card(
 ) -> bool {
     let mut clicked = false;
 
-    let frame = egui::Frame::none()
+    let frame = egui::Frame::new()
         .fill(Color32::from_rgb(255, 255, 255))
         .stroke(Stroke::new(1.0, Color32::from_rgb(200, 200, 210)))
-        .rounding(Rounding::same(6.0))
-        .inner_margin(Margin::same(10.0))
-        .outer_margin(Margin::same(2.0));
+        .corner_radius(6)
+        .inner_margin(Margin::same(10))
+        .outer_margin(Margin::same(2));
 
     frame.show(ui, |ui| {
         ui.horizontal(|ui| {
@@ -108,8 +108,8 @@ pub fn render_email_card(
 
         let response = ui.interact(
             ui.min_rect().expand2(egui::vec2(
-                frame.inner_margin.left,
-                frame.inner_margin.right,
+                frame.inner_margin.left as f32,
+                frame.inner_margin.right as f32,
             )),
             ui.id().with(email.id),
             egui::Sense::click(),
@@ -141,7 +141,7 @@ pub fn render_email_card(
         if response.hovered() {
             ui.painter().rect_filled(
                 response.rect.expand(2.0),
-                Rounding::same(6.0),
+                6,
                 Color32::from_rgb(200, 220, 255).gamma_multiply(0.2),
             );
             ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);

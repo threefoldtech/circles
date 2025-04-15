@@ -3,7 +3,6 @@ use eframe::egui;
 use egui::{Color32, RichText, Stroke, Ui};
 // use icalendar::{Calendar, Component, Event as IcalEvent};
 // use reqwest::Client;
-use serde::{Deserialize, Serialize};
 // use std::str::FromStr;
 use uuid::Uuid;
 
@@ -18,21 +17,13 @@ const TEXT_COLOR: Color32 = Color32::from_rgb(40, 50, 60);
 const MUTED_COLOR: Color32 = Color32::from_rgb(150, 150, 150);
 const BORDER_COLOR: Color32 = Color32::from_rgb(218, 220, 224);
 
-/// Configuration for CalDAV integration
-#[derive(Serialize, Deserialize, Clone)]
-struct CalDavConfig {
-    url: String,
-    username: String,
-    password: String,
-}
-
 /// Calendar state containing events and view settings
 #[derive(Clone)]
 struct CalendarState {
     events: Vec<Event>,
     selected_date: DateTime<Local>,
     view_mode: CalendarViewMode,
-    caldav_config: Option<CalDavConfig>,
+    // caldav_config: Option<CalDavConfig>,
     last_sync: Option<DateTime<Utc>>,
 }
 
@@ -50,7 +41,7 @@ fn get_default_calendar_state() -> CalendarState {
         events: Vec::new(),
         selected_date: Local::now(),
         view_mode: CalendarViewMode::Month,
-        caldav_config: None,
+        // caldav_config: None,
         last_sync: None,
     }
 }
@@ -199,10 +190,10 @@ fn render_toolbar(ui: &mut Ui, calendar_state: &mut CalendarState) {
             .add(app_layout::create_action_button("Sync", "🔄"))
             .clicked()
         {
-            if let Some(_) = &calendar_state.caldav_config {
-                println!("CalDAV sync would happen here");
-                calendar_state.last_sync = Some(Utc::now());
-            }
+            // if let Some(_) = &calendar_state.caldav_config {
+            //     println!("CalDAV sync would happen here");
+            //     calendar_state.last_sync = Some(Utc::now());
+            // }
         }
 
         ui.add_space(8.0);
@@ -238,10 +229,10 @@ fn render_toolbar(ui: &mut Ui, calendar_state: &mut CalendarState) {
 
 /// Renders the main calendar view based on the selected view mode
 fn render_calendar_view(ui: &mut Ui, calendar_state: &mut CalendarState) {
-    egui::Frame::none()
+    egui::Frame::new()
         .fill(Color32::WHITE)
         .stroke(Stroke::new(1.0, BORDER_COLOR))
-        .rounding(egui::Rounding::same(4.0))
+        .corner_radius(4)
         .show(ui, |ui| match calendar_state.view_mode {
             CalendarViewMode::Month => render_month_view(ui, calendar_state),
             CalendarViewMode::Week => render_week_view(ui, calendar_state),
@@ -444,12 +435,17 @@ fn render_day_view(ui: &mut Ui, calendar_state: &mut CalendarState) {
 
 /// Renders a single event card
 fn render_event(ui: &mut Ui, event: &Event) {
-    egui::Frame::none()
+    egui::Frame::new()
         .fill(SECONDARY_COLOR)
         .stroke(Stroke::new(1.0, PRIMARY_COLOR.linear_multiply(0.5)))
-        .rounding(egui::Rounding::same(6.0))
-        .inner_margin(egui::Margin::same(10.0))
-        .shadow(egui::epaint::Shadow::small_light())
+        .corner_radius(6)
+        .inner_margin(egui::Margin::same(10))
+        .shadow(egui::epaint::Shadow {
+            color: Color32::from_black_alpha(25),
+            offset: [0, 4],
+            blur: 8,
+            spread: 0,
+        })
         .show(ui, |ui| {
             // Event title and date
             ui.horizontal(|ui| {

@@ -34,7 +34,7 @@ fn main() -> eframe::Result<()> {
             let app = app::CircleApp::new(cc);
 
             // Create the eframe app with the improved UI
-            Box::new(EguiApp { app })
+            Ok(Box::new(EguiApp { app }))
         }),
     )
 }

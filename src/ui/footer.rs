@@ -2,23 +2,22 @@ use crate::app::CircleApp;
 use crate::utils::config::Theme;
 use chrono::Local;
 use eframe::egui::{
-    Align, Color32, Context, Frame, Layout, Margin, RichText, Rounding, Stroke, TopBottomPanel,
-    Vec2,
+    Align, Color32, Context, Frame, Layout, Margin, RichText, Stroke, TopBottomPanel, Vec2,
 };
 
 // Footer rendering function
 pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
     TopBottomPanel::bottom("status_bar")
         .exact_height(40.0)
-        .frame(app_layout.clone().rounding(Rounding::same(0.0)))
+        .frame(app_layout.clone().corner_radius(0))
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
                 // Left side - Connection status
                 ui.add_space(16.0);
-                let _status_frame = Frame::none()
+                let _status_frame = Frame::new()
                     .fill(Color32::from_rgb(240, 245, 250))
-                    .rounding(Rounding::same(12.0))
-                    .inner_margin(Margin::symmetric(10.0, 4.0))
+                    .corner_radius(12)
+                    .inner_margin(Margin::symmetric(10, 4))
                     .stroke(Stroke::new(1.0, Color32::from_rgb(220, 225, 230)))
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
@@ -64,14 +63,14 @@ pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, the
 
                     // Notifications indicator
                     let unread_count = 3; // This would come from app state in a real implementation
-                    let notif_frame = Frame::none()
+                    let notif_frame = Frame::new()
                         .fill(if unread_count > 0 {
                             Color32::from_rgb(240, 70, 70)
                         } else {
                             Color32::from_rgb(200, 210, 220)
                         })
-                        .rounding(Rounding::same(10.0))
-                        .inner_margin(Margin::symmetric(8.0, 4.0))
+                        .corner_radius(10)
+                        .inner_margin(Margin::symmetric(8, 4))
                         .show(ui, |ui| {
                             ui.label(
                                 RichText::new(format!("🔔 {}", unread_count))
@@ -89,10 +88,10 @@ pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, the
 
                     // User status
                     let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
-                    let user_frame = Frame::none()
+                    let user_frame = Frame::new()
                         .fill(theme.hover)
-                        .rounding(Rounding::same(12.0))
-                        .inner_margin(Margin::symmetric(10.0, 4.0))
+                        .corner_radius(12)
+                        .inner_margin(Margin::symmetric(10, 4))
                         .show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 // Status indicator - green for online

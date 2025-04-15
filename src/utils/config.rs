@@ -1,5 +1,35 @@
 use egui::Color32;
 
+use crate::app::ActiveFeature;
+
+pub const NAV_ITEMS: &[(&str, &str, ActiveFeature)] = &[
+    ("📧", "Mail", ActiveFeature::Mail),
+    ("📅", "Calendar", ActiveFeature::Calendar),
+    ("💬", "Chat", ActiveFeature::Chat),
+    ("📄", "Documents", ActiveFeature::Documents),
+    ("🤖", "AI Tools", ActiveFeature::AITools),
+    ("📹", "Video", ActiveFeature::VideoConference),
+    ("⚙️", "Settings", ActiveFeature::Settings),
+];
+
+pub struct LayoutConfig {
+    pub spacing: f32,
+    pub sidebar_width: f32,
+    pub navbar_height: f32,
+    // pub button_size: Vec2,
+}
+
+impl LayoutConfig {
+    pub fn new() -> Self {
+        Self {
+            spacing: 12.0,
+            sidebar_width: 300.0,
+            navbar_height: 85.0,
+            // button_size: Vec2::new(90.0, 40.0),
+        }
+    }
+}
+
 #[allow(dead_code)]
 pub struct Theme {
     pub accent: Color32,

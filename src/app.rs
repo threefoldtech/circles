@@ -228,6 +228,11 @@ impl CircleApp {
         self.active_feature = feature;
     }
 
+    /// Get the currently active feature
+    pub fn get_active_feature(&mut self) -> ActiveFeature {
+        return self.active_feature;
+    }
+
     /// Add a new circle to the application
     pub fn add_circle(&mut self, circle: Circle) {
         // Generate feature data for the new circle

@@ -1,5 +1,5 @@
 use crate::models::circle::{Circle, CircleType, JoinPolicy, NotificationSettings, Visibility};
-use eframe::egui::{self, Color32, RichText, Rounding, Stroke, Vec2};
+use eframe::egui::{self, Color32, RichText, Stroke, Vec2};
 
 /// State for the circle creation dialog
 #[derive(Debug)]
@@ -75,12 +75,14 @@ pub fn render_circle_dialog(
         .frame(
             egui::Frame::window(&ctx.style())
                 .fill(Color32::from_rgb(255, 255, 255))
-                .rounding(Rounding::same(12.0))
+                .corner_radius(12)
                 .shadow(egui::epaint::Shadow {
-                    extrusion: 8.0,
                     color: Color32::from_black_alpha(25),
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
                 })
-                .inner_margin(egui::Margin::same(24.0)), // Further increased padding for better spacing
+                .inner_margin(egui::Margin::same(24)), // Further increased padding for better spacing
         )
         .show(ctx, |ui| {
             // Main layout
@@ -118,7 +120,9 @@ pub fn render_circle_dialog(
                         .desired_width(f32::INFINITY)
                         .font(egui::FontId::proportional(16.0)), // Removed trailing comma
                 )
-                .on_hover_text("Enter a name for your circle")
+                .on_hover_text(
+                    egui::RichText::new("Enter a name for your circle").color(Color32::WHITE),
+                )
                 .on_hover_cursor(egui::CursorIcon::Text);
 
                 // Add some space after the text field
@@ -224,7 +228,7 @@ pub fn render_circle_dialog(
                             .color(Color32::from_rgb(70, 80, 90)),
                     )
                     .min_size(Vec2::new(110.0, 38.0)) // Slightly larger button
-                    .rounding(Rounding::same(8.0))
+                    .corner_radius(8.0)
                     .fill(Color32::from_rgb(230, 235, 240))
                     .stroke(Stroke::new(1.0, Color32::from_rgb(200, 210, 220)));
 
@@ -245,7 +249,7 @@ pub fn render_circle_dialog(
                             .color(Color32::WHITE),
                     )
                     .min_size(Vec2::new(130.0, 38.0)) // Slightly larger button
-                    .rounding(Rounding::same(8.0))
+                    .corner_radius(8.0)
                     .fill(Color32::from_rgb(66, 133, 244))
                     .stroke(Stroke::new(1.0, Color32::from_rgb(45, 100, 200)));
 

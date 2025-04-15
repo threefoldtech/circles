@@ -2,7 +2,7 @@ use crate::{
     ui::app_layout::{create_content_frame, render_header},
     utils::config::Theme,
 };
-use egui::{Button, Color32, RichText, Rounding, Stroke, Ui, Vec2};
+use egui::{Button, Color32, RichText, Stroke, Ui, Vec2};
 
 use crate::app::CircleApp;
 
@@ -13,7 +13,7 @@ pub fn render_settings(_: &CircleApp, ui: &mut Ui) {
 
     // Create a full-width frame for the settings card.
     let mut frame = create_content_frame();
-    frame.inner_margin = egui::Margin::same(16.0); // Ensure consistent padding.
+    frame.inner_margin = egui::Margin::same(16); // Ensure consistent padding.
 
     frame.show(ui, |ui| {
         // Ensure the frame takes the full available width.
@@ -48,7 +48,7 @@ pub fn render_settings(_: &CircleApp, ui: &mut Ui) {
                                 .color(Color32::WHITE),
                         )
                         .fill(Color32::from_rgb(66, 133, 244))
-                        .rounding(Rounding::same(6.0))
+                        .corner_radius(6)
                         .min_size(Vec2::new(120.0, 36.0)),
                     )
                     .clicked()
@@ -76,9 +76,9 @@ pub fn render_settings_section(ui: &mut Ui, title: &str, settings: &[(bool, &str
     );
     ui.add_space(12.0);
 
-    for (mut value, text) in settings.iter() {
+    for (value, text) in settings.iter() {
         ui.checkbox(
-            &mut value,
+            &mut value.clone(),
             RichText::new(*text)
                 .size(14.0)
                 .color(Color32::from_rgb(70, 80, 90)),

@@ -3,28 +3,14 @@ use crate::ui::components::circle_dialog;
 use crate::ui::features::{bot_channel, calendar, chat, documents, mail, video_conf, welcome};
 use crate::ui::footer;
 use crate::ui::navbar;
-use crate::utils::config::Theme;
+use crate::utils::config::{LayoutConfig, Theme};
 use eframe::egui::{
     self, Align, Button, CentralPanel, Color32, Context, CursorIcon, Frame, Layout, Margin,
-    RichText, Rounding, ScrollArea, Sense, SidePanel, Stroke, Ui, Vec2,
+    RichText, ScrollArea, Sense, SidePanel, Stroke, Ui, Vec2,
 };
 use uuid::Uuid;
 
 use super::features::settings;
-
-struct LayoutConfig {
-    spacing: f32,
-    sidebar_width: f32,
-}
-
-impl LayoutConfig {
-    fn new() -> Self {
-        Self {
-            spacing: 12.0,
-            sidebar_width: 260.0,
-        }
-    }
-}
 
 // Main rendering function
 pub fn render(app: &mut CircleApp, ctx: &Context) {
@@ -35,11 +21,11 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
     let app_layout = create_app_layout(&theme);
 
     // Render the navbar at the top with app name/logo on right and active circle on left
-    navbar::render_top_panel(app, ctx, &app_layout, &theme);
+    navbar::render_top_panel(app, ctx, &app_layout, &theme, &config);
 
     // Render the navigation bar with feature buttons
     if !app.is_first_time {
-        navbar::render_navigation_bar(app, ctx, &app_layout, &theme);
+        // navbar::render_navigation_bar(app, ctx, &app_layout, &theme, &config);
     }
 
     // Render the sidebar with available circles
@@ -59,7 +45,7 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
 fn setup_style(ctx: &Context, theme: &Theme, config: &LayoutConfig) {
     let mut style = (*ctx.style()).clone();
     style.spacing.item_spacing = Vec2::new(config.spacing, config.spacing);
-    style.spacing.window_margin = Margin::same(config.spacing);
+    style.spacing.window_margin = Margin::same(config.spacing as i8);
     style.spacing.button_padding = Vec2::new(10.0, 6.0);
 
     style.visuals.override_text_color = Some(theme.text);
@@ -89,14 +75,14 @@ fn apply_rounding(style: &mut egui::Style) {
     // Remove window shadows
     style.visuals.window_shadow = egui::epaint::Shadow::NONE;
     style.visuals.popup_shadow = egui::epaint::Shadow::NONE;
-    style.visuals.window_rounding = Rounding::same(0.0);
-    style.visuals.menu_rounding = Rounding::same(0.0);
+    // style.visuals.window_rounding = Rounding::same(0.0);
+    // style.visuals.menu_rounding = Rounding::same(0.0);
 }
 
 fn create_app_layout(theme: &Theme) -> Frame {
-    Frame::none()
+    Frame::new()
         .fill(theme.background)
-        .inner_margin(Margin::same(8.0))
+        .inner_margin(Margin::same(8))
 }
 
 // Panel rendering functions
@@ -129,7 +115,7 @@ fn render_sidebar(
 
 fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
     ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
-        ui.add_space(8.0);
+        // ui.add_space(8.0);
         ui.vertical(|ui| {
             ui.add_space(5.0);
             ui.heading(
@@ -142,7 +128,7 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
             let add_button = Button::new(RichText::new("➕").size(16.0).color(Color32::WHITE))
                 .min_size(Vec2::new(32.0, 32.0))
-                .rounding(Rounding::same(8.0))
+                .corner_radius(8.0)
                 .fill(theme.accent)
                 .stroke(Stroke::NONE);
 
@@ -164,10 +150,10 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
 }
 
 fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
-    let search_frame = Frame::none()
+    let search_frame = Frame::new()
         .fill(theme.hover)
-        .rounding(Rounding::same(20.0))
-        .inner_margin(Margin::same(10.0))
+        .corner_radius(20)
+        .inner_margin(Margin::same(10))
         .stroke(Stroke::NONE);
 
     ui.horizontal(|ui| {
@@ -325,28 +311,28 @@ fn render_circle_item(
         crate::models::circle::CircleType::Private => ("🔒", theme.private),
     };
 
-    let circle_frame = Frame::none()
+    let circle_frame = Frame::new()
         .fill(if is_active {
             theme.hover
         } else {
             Color32::TRANSPARENT
         })
-        .inner_margin(Margin::symmetric(8.0, 6.0))
-        .rounding(Rounding::same(4.0));
+        .inner_margin(Margin::symmetric(8, 6))
+        .corner_radius(4);
 
     let mut clicked = false;
 
     circle_frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.set_min_width(ui.available_width());
-            let icon_frame = Frame::none()
+            let icon_frame = Frame::new()
                 .fill(if is_active {
                     color
                 } else {
                     Color32::from_rgb(230, 235, 240)
                 })
-                .rounding(Rounding::same(12.0))
-                .inner_margin(Margin::same(6.0));
+                .corner_radius(12)
+                .inner_margin(Margin::same(6));
 
             // Allocate space for the icon and get its rectangle
             let icon_response = icon_frame.show(ui, |ui| {
@@ -439,7 +425,7 @@ fn render_feature_content(app: &mut CircleApp, ctx: &Context, app_layout: &Frame
                     .strong()
                     .color(Color32::from_rgb(40, 50, 60)),
             );
-            ui.separator();
+            // ui.separator();
             ui.add_space(16.0);
 
             // Render the actual feature content
@@ -495,10 +481,10 @@ fn render_ai_tools(app: &CircleApp, ui: &mut Ui) {
 pub fn render_header(ui: &mut Ui, icon: &str, title: &str) {
     ui.horizontal(|ui| {
         ui.add_space(8.0);
-        Frame::none()
+        Frame::new()
             .fill(Color32::from_rgb(235, 240, 245))
-            .rounding(Rounding::same(0.0))
-            .inner_margin(Margin::symmetric(12.0, 8.0))
+            .corner_radius(0)
+            .inner_margin(Margin::symmetric(12, 8))
             .show(ui, |ui| {
                 ui.label(
                     RichText::new(format!("{} {}", icon, title))
@@ -517,16 +503,16 @@ pub fn create_action_button<'a>(text: &'a str, icon: &'a str) -> Button<'a> {
             .size(14.0)
             .color(Color32::WHITE),
     )
-    .rounding(Rounding::same(20.0))
+    .corner_radius(20)
     .fill(Color32::from_rgb(66, 133, 244))
     .stroke(Stroke::NONE)
     .min_size(Vec2::new(100.0, 36.0))
 }
 
 pub fn create_content_frame() -> Frame {
-    Frame::none()
+    Frame::new()
         .fill(Color32::WHITE)
         .stroke(Stroke::NONE)
-        .rounding(Rounding::same(0.0))
-        .inner_margin(Margin::same(16.0))
+        .corner_radius(0)
+        .inner_margin(Margin::same(16))
 }

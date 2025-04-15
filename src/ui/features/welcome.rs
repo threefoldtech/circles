@@ -5,10 +5,10 @@ use eframe::egui::{Color32, Frame, Margin, RichText, Ui};
 // Renders the welcome screen for the Circle Collaboration System
 pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui) {
     let available_height = ui.available_height();
-    let welcome_frame = Frame::none()
+    let welcome_frame = Frame::new()
         .fill(Color32::WHITE)
-        .inner_margin(Margin::same(0.0))
-        .outer_margin(Margin::same(0.0));
+        .inner_margin(Margin::same(0))
+        .outer_margin(Margin::same(0));
 
     welcome_frame.show(ui, |ui| {
         ui.set_min_height(available_height);

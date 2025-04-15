@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, RichText, Rounding, Stroke, Vec2};
+use eframe::egui::{self, Color32, RichText, Stroke, Vec2};
 use chrono::{DateTime, Utc};
 
 /// Different types of bot messages
@@ -85,11 +85,11 @@ fn format_timestamp(timestamp: DateTime<Utc>) -> String {
 
 /// Render a welcome message
 fn render_welcome_message(ui: &mut egui::Ui) {
-    let message_frame = egui::Frame::none()
+    let message_frame = egui::Frame::new()
         .fill(Color32::from_rgb(240, 249, 255))
         .stroke(Stroke::new(1.0, Color32::from_rgb(187, 222, 251)))
-        .rounding(Rounding::same(8.0))
-        .inner_margin(egui::Margin::same(16.0));
+        .corner_radius(8.0)
+        .inner_margin(egui::Margin::same(16));
     
     message_frame.show(ui, |ui| {
         ui.vertical(|ui| {
@@ -136,11 +136,11 @@ fn render_welcome_message(ui: &mut egui::Ui) {
 
 /// Render an update message
 fn render_update_message(ui: &mut egui::Ui, version: &str, date: &str, changes: &[&str]) {
-    let message_frame = egui::Frame::none()
+    let message_frame = egui::Frame::new()
         .fill(Color32::from_rgb(237, 247, 237))
         .stroke(Stroke::new(1.0, Color32::from_rgb(200, 230, 201)))
-        .rounding(Rounding::same(8.0))
-        .inner_margin(egui::Margin::same(16.0));
+        .corner_radius(8.0)
+        .inner_margin(egui::Margin::same(16));
     
     message_frame.show(ui, |ui| {
         ui.vertical(|ui| {
@@ -205,11 +205,11 @@ fn render_update_message(ui: &mut egui::Ui, version: &str, date: &str, changes: 
 
 /// Render a connection message
 fn render_connection_message(ui: &mut egui::Ui, circle_name: &str, date: &str) {
-    let message_frame = egui::Frame::none()
+    let message_frame = egui::Frame::new()
         .fill(Color32::from_rgb(232, 245, 253))
         .stroke(Stroke::new(1.0, Color32::from_rgb(187, 222, 251)))
-        .rounding(Rounding::same(8.0))
-        .inner_margin(egui::Margin::same(16.0));
+        .corner_radius(8.0)
+        .inner_margin(egui::Margin::same(16));
     
     message_frame.show(ui, |ui| {
         ui.vertical(|ui| {
@@ -257,11 +257,11 @@ fn render_connection_message(ui: &mut egui::Ui, circle_name: &str, date: &str) {
 
 /// Render a feature announcement
 fn render_feature_announcement(ui: &mut egui::Ui, feature_name: &str, date: &str, description: &str) {
-    let message_frame = egui::Frame::none()
+    let message_frame = egui::Frame::new()
         .fill(Color32::from_rgb(243, 229, 245))
         .stroke(Stroke::new(1.0, Color32::from_rgb(206, 147, 216)))
-        .rounding(Rounding::same(8.0))
-        .inner_margin(egui::Margin::same(16.0));
+        .corner_radius(8.0)
+        .inner_margin(egui::Margin::same(16));
     
     message_frame.show(ui, |ui| {
         ui.vertical(|ui| {
@@ -313,7 +313,7 @@ fn render_feature_announcement(ui: &mut egui::Ui, feature_name: &str, date: &str
                     .color(Color32::WHITE)
             )
             .min_size(Vec2::new(150.0, 32.0))
-            .rounding(Rounding::same(16.0))
+            .corner_radius(16)
             .fill(Color32::from_rgb(123, 31, 162))
             .stroke(Stroke::new(1.0, Color32::from_rgb(106, 27, 154)));
             
@@ -324,11 +324,11 @@ fn render_feature_announcement(ui: &mut egui::Ui, feature_name: &str, date: &str
 
 /// Render a tip message
 fn render_tip_message(ui: &mut egui::Ui, tip: &str) {
-    let message_frame = egui::Frame::none()
+    let message_frame = egui::Frame::new()
         .fill(Color32::from_rgb(255, 243, 224))
         .stroke(Stroke::new(1.0, Color32::from_rgb(255, 224, 178)))
-        .rounding(Rounding::same(8.0))
-        .inner_margin(egui::Margin::same(16.0));
+        .corner_radius(8.0)
+        .inner_margin(egui::Margin::same(16));
     
     message_frame.show(ui, |ui| {
         ui.vertical(|ui| {
@@ -376,11 +376,11 @@ fn render_tip_message(ui: &mut egui::Ui, tip: &str) {
 
 /// Render a cat message
 fn render_cat_message(ui: &mut egui::Ui, message: &str, image_emoji: &str, date: &str) {
-    let message_frame = egui::Frame::none()
+    let message_frame = egui::Frame::new()
         .fill(Color32::from_rgb(255, 240, 245)) // Light pink background
         .stroke(Stroke::new(1.0, Color32::from_rgb(255, 182, 193))) // Pink border
-        .rounding(Rounding::same(8.0))
-        .inner_margin(egui::Margin::same(16.0));
+        .corner_radius(8.0)
+        .inner_margin(egui::Margin::same(16));
     
     message_frame.show(ui, |ui| {
         ui.vertical(|ui| {
