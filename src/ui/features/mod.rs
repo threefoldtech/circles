@@ -1,3 +1,4 @@
+pub mod ai_tools;
 pub mod bot_channel;
 pub mod calendar;
 pub mod chat;

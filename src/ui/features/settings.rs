@@ -1,19 +1,15 @@
-use crate::{
-    ui::app_layout::{create_content_frame, render_header},
-    utils::config::Theme,
-};
+use crate::{ui::app_layout::create_content_frame, utils::config::Theme};
 use egui::{Button, Color32, RichText, Stroke, Ui, Vec2};
 
 use crate::app::CircleApp;
 
 /// Renders the settings screen with a full-width settings card.
 pub fn render_settings(_: &CircleApp, ui: &mut Ui) {
-    render_header(ui, "", "Settings");
     ui.add_space(16.0);
 
     // Create a full-width frame for the settings card.
     let mut frame = create_content_frame();
-    frame.inner_margin = egui::Margin::same(16); // Ensure consistent padding.
+    // frame.inner_margin = egui::Margin::same(16); // Ensure consistent padding.
 
     frame.show(ui, |ui| {
         // Ensure the frame takes the full available width.

@@ -24,7 +24,7 @@ impl LayoutConfig {
         Self {
             spacing: 12.0,
             sidebar_width: 300.0,
-            navbar_height: 85.0,
+            navbar_height: 95.0,
             // button_size: Vec2::new(90.0, 40.0),
         }
     }

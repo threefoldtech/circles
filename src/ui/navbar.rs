@@ -19,7 +19,7 @@ pub fn render_top_panel(
         .frame(app_layout.clone().corner_radius(0))
         .show(ctx, |ui| {
             ui.vertical(|ui| {
-                ui.add_space(8.0);
+                ui.add_space(16.0);
                 ui.horizontal(|ui| {
                     // Left side - App logo
                     ui.add_space(16.0);

@@ -3,10 +3,12 @@ use egui::{Color32, FontFamily, FontId, Margin, RichText, Sense};
 
 use crate::app::CircleApp;
 use crate::models::dummy_data::Email;
-use crate::ui::app_layout::{create_action_button, create_content_frame};
+use crate::ui::app_layout::create_content_frame;
+use crate::ui::components::button;
 use crate::ui::components::mail::compose_dialog::{open_compose_dialog, render_compose_dialog};
 use crate::ui::components::mail::email_card::{get_folder_icon, render_email_card};
 use crate::ui::components::mail::email_detials::render_email_detail;
+
 use crate::utils::config::Theme;
 
 pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
@@ -15,7 +17,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
     // Top bar
     ui.horizontal(|ui| {
         ui.add_space(12.0);
-        let compose_button = create_action_button("Compose", "✏️")
+        let compose_button = button::create_button("Compose", "✏️")
             .fill(theme.accent)
             .corner_radius(6);
         if ui.add(compose_button).clicked() {
@@ -23,7 +25,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
             open_compose_dialog(app, ui);
         }
         ui.add_space(10.0);
-        let refresh_button = create_action_button("Refresh", "🔄")
+        let refresh_button = button::create_button("Refresh", "🔄")
             .fill(theme.accent)
             .corner_radius(6);
         if ui.add(refresh_button).clicked() {

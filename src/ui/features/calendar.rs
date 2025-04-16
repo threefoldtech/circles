@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::app::CircleApp;
 use crate::models::dummy_data::Event;
 use crate::ui::app_layout;
+use crate::ui::components::button;
 
 // Constants for styling
 const PRIMARY_COLOR: Color32 = Color32::from_rgb(66, 133, 244);
@@ -162,10 +163,7 @@ fn render_toolbar(ui: &mut Ui, calendar_state: &mut CalendarState) {
         ui.add_space(8.0);
 
         // New Event button
-        if ui
-            .add(app_layout::create_action_button("New Event", "➕"))
-            .clicked()
-        {
+        if ui.add(button::create_button("New Event", "➕")).clicked() {
             calendar_state.events.push(Event {
                 id: Uuid::new_v4(),
                 title: String::new(),
@@ -178,18 +176,12 @@ fn render_toolbar(ui: &mut Ui, calendar_state: &mut CalendarState) {
         }
 
         // Today button
-        if ui
-            .add(app_layout::create_action_button("Today", "📌"))
-            .clicked()
-        {
+        if ui.add(button::create_button("Today", "📌")).clicked() {
             calendar_state.selected_date = Local::now();
         }
 
         // Sync button
-        if ui
-            .add(app_layout::create_action_button("Sync", "🔄"))
-            .clicked()
-        {
+        if ui.add(button::create_button("Sync", "🔄")).clicked() {
             // if let Some(_) = &calendar_state.caldav_config {
             //     println!("CalDAV sync would happen here");
             //     calendar_state.last_sync = Some(Utc::now());
@@ -199,10 +191,7 @@ fn render_toolbar(ui: &mut Ui, calendar_state: &mut CalendarState) {
         ui.add_space(8.0);
 
         // View selector using the same style as other buttons
-        if ui
-            .add(app_layout::create_action_button("View", "👁️"))
-            .clicked()
-        {
+        if ui.add(button::create_button("View", "👁️")).clicked() {
             // Toggle between view modes when clicked
             calendar_state.view_mode = match calendar_state.view_mode {
                 CalendarViewMode::Month => CalendarViewMode::Week,
