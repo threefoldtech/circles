@@ -24,7 +24,7 @@ struct CalendarState {
     selected_date: DateTime<Local>,
     view_mode: CalendarViewMode,
     // caldav_config: Option<CalDavConfig>,
-    last_sync: Option<DateTime<Utc>>,
+    // last_sync: Option<DateTime<Utc>>,
 }
 
 /// Available calendar view modes
@@ -42,7 +42,7 @@ fn get_default_calendar_state() -> CalendarState {
         selected_date: Local::now(),
         view_mode: CalendarViewMode::Month,
         // caldav_config: None,
-        last_sync: None,
+        // last_sync: None,
     }
 }
 

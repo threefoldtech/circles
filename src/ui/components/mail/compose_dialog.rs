@@ -1,12 +1,6 @@
-use chrono::Utc;
-use egui::{Color32, FontFamily, FontId, Margin, RichText, Rounding, TextStyle, Vec2};
-use uuid::Uuid;
+use egui::TextStyle;
 
-use crate::{
-    app::CircleApp,
-    models::{dummy_data::Email, features::ComposeDraft},
-    utils::config::Theme,
-};
+use crate::{app::CircleApp, models::features::ComposeDraft, utils::config::Theme};
 use egui_extras::{Size, StripBuilder};
 
 /// Open the compose dialog
@@ -22,7 +16,7 @@ pub fn open_compose_dialog(app: &mut CircleApp, _: &mut egui::Ui) {
 
 /// Render the compose dialog
 /// Includes the compose form
-pub fn render_compose_dialog(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
+pub fn render_compose_dialog(ui: &mut egui::Ui, _: &mut CircleApp, _: &Theme) {
     let body_text_size = TextStyle::Body.resolve(ui.style()).size;
     StripBuilder::new(ui)
         .size(Size::exact(50.0))
