@@ -22,18 +22,76 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
             let compose_button = button::create_button("Compose", "✏️")
                 .fill(theme.accent)
                 .corner_radius(6);
-            if ui.add(compose_button).clicked() {
+            let compose_response = ui.add(compose_button);
+            if compose_response.clicked() {
                 open_compose_screen(app, ui);
             }
+            if compose_response.hovered() {
+                ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+            }
+
             ui.add_space(10.0);
-            let refresh_button = button::create_button("Refresh", "🔄")
-                .fill(theme.accent)
-                .corner_radius(6);
-            if ui.add(refresh_button).clicked() {
-                println!("Refresh clicked"); // TODO: Implement
+            let refresh_button =
+                button::create_button("Refresh", if app.is_refreshing { "⌛" } else { "🔄" })
+                    .fill(theme.accent)
+                    .corner_radius(6);
+            let refresh_response = ui.add(refresh_button);
+            if refresh_response.clicked() {
+                app.is_refreshing = true;
+                ui.ctx().request_repaint(); // Force immediate repaint to show loading state
+            }
+            if refresh_response.hovered() {
+                ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
             }
             ui.add_space(10.0);
         });
+
+        // Show loading message if refreshing
+        if app.is_refreshing {
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                ui.add_space(12.0);
+                let loading_text = RichText::new("⌛ Refreshing mail data...")
+                    .color(theme.accent)
+                    .size(14.0);
+                ui.label(loading_text);
+            });
+            ui.add_space(8.0);
+
+            if let Some(feature_data) = &mut app.active_feature_data {
+                // Reset unread counts for all folders
+                for folder in &mut feature_data.mail_data.folders {
+                    folder.unread_count = feature_data
+                        .mail_data
+                        .emails
+                        .iter()
+                        .filter(|email| email.folder_id == folder.id && !email.read)
+                        .count();
+                }
+
+                // If we're in email detail view, refresh the current email
+                if app.email_dialog_open {
+                    if let Some(email_id) = app.selected_email_id {
+                        if feature_data
+                            .mail_data
+                            .emails
+                            .iter()
+                            .find(|e| e.id == email_id)
+                            .is_none()
+                        {
+                            // If email no longer exists, close the detail view
+                            app.email_dialog_open = false;
+                            app.selected_email_id = None;
+                        }
+                    }
+                }
+            }
+
+            // Simulate a brief loading period and reset the state
+            ui.ctx()
+                .request_repaint_after(std::time::Duration::from_millis(500));
+            app.is_refreshing = false;
+        }
 
         ui.add_space(12.0);
     }

@@ -39,6 +39,8 @@ pub struct CircleApp {
     pub compose_draft: Option<crate::models::features::ComposeDraft>,
     /// Notification manager
     pub notification_manager: NotificationManager,
+    /// Flag to track if the app is currently refreshing
+    pub is_refreshing: bool,
 }
 
 /// Enum representing available features in the application
@@ -143,6 +145,7 @@ impl CircleApp {
             compose_dialog_open: false,
             compose_draft: None,
             notification_manager: NotificationManager::new(50), // Keep last 50 notifications
+            is_refreshing: false,
         }
     }
 
