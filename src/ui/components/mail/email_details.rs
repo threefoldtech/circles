@@ -1,12 +1,14 @@
-use crate::{models::dummy_data::Email, utils::config::Theme};
+use crate::{app::CircleApp, models::dummy_data::Email, utils::config::Theme};
 use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, Vec2};
+
+use super::compose::{create_forward_draft, create_reply_draft};
 
 #[allow(dead_code)]
 /// Render the email details
-pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
+pub fn render_email_detail(app: &mut CircleApp, ui: &mut egui::Ui, email: &Email, theme: &Theme) {
     ui.vertical(|ui| {
         // Header section
-        egui::Frame::none()
+        egui::Frame::new()
             .fill(theme.secondary_background)
             .inner_margin(Margin::same(16))
             .show(ui, |ui| {
@@ -100,7 +102,7 @@ pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
         ui.add_space(16.0);
 
         // Email content
-        egui::Frame::none()
+        egui::Frame::new()
             .fill(Color32::WHITE)
             .inner_margin(Margin::same(24))
             .stroke(Stroke::new(1.0, theme.border))
@@ -135,7 +137,9 @@ pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
                 .min_size(button_size);
 
                 if ui.add(reply_button).clicked() {
-                    println!("Reply to email: {}", email.subject);
+                    app.compose_draft = Some(create_reply_draft(email));
+                    app.compose_dialog_open = true;
+                    app.email_dialog_open = false;
                 }
 
                 ui.add_space(8.0);
@@ -151,7 +155,9 @@ pub fn render_email_detail(ui: &mut egui::Ui, email: &Email, theme: &Theme) {
                 .min_size(button_size);
 
                 if ui.add(forward_button).clicked() {
-                    println!("Forward email: {}", email.subject);
+                    app.compose_draft = Some(create_forward_draft(email));
+                    app.compose_dialog_open = true;
+                    app.email_dialog_open = false;
                 }
             });
         });

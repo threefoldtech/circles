@@ -32,13 +32,26 @@ pub struct MailFeature {
     pub settings: MailSettings,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum ComposeDraftMode {
+    New,
+    Reply,
+    Forward,
+}
+
 // ComposeDraft
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ComposeDraft {
+    pub to: String,
     pub subject: String,
     pub body: String,
     pub attachments: Vec<String>,
-    pub to: String,
+    pub reply_to: Option<String>,         // Original sender email
+    pub forward_from: Option<String>,     // Original sender for forwarded emails
+    pub original_subject: Option<String>, // Original email subject
+    pub original_date: Option<String>,    // Original email date
+    pub original_content: Option<String>, // Original email content
+    pub mode: ComposeDraftMode,           // New, Reply, or Forward
 }
 
 /// Calendar feature

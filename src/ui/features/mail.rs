@@ -73,7 +73,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                             ui.add_space(12.0);
 
                             // Email details
-                            render_email_detail(ui, email, &theme);
+                            render_email_detail(app, ui, email, &theme);
                         } else {
                             ui.label(
                                 RichText::new("Error: Email not found")
