@@ -14,26 +14,29 @@ use crate::utils::config::Theme;
 pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
     let theme = Theme::new();
 
-    // Top bar
-    ui.horizontal(|ui| {
-        ui.add_space(12.0);
-        let compose_button = button::create_button("Compose", "✏️")
-            .fill(theme.accent)
-            .corner_radius(6);
-        if ui.add(compose_button).clicked() {
-            open_compose_screen(app, ui);
-        }
-        ui.add_space(10.0);
-        let refresh_button = button::create_button("Refresh", "🔄")
-            .fill(theme.accent)
-            .corner_radius(6);
-        if ui.add(refresh_button).clicked() {
-            println!("Refresh clicked"); // TODO: Implement
-        }
-        ui.add_space(10.0);
-    });
+    // Only show top bar buttons if we're not in compose mode
+    if !app.compose_dialog_open {
+        // Top bar
+        ui.horizontal(|ui| {
+            ui.add_space(12.0);
+            let compose_button = button::create_button("Compose", "✏️")
+                .fill(theme.accent)
+                .corner_radius(6);
+            if ui.add(compose_button).clicked() {
+                open_compose_screen(app, ui);
+            }
+            ui.add_space(10.0);
+            let refresh_button = button::create_button("Refresh", "🔄")
+                .fill(theme.accent)
+                .corner_radius(6);
+            if ui.add(refresh_button).clicked() {
+                println!("Refresh clicked"); // TODO: Implement
+            }
+            ui.add_space(10.0);
+        });
 
-    ui.add_space(12.0);
+        ui.add_space(12.0);
+    }
 
     // Main content
     if let Some(feature_data) = &mut app.active_feature_data.clone() {
