@@ -80,7 +80,7 @@ pub fn render_email_card(
                         Some(Color32::from_rgb(255, 255, 255));
                     ui.style_mut().visuals.window_fill = Color32::from_rgb(255, 255, 255);
                     ui.label(
-                        egui::RichText::new("Subjectx").color(Color32::from_rgb(255, 255, 255)),
+                        egui::RichText::new("Subject").color(Color32::from_rgb(255, 255, 255)),
                     );
                 });
 
