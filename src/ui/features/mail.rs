@@ -7,7 +7,7 @@ use crate::ui::app_layout::create_content_frame;
 use crate::ui::components::button;
 use crate::ui::components::mail::compose::{open_compose_screen, render_compose_screen};
 use crate::ui::components::mail::email_card::{get_folder_icon, render_email_card};
-use crate::ui::components::mail::email_detials::render_email_detail;
+use crate::ui::components::mail::email_details::render_email_detail;
 
 use crate::utils::config::Theme;
 
