@@ -38,7 +38,8 @@ pub fn create_reply_draft(email: &Email) -> ComposeDraft {
         "Reply Draft Created",
         format!("Started composing reply to \"{}\"", email.subject),
         NotificationType::Info,
-    );
+    )
+    .with_timeout(30000);
     if let Err(e) = send_desktop_notification(&config) {
         eprintln!("Failed to send desktop notification: {}", e);
     }
@@ -71,7 +72,8 @@ pub fn create_forward_draft(email: &Email) -> ComposeDraft {
         "Forward Draft Created",
         format!("Started forwarding \"{}\"", email.subject),
         NotificationType::Info,
-    );
+    )
+    .with_timeout(30000);
     if let Err(e) = send_desktop_notification(&config) {
         eprintln!("Failed to send desktop notification: {}", e);
     }
@@ -99,7 +101,8 @@ pub fn open_compose_screen(app: &mut CircleApp, _: &mut egui::Ui) {
         "New Draft Created",
         "Started composing new email",
         NotificationType::Info,
-    );
+    )
+    .with_timeout(30000);
     if let Err(e) = send_desktop_notification(&config) {
         eprintln!("Failed to send desktop notification: {}", e);
     }
@@ -270,19 +273,36 @@ fn handle_email_send(app: &mut CircleApp, draft: &ComposeDraft) {
         ),
     };
 
-    let mut config = NotificationConfig::new(title, &body, NotificationType::Success);
-    config.timeout = 10000;
+    // Send desktop notification with longer timeout and higher urgency
+    let config = NotificationConfig::new(title, &notification_message, NotificationType::Success)
+        .with_timeout(60000); // 60 seconds for better visibility
 
     match send_desktop_notification(&config) {
-        Ok(_) => println!("Desktop notification sent successfully"),
-        Err(e) => eprintln!("Failed to send desktop notification: {}", e),
+        Ok(_) => println!(
+            "Desktop notification sent successfully for email: {}",
+            draft.subject
+        ),
+        Err(e) => {
+            eprintln!("Desktop notification error: {:?}", e);
+            // Fallback to just in-app notification
+            app.notification_manager.add(AppNotification::new(
+                "Notification Error",
+                &format!("Could not show desktop notification: {}", e),
+                NotificationPriority::High,
+            ));
+        }
     }
 
+    // Keep the in-app notification
     app.notification_manager.add(AppNotification::new(
         title,
         notification_message,
         NotificationPriority::Normal,
     ));
+
+    // Close the compose dialog after sending
+    app.compose_dialog_open = false;
+    app.compose_draft = None;
 }
 
 /// Render the compose screen
