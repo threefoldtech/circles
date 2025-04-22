@@ -8,7 +8,7 @@ pub fn render_settings(_: &CircleApp, ui: &mut Ui) {
     ui.add_space(16.0);
 
     // Create a full-width frame for the settings card.
-    let mut frame = create_content_frame();
+    let frame = create_content_frame();
     // frame.inner_margin = egui::Margin::same(16); // Ensure consistent padding.
 
     frame.show(ui, |ui| {

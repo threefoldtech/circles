@@ -5,7 +5,7 @@ use crate::app::CircleApp;
 use crate::models::dummy_data::Email;
 use crate::ui::app_layout::create_content_frame;
 use crate::ui::components::button;
-use crate::ui::components::mail::compose_dialog::{open_compose_dialog, render_compose_dialog};
+use crate::ui::components::mail::compose::{open_compose_screen, render_compose_screen};
 use crate::ui::components::mail::email_card::{get_folder_icon, render_email_card};
 use crate::ui::components::mail::email_detials::render_email_detail;
 
@@ -21,8 +21,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
             .fill(theme.accent)
             .corner_radius(6);
         if ui.add(compose_button).clicked() {
-            // Open compose dialog
-            open_compose_dialog(app, ui);
+            open_compose_screen(app, ui);
         }
         ui.add_space(10.0);
         let refresh_button = button::create_button("Refresh", "🔄")
@@ -43,9 +42,9 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
             .corner_radius(8.0)
             .inner_margin(Margin::same(12))
             .show(ui, |ui| {
-                // Compose dialog
+                // Compose screen
                 if app.compose_dialog_open {
-                    render_compose_dialog(ui, app, &theme);
+                    render_compose_screen(ui, app, &theme);
                 }
                 // Email detail view
                 else if app.email_dialog_open {
