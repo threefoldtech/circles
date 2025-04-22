@@ -46,6 +46,7 @@ pub struct Theme {
     pub success: Color32,
     pub team: Color32,
     pub private: Color32,
+    pub error: Color32,
 }
 
 impl Theme {
@@ -65,6 +66,7 @@ impl Theme {
             success: Color32::from_rgb(52, 211, 153),     // Muted green
             team: Color32::from_rgb(2, 132, 199),         // Vibrant blue
             private: Color32::from_rgb(168, 85, 247),     // Soft purple
+            error: Color32::from_rgb(239, 68, 68),        // Soft red
         }
     }
 }

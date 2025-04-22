@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::ui::components::mail::compose::Attachment;
+
 // We'll implement these modules later
 // pub mod calendar;
 // pub mod chat;
@@ -45,7 +47,7 @@ pub struct ComposeDraft {
     pub to: String,
     pub subject: String,
     pub body: String,
-    pub attachments: Vec<String>,
+    pub attachments: Vec<Attachment>,
     pub reply_to: Option<String>,         // Original sender email
     pub forward_from: Option<String>,     // Original sender for forwarded emails
     pub original_subject: Option<String>, // Original email subject

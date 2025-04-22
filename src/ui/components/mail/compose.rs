@@ -1,4 +1,6 @@
 use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, Vec2};
+use rfd::FileDialog; // Add this to Cargo.toml
+use std::path::PathBuf;
 
 use crate::{
     app::CircleApp,
@@ -70,20 +72,157 @@ pub fn open_compose_screen(app: &mut CircleApp, _: &mut egui::Ui) {
     });
 }
 
+/// Represents a file attachment
+#[derive(Clone, Debug)]
+pub struct Attachment {
+    pub name: String,
+    pub path: PathBuf,
+    pub size: u64,
+}
+
+impl ComposeDraft {
+    /// Add a new attachment
+    fn add_attachment(&mut self, path: PathBuf) {
+        if let Ok(metadata) = std::fs::metadata(&path) {
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown")
+                .to_string();
+
+            self.attachments.push(Attachment {
+                name,
+                path,
+                size: metadata.len(),
+            });
+        }
+    }
+
+    /// Remove an attachment by index
+    fn remove_attachment(&mut self, index: usize) {
+        if index < self.attachments.len() {
+            self.attachments.remove(index);
+        }
+    }
+}
+
+/// Format file size in human-readable format
+fn format_file_size(size: u64) -> String {
+    const KB: u64 = 1024;
+    const MB: u64 = KB * 1024;
+    const GB: u64 = MB * 1024;
+
+    if size >= GB {
+        format!("{:.1} GB", size as f64 / GB as f64)
+    } else if size >= MB {
+        format!("{:.1} MB", size as f64 / MB as f64)
+    } else if size >= KB {
+        format!("{:.1} KB", size as f64 / KB as f64)
+    } else {
+        format!("{} B", size)
+    }
+}
+
+/// Render attachments section
+fn render_attachments(ui: &mut egui::Ui, draft: &mut ComposeDraft, theme: &Theme) {
+    if !draft.attachments.is_empty() {
+        ui.add_space(16.0);
+
+        // Attachments container
+        let attachment_frame = egui::Frame::none()
+            .fill(theme.hover.gamma_multiply(0.5))
+            .inner_margin(Margin::same(12))
+            .corner_radius(8.0);
+
+        attachment_frame.show(ui, |ui| {
+            ui.vertical(|ui| {
+                ui.label(RichText::new("Attachments").size(14.0).strong());
+                ui.add_space(8.0);
+
+                // Store indices of attachments to remove
+                let mut to_remove = None;
+
+                // Iterate over attachments with indices
+                for (idx, attachment) in draft.attachments.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        // File icon and name
+                        ui.label(RichText::new("📎").size(16.0));
+                        ui.add_space(4.0);
+                        ui.label(RichText::new(&attachment.name).size(14.0));
+
+                        // File size
+                        ui.add_space(8.0);
+                        ui.label(
+                            RichText::new(format_file_size(attachment.size))
+                                .size(12.0)
+                                .color(theme.secondary_text),
+                        );
+
+                        // Remove button
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui
+                                .add(
+                                    egui::Button::new(
+                                        RichText::new("✖").size(14.0).color(theme.error),
+                                    )
+                                    .frame(false),
+                                )
+                                .clicked()
+                            {
+                                to_remove = Some(idx);
+                            }
+                        });
+                    });
+
+                    if idx < draft.attachments.len() - 1 {
+                        ui.add_space(8.0);
+                        ui.separator();
+                        ui.add_space(8.0);
+                    }
+                }
+
+                // Remove attachment if needed
+                if let Some(idx) = to_remove {
+                    draft.remove_attachment(idx);
+                }
+            });
+        });
+    }
+}
+
+/// Handle attachment button click
+fn handle_attachment_click(draft: &mut ComposeDraft) {
+    if let Some(files) = FileDialog::new()
+        .set_title("Choose files to attach")
+        .pick_files()
+    {
+        for path in files {
+            draft.add_attachment(path);
+        }
+    }
+}
+
 /// Render the compose screen
 pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
+    // Get the title first, using an immutable borrow
+    let title = if let Some(draft) = &app.compose_draft {
+        match draft.mode {
+            ComposeDraftMode::Reply => "Reply to email",
+            ComposeDraftMode::Forward => "Forward email",
+            ComposeDraftMode::New => "Draft a new email",
+        }
+    } else {
+        "Draft a new email"
+    };
+
     ui.vertical(|ui| {
         // Header
         ui.horizontal(|ui| {
             ui.heading(
-                RichText::new(match app.compose_draft.as_ref().map(|d| d.mode.clone()) {
-                    Some(ComposeDraftMode::Reply) => "Reply to email",
-                    Some(ComposeDraftMode::Forward) => "Forward email",
-                    _ => "Draft a new email",
-                })
-                .size(20.0)
-                .color(theme.header_text)
-                .strong(),
+                RichText::new(title)
+                    .size(20.0)
+                    .color(theme.header_text)
+                    .strong(),
             );
         });
         ui.add_space(20.0);
@@ -238,7 +377,11 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
             // Restore original style after input fields
             ui.set_style(original_style);
 
+            // Render attachments section before bottom buttons
+            render_attachments(ui, draft, theme);
+
             // Bottom buttons
+            let mut should_close = false;
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                     if ui
@@ -253,7 +396,17 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                         )
                         .clicked()
                     {
-                        // TODO: Implement attachment functionality
+                        handle_attachment_click(draft);
+                    }
+
+                    // Show attachment count if any
+                    if !draft.attachments.is_empty() {
+                        ui.add_space(8.0);
+                        ui.label(
+                            RichText::new(format!("{} attached", draft.attachments.len()))
+                                .size(14.0)
+                                .color(theme.secondary_text),
+                        );
                     }
                 });
 
@@ -269,9 +422,7 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                         )
                         .clicked()
                     {
-                        // TODO: Implement send functionality
-                        app.compose_dialog_open = false;
-                        app.compose_draft = None;
+                        should_close = true;
                     }
 
                     if ui
@@ -288,12 +439,16 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                         )
                         .clicked()
                     {
-                        app.compose_dialog_open = false;
-                        app.compose_draft = None;
+                        should_close = true;
                     }
                     ui.add_space(8.0);
                 });
             });
+
+            if should_close {
+                app.compose_dialog_open = false;
+                app.compose_draft = None;
+            }
         }
     });
 }
