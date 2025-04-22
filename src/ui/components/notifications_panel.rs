@@ -1,7 +1,5 @@
-use super::button::create_button;
 use crate::{app::CircleApp, utils::config::Theme};
-use chrono::{DateTime, Local, Utc};
-use eframe::egui::{self, Align, Color32, Frame, Layout, Order, Pos2, Rect, RichText, Vec2};
+use eframe::egui::{self, Color32, Frame, Order, Pos2, Rect, RichText, Vec2};
 use egui::{Area, Id, Margin, Stroke};
 
 pub struct NotificationsPanelProps<'a> {

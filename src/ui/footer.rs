@@ -21,7 +21,7 @@ pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame,
         });
 }
 
-fn render_left_section(ui: &mut egui::Ui, theme: &Theme) {
+fn render_left_section(ui: &mut egui::Ui, _: &Theme) {
     // Left side - Connection status
     ui.add_space(16.0);
     let _status_frame = Frame::new()
@@ -115,11 +115,7 @@ fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut egui::Ui, t
     });
 }
 
-fn render_notification_bell(
-    app: &mut CircleApp,
-    ui: &mut egui::Ui,
-    theme: &Theme,
-) -> egui::Response {
+fn render_notification_bell(app: &mut CircleApp, ui: &mut egui::Ui, _: &Theme) -> egui::Response {
     let unread_count = app.notification_manager.unread_count();
     let notif_frame = Frame::new()
         .fill(if unread_count > 0 {
