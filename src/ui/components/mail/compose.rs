@@ -116,6 +116,7 @@ pub fn open_compose_screen(app: &mut CircleApp, _: &mut egui::Ui) {
 
 /// Represents a file attachment
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub struct Attachment {
     pub name: String,
     pub path: PathBuf,
@@ -168,7 +169,7 @@ fn render_attachments(ui: &mut egui::Ui, draft: &mut ComposeDraft, theme: &Theme
     if !draft.attachments.is_empty() {
         ui.add_space(16.0);
 
-        let attachment_frame = egui::Frame::none()
+        let attachment_frame = egui::Frame::new()
             .fill(theme.hover.gamma_multiply(0.5))
             .inner_margin(Margin::same(12))
             .corner_radius(8.0);
@@ -237,7 +238,7 @@ fn handle_attachment_click(draft: &mut ComposeDraft) {
 
 /// Handle email sending and show notifications
 fn handle_email_send(app: &mut CircleApp, draft: &ComposeDraft) {
-    let (title, body) = match draft.mode {
+    let (title, _) = match draft.mode {
         ComposeDraftMode::New => (
             "Email Sent",
             format!("Email \"{}\" sent to {}", draft.subject, draft.to),

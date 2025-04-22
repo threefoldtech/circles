@@ -42,6 +42,7 @@ pub enum ComposeDraftMode {
 }
 
 // ComposeDraft
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ComposeDraft {
     pub to: String,

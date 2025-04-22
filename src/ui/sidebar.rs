@@ -302,7 +302,7 @@ fn render_circle_item(
                     app.active_feature,
                     ActiveFeature::Welcome | ActiveFeature::BotChannel
                 ) {
-                    app.set_active_feature(ActiveFeature::Chat);
+                    app.set_active_feature(ActiveFeature::Mail);
                 }
             }
         }
