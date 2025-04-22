@@ -1,14 +1,16 @@
 use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, Vec2};
-use rfd::FileDialog; // Add this to Cargo.toml
+use rfd::FileDialog;
 use std::path::PathBuf;
 
 use crate::{
     app::CircleApp,
+    models::notification::{AppNotification, NotificationPriority},
     models::{
         dummy_data::Email,
         features::{ComposeDraft, ComposeDraftMode},
     },
     utils::config::Theme,
+    utils::notifications::{NotificationConfig, NotificationType, send_desktop_notification},
 };
 
 /// Create a new compose draft for replying to an email
@@ -19,7 +21,7 @@ pub fn create_reply_draft(email: &Email) -> ComposeDraft {
         email.subject.clone()
     };
 
-    ComposeDraft {
+    let draft = ComposeDraft {
         to: email.sender.clone(),
         subject,
         body: String::new(),
@@ -30,7 +32,18 @@ pub fn create_reply_draft(email: &Email) -> ComposeDraft {
         original_date: Some(email.timestamp.format("%Y-%m-%d %H:%M:%S").to_string()),
         original_content: Some(email.content.clone()),
         mode: ComposeDraftMode::Reply,
+    };
+
+    let config = NotificationConfig::new(
+        "Reply Draft Created",
+        format!("Started composing reply to \"{}\"", email.subject),
+        NotificationType::Info,
+    );
+    if let Err(e) = send_desktop_notification(&config) {
+        eprintln!("Failed to send desktop notification: {}", e);
     }
+
+    draft
 }
 
 /// Create a new compose draft for forwarding an email
@@ -41,7 +54,7 @@ pub fn create_forward_draft(email: &Email) -> ComposeDraft {
         email.subject.clone()
     };
 
-    ComposeDraft {
+    let draft = ComposeDraft {
         to: String::new(),
         subject,
         body: String::new(),
@@ -52,7 +65,18 @@ pub fn create_forward_draft(email: &Email) -> ComposeDraft {
         original_date: Some(email.timestamp.format("%Y-%m-%d %H:%M:%S").to_string()),
         original_content: Some(email.content.clone()),
         mode: ComposeDraftMode::Forward,
+    };
+
+    let config = NotificationConfig::new(
+        "Forward Draft Created",
+        format!("Started forwarding \"{}\"", email.subject),
+        NotificationType::Info,
+    );
+    if let Err(e) = send_desktop_notification(&config) {
+        eprintln!("Failed to send desktop notification: {}", e);
     }
+
+    draft
 }
 
 /// Open the compose screen
@@ -70,6 +94,21 @@ pub fn open_compose_screen(app: &mut CircleApp, _: &mut egui::Ui) {
         original_content: None,
         mode: ComposeDraftMode::New,
     });
+
+    let config = NotificationConfig::new(
+        "New Draft Created",
+        "Started composing new email",
+        NotificationType::Info,
+    );
+    if let Err(e) = send_desktop_notification(&config) {
+        eprintln!("Failed to send desktop notification: {}", e);
+    }
+
+    app.notification_manager.add(AppNotification::new(
+        "New Draft",
+        "Started composing new email",
+        NotificationPriority::Low,
+    ));
 }
 
 /// Represents a file attachment
@@ -81,7 +120,6 @@ pub struct Attachment {
 }
 
 impl ComposeDraft {
-    /// Add a new attachment
     fn add_attachment(&mut self, path: PathBuf) {
         if let Ok(metadata) = std::fs::metadata(&path) {
             let name = path
@@ -98,7 +136,6 @@ impl ComposeDraft {
         }
     }
 
-    /// Remove an attachment by index
     fn remove_attachment(&mut self, index: usize) {
         if index < self.attachments.len() {
             self.attachments.remove(index);
@@ -128,7 +165,6 @@ fn render_attachments(ui: &mut egui::Ui, draft: &mut ComposeDraft, theme: &Theme
     if !draft.attachments.is_empty() {
         ui.add_space(16.0);
 
-        // Attachments container
         let attachment_frame = egui::Frame::none()
             .fill(theme.hover.gamma_multiply(0.5))
             .inner_margin(Margin::same(12))
@@ -139,18 +175,14 @@ fn render_attachments(ui: &mut egui::Ui, draft: &mut ComposeDraft, theme: &Theme
                 ui.label(RichText::new("Attachments").size(14.0).strong());
                 ui.add_space(8.0);
 
-                // Store indices of attachments to remove
                 let mut to_remove = None;
 
-                // Iterate over attachments with indices
                 for (idx, attachment) in draft.attachments.iter().enumerate() {
                     ui.horizontal(|ui| {
-                        // File icon and name
                         ui.label(RichText::new("📎").size(16.0));
                         ui.add_space(4.0);
                         ui.label(RichText::new(&attachment.name).size(14.0));
 
-                        // File size
                         ui.add_space(8.0);
                         ui.label(
                             RichText::new(format_file_size(attachment.size))
@@ -158,7 +190,6 @@ fn render_attachments(ui: &mut egui::Ui, draft: &mut ComposeDraft, theme: &Theme
                                 .color(theme.secondary_text),
                         );
 
-                        // Remove button
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             if ui
                                 .add(
@@ -181,7 +212,6 @@ fn render_attachments(ui: &mut egui::Ui, draft: &mut ComposeDraft, theme: &Theme
                     }
                 }
 
-                // Remove attachment if needed
                 if let Some(idx) = to_remove {
                     draft.remove_attachment(idx);
                 }
@@ -202,22 +232,69 @@ fn handle_attachment_click(draft: &mut ComposeDraft) {
     }
 }
 
-/// Render the compose screen
-pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
-    // Get the title first, using an immutable borrow
-    let title = if let Some(draft) = &app.compose_draft {
-        match draft.mode {
-            ComposeDraftMode::Reply => "Reply to email",
-            ComposeDraftMode::Forward => "Forward email",
-            ComposeDraftMode::New => "Draft a new email",
-        }
-    } else {
-        "Draft a new email"
+/// Handle email sending and show notifications
+fn handle_email_send(app: &mut CircleApp, draft: &ComposeDraft) {
+    let (title, body) = match draft.mode {
+        ComposeDraftMode::New => (
+            "Email Sent",
+            format!("Email \"{}\" sent to {}", draft.subject, draft.to),
+        ),
+        ComposeDraftMode::Reply => (
+            "Reply Sent",
+            format!("Reply \"{}\" sent to {}", draft.subject, draft.to),
+        ),
+        ComposeDraftMode::Forward => (
+            "Email Forwarded",
+            format!("Email \"{}\" forwarded to {}", draft.subject, draft.to),
+        ),
     };
 
+    let attachment_info = if !draft.attachments.is_empty() {
+        format!(" with {} attachments", draft.attachments.len())
+    } else {
+        String::new()
+    };
+
+    let notification_message = match draft.mode {
+        ComposeDraftMode::New => format!(
+            "Email \"{}\" sent to {}{}",
+            draft.subject, draft.to, attachment_info
+        ),
+        ComposeDraftMode::Reply => format!(
+            "Replied to {} - \"{}\"{}",
+            draft.to, draft.subject, attachment_info
+        ),
+        ComposeDraftMode::Forward => format!(
+            "Forwarded \"{}\" to {}{}",
+            draft.subject, draft.to, attachment_info
+        ),
+    };
+
+    let mut config = NotificationConfig::new(title, &body, NotificationType::Success);
+    config.timeout = 10000;
+
+    match send_desktop_notification(&config) {
+        Ok(_) => println!("Desktop notification sent successfully"),
+        Err(e) => eprintln!("Failed to send desktop notification: {}", e),
+    }
+
+    app.notification_manager.add(AppNotification::new(
+        title,
+        notification_message,
+        NotificationPriority::Normal,
+    ));
+}
+
+/// Render the compose screen
+pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
     ui.vertical(|ui| {
         // Header
         ui.horizontal(|ui| {
+            let title = match app.compose_draft.as_ref().map(|d| d.mode.clone()) {
+                Some(ComposeDraftMode::Reply) => "Reply to email",
+                Some(ComposeDraftMode::Forward) => "Forward email",
+                _ => "Draft a new email",
+            };
             ui.heading(
                 RichText::new(title)
                     .size(20.0)
@@ -227,6 +304,8 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
         });
         ui.add_space(20.0);
 
+        // Handle draft rendering
+        let mut action = None;
         if let Some(draft) = &mut app.compose_draft {
             // Original email quote for replies and forwards
             if draft.mode != ComposeDraftMode::New {
@@ -283,7 +362,7 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                 ui.label(RichText::new("To:").size(14.0).color(theme.text).strong());
                 ui.add_space(8.0);
                 input_frame.show(ui, |ui| {
-                    ui.set_max_width(500.0); // Adjust to fit dialog width
+                    ui.set_max_width(500.0);
                     ui.horizontal(|ui| {
                         ui.label(
                             RichText::new("👤")
@@ -377,11 +456,10 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
             // Restore original style after input fields
             ui.set_style(original_style);
 
-            // Render attachments section before bottom buttons
+            // Render attachments
             render_attachments(ui, draft, theme);
 
             // Bottom buttons
-            let mut should_close = false;
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                     if ui
@@ -399,7 +477,6 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                         handle_attachment_click(draft);
                     }
 
-                    // Show attachment count if any
                     if !draft.attachments.is_empty() {
                         ui.add_space(8.0);
                         ui.label(
@@ -422,7 +499,7 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                         )
                         .clicked()
                     {
-                        should_close = true;
+                        action = Some(("send", draft.clone()));
                     }
 
                     if ui
@@ -439,15 +516,26 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                         )
                         .clicked()
                     {
-                        should_close = true;
+                        action = Some(("discard", ComposeDraft::new()));
                     }
                     ui.add_space(8.0);
                 });
             });
+        }
 
-            if should_close {
-                app.compose_dialog_open = false;
-                app.compose_draft = None;
+        // Handle actions after draft borrow is released
+        if let Some((action_type, draft)) = action {
+            match action_type {
+                "send" => {
+                    handle_email_send(app, &draft);
+                    app.compose_dialog_open = false;
+                    app.compose_draft = None;
+                }
+                "discard" => {
+                    app.compose_dialog_open = false;
+                    app.compose_draft = None;
+                }
+                _ => {}
             }
         }
     });

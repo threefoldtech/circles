@@ -2,6 +2,7 @@ use crate::models::circle::Circle;
 use crate::models::dummy_data::{self, CircleFeatureData};
 use crate::models::user::User;
 use crate::ui::app_layout;
+use crate::ui::components::notifications::NotificationManager;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -36,6 +37,8 @@ pub struct CircleApp {
     pub compose_dialog_open: bool,
     /// Draft for the compose dialog
     pub compose_draft: Option<crate::models::features::ComposeDraft>,
+    /// Notification manager
+    pub notification_manager: NotificationManager,
 }
 
 /// Enum representing available features in the application
@@ -139,6 +142,7 @@ impl CircleApp {
             email_dialog_open: false,
             compose_dialog_open: false,
             compose_draft: None,
+            notification_manager: NotificationManager::new(50), // Keep last 50 notifications
         }
     }
 

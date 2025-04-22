@@ -6,7 +6,7 @@ use eframe::egui::{
 };
 
 // Footer rendering function
-pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
+pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
     TopBottomPanel::bottom("status_bar")
         .exact_height(40.0)
         .frame(app_layout.clone().corner_radius(0))
@@ -62,7 +62,7 @@ pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, the
                     ui.add_space(16.0);
 
                     // Notifications indicator
-                    let unread_count = 3; // This would come from app state in a real implementation
+                    let unread_count = app.notification_manager.unread_count();
                     let notif_frame = Frame::new()
                         .fill(if unread_count > 0 {
                             Color32::from_rgb(240, 70, 70)
@@ -79,6 +79,11 @@ pub fn render_status_bar(app: &CircleApp, ctx: &Context, app_layout: &Frame, the
                                     .strong(),
                             );
                         });
+
+                    if notif_frame.response.clicked() {
+                        // Show notifications panel
+                        app.notification_manager.render(ui, &theme);
+                    }
 
                     if notif_frame.response.hovered() {
                         ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);

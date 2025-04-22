@@ -56,6 +56,23 @@ pub struct ComposeDraft {
     pub mode: ComposeDraftMode,           // New, Reply, or Forward
 }
 
+impl ComposeDraft {
+    pub fn new() -> Self {
+        Self {
+            to: String::new(),
+            subject: String::new(),
+            body: String::new(),
+            attachments: Vec::new(),
+            reply_to: None,
+            forward_from: None,
+            original_subject: None,
+            original_date: None,
+            original_content: None,
+            mode: ComposeDraftMode::New,
+        }
+    }
+}
+
 /// Calendar feature
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CalendarFeature {
