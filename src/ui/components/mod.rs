@@ -3,3 +3,4 @@ pub mod button;
 pub mod circle_dialog;
 pub mod mail;
 pub mod notifications;
+pub mod notifications_panel;
