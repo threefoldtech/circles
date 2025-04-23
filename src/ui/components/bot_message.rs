@@ -46,6 +46,14 @@ impl BotMessage {
 
     /// Render the bot message
     pub fn render(&self, ui: &mut egui::Ui) {
+        // Get the theme from the app
+        let is_dark_mode = ui.ctx().style().visuals.dark_mode;
+        
+        // Apply theme-appropriate styles to the UI
+        if is_dark_mode {
+            ui.style_mut().visuals.override_text_color = Some(Color32::from_rgb(241, 245, 249));
+        }
+        
         match &self.message_type {
             BotMessageType::Welcome => render_welcome_message(ui),
             BotMessageType::Update { version, changes } => {
@@ -85,9 +93,31 @@ fn format_timestamp(timestamp: DateTime<Utc>) -> String {
 
 /// Render a welcome message
 fn render_welcome_message(ui: &mut egui::Ui) {
+    // Determine if we're in dark mode
+    let is_dark_mode = ui.ctx().style().visuals.dark_mode;
+    
+    // Choose appropriate colors based on theme
+    let bg_color = if is_dark_mode {
+        Color32::from_rgb(30, 41, 59) // Dark mode background
+    } else {
+        Color32::from_rgb(240, 249, 255) // Light mode background
+    };
+    
+    let text_color = if is_dark_mode {
+        Color32::from_rgb(241, 245, 249) // Dark mode text
+    } else {
+        Color32::from_rgb(40, 50, 60) // Light mode text
+    };
+    
+    let secondary_text_color = if is_dark_mode {
+        Color32::from_rgb(148, 163, 184) // Dark mode secondary text
+    } else {
+        Color32::from_rgb(120, 130, 140) // Light mode secondary text
+    };
+    
     let message_frame = egui::Frame::new()
-        .fill(Color32::from_rgb(240, 249, 255))
-        .stroke(Stroke::new(1.0, Color32::from_rgb(187, 222, 251)))
+        .fill(bg_color)
+        .stroke(Stroke::new(1.0, Color32::from_rgba_premultiplied(100, 100, 100, 100)))
         .corner_radius(8.0)
         .inner_margin(egui::Margin::same(16));
     
@@ -104,13 +134,13 @@ fn render_welcome_message(ui: &mut egui::Ui) {
                         RichText::new("Circles Bot")
                             .size(16.0)
                             .strong()
-                            .color(Color32::from_rgb(25, 118, 210))
+                            .color(text_color)
                     );
                     
                     ui.label(
                         RichText::new("Welcome to the Circles Bot Channel!")
                             .size(14.0)
-                            .color(Color32::from_rgb(40, 50, 60))
+                            .color(text_color)
                     );
                 });
                 
@@ -118,7 +148,7 @@ fn render_welcome_message(ui: &mut egui::Ui) {
                     ui.label(
                         RichText::new("Just now")
                             .size(12.0)
-                            .color(Color32::from_rgb(120, 130, 140))
+                            .color(secondary_text_color)
                     );
                 });
             });
@@ -128,7 +158,7 @@ fn render_welcome_message(ui: &mut egui::Ui) {
             ui.label(
                 RichText::new("I'll keep you updated on system changes, new connections, and helpful tips. You'll only receive messages from me in this channel - it's a one-way communication channel for important announcements.")
                     .size(14.0)
-                    .color(Color32::from_rgb(70, 80, 90))
+                    .color(text_color)
             );
         });
     });

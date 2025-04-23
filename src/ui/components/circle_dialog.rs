@@ -1,4 +1,5 @@
 use crate::models::circle::{Circle, CircleType, JoinPolicy, NotificationSettings, Visibility};
+use crate::utils::config::Theme;
 use eframe::egui::{self, Color32, RichText, Stroke, Vec2};
 
 /// State for the circle creation dialog
@@ -58,6 +59,7 @@ pub fn render_circle_dialog(
     state: &mut CircleDialogState,
     ctx: &egui::Context,
     creator_id: uuid::Uuid,
+    theme: &Theme,
 ) -> Option<Circle> {
     if !state.is_open {
         return None;
@@ -74,7 +76,7 @@ pub fn render_circle_dialog(
         .resizable(false)
         .frame(
             egui::Frame::window(&ctx.style())
-                .fill(Color32::from_rgb(255, 255, 255))
+                .fill(theme.panel)
                 .corner_radius(12)
                 .shadow(egui::epaint::Shadow {
                     color: Color32::from_black_alpha(25),
@@ -93,7 +95,7 @@ pub fn render_circle_dialog(
                         RichText::new("Create New Circle")
                             .size(24.0) // Optimized heading font size
                             .strong()
-                            .color(Color32::from_rgb(40, 50, 60)),
+                            .color(theme.text),
                     );
                     ui.add_space(20.0);
                 });
@@ -105,13 +107,13 @@ pub fn render_circle_dialog(
                     RichText::new("Circle Name *")
                         .strong()
                         .size(16.0) // Optimized label font size
-                        .color(Color32::from_rgb(40, 50, 60)),
+                        .color(theme.text),
                 );
-                // Set light background for all widgets before adding text field
-                ui.style_mut().visuals.extreme_bg_color = Color32::from_rgb(248, 248, 248);
-                ui.style_mut().visuals.widgets.inactive.bg_fill = Color32::from_rgb(248, 248, 248);
-                ui.style_mut().visuals.widgets.active.bg_fill = Color32::from_rgb(240, 240, 240);
-                ui.style_mut().visuals.widgets.hovered.bg_fill = Color32::from_rgb(235, 235, 235);
+                // Set theme-appropriate background for all widgets before adding text field
+                ui.style_mut().visuals.extreme_bg_color = theme.secondary_background;
+                ui.style_mut().visuals.widgets.inactive.bg_fill = theme.secondary_background;
+                ui.style_mut().visuals.widgets.active.bg_fill = theme.hover;
+                ui.style_mut().visuals.widgets.hovered.bg_fill = theme.hover;
 
                 // Create text edit with consistent styling
                 ui.add(
@@ -121,7 +123,7 @@ pub fn render_circle_dialog(
                         .font(egui::FontId::proportional(16.0)), // Removed trailing comma
                 )
                 .on_hover_text(
-                    egui::RichText::new("Enter a name for your circle").color(Color32::WHITE),
+                    egui::RichText::new("Enter a name for your circle").color(theme.text),
                 )
                 .on_hover_cursor(egui::CursorIcon::Text);
 
@@ -145,7 +147,7 @@ pub fn render_circle_dialog(
                     RichText::new("Circle Type *")
                         .strong()
                         .size(16.0) // Optimized label font size
-                        .color(Color32::from_rgb(40, 50, 60)),
+                        .color(theme.text),
                 );
                 ui.horizontal(|ui| {
                     ui.style_mut().spacing.item_spacing = Vec2::new(12.0, 0.0);
@@ -163,7 +165,7 @@ pub fn render_circle_dialog(
                     RichText::new("Visibility")
                         .strong()
                         .size(16.0) // Optimized label font size
-                        .color(Color32::from_rgb(40, 50, 60)),
+                        .color(theme.text),
                 );
                 ui.horizontal(|ui| {
                     ui.style_mut().spacing.item_spacing = Vec2::new(12.0, 0.0);
@@ -181,7 +183,7 @@ pub fn render_circle_dialog(
                     RichText::new("Join Policy")
                         .strong()
                         .size(16.0) // Optimized label font size
-                        .color(Color32::from_rgb(40, 50, 60)),
+                        .color(theme.text),
                 );
                 ui.horizontal(|ui| {
                     ui.style_mut().spacing.item_spacing = Vec2::new(12.0, 0.0);
@@ -207,7 +209,7 @@ pub fn render_circle_dialog(
                     RichText::new("Notification Settings")
                         .strong()
                         .size(16.0) // Optimized label font size
-                        .color(Color32::from_rgb(40, 50, 60)),
+                        .color(theme.text),
                 );
                 ui.checkbox(&mut state.email_notifications, "Email Notifications")
                     .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -225,12 +227,12 @@ pub fn render_circle_dialog(
                     let cancel_button = egui::Button::new(
                         RichText::new("Cancel")
                             .size(16.0) // Optimized button text font size
-                            .color(Color32::from_rgb(70, 80, 90)),
+                            .color(theme.text),
                     )
                     .min_size(Vec2::new(110.0, 38.0)) // Slightly larger button
                     .corner_radius(8.0)
-                    .fill(Color32::from_rgb(230, 235, 240))
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(200, 210, 220)));
+                    .fill(theme.secondary_background)
+                    .stroke(Stroke::new(1.0, theme.border));
 
                     if ui
                         .add(cancel_button)
@@ -250,8 +252,8 @@ pub fn render_circle_dialog(
                     )
                     .min_size(Vec2::new(130.0, 38.0)) // Slightly larger button
                     .corner_radius(8.0)
-                    .fill(Color32::from_rgb(66, 133, 244))
-                    .stroke(Stroke::new(1.0, Color32::from_rgb(45, 100, 200)));
+                    .fill(theme.accent)
+                    .stroke(Stroke::new(1.0, theme.border));
 
                     if ui
                         .add(create_button)

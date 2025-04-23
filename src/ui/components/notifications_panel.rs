@@ -36,6 +36,7 @@ pub fn render_notifications_panel(
                 .show(ui, |ui| {
                     ui.set_min_size(Vec2::new(props.width, props.height));
                     ui.set_max_size(Vec2::new(props.width, props.height));
+                    ui.set_max_width(props.width); // Ensure content doesn't expand the panel width
                     ui.vertical(|ui| {
                         ui.heading(
                             RichText::new("Notifications")

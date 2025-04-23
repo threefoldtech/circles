@@ -202,12 +202,11 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                                     .on_hover_ui(|ui| {
                                         ui.style_mut().visuals.popup_shadow = epaint::Shadow::NONE;
                                         ui.style_mut().visuals.override_text_color =
-                                            Some(Color32::from_rgb(255, 255, 255));
-                                        ui.style_mut().visuals.window_fill =
-                                            Color32::from_rgb(255, 255, 255);
+                                            Some(theme.text);
+                                        ui.style_mut().visuals.window_fill = theme.panel;
                                         ui.label(
                                             egui::RichText::new(format!("View {}", folder.name))
-                                                .color(Color32::from_rgb(255, 255, 255)),
+                                                .color(theme.text),
                                         );
                                     })
                                     .on_hover_cursor(egui::CursorIcon::PointingHand);
@@ -272,7 +271,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                                 });
                             } else {
                                 for (index, email) in filtered_emails {
-                                    let clicked = render_email_card(ui, email, index, app);
+                                    let clicked = render_email_card(ui, email, index, app, &theme);
                                     if clicked {
                                         app.selected_email_id = Some(email.id);
                                         app.email_dialog_open = true;

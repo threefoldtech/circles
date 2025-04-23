@@ -21,14 +21,14 @@ pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame,
         });
 }
 
-fn render_left_section(ui: &mut egui::Ui, _: &Theme) {
+fn render_left_section(ui: &mut egui::Ui, theme: &Theme) {
     // Left side - Connection status
     ui.add_space(16.0);
     let _status_frame = Frame::new()
-        .fill(Color32::from_rgb(240, 245, 250))
+        .fill(theme.secondary_background)
         .corner_radius(12)
         .inner_margin(Margin::symmetric(10, 4))
-        .stroke(Stroke::new(1.0, Color32::from_rgb(220, 225, 230)))
+        .stroke(Stroke::new(1.0, theme.border))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
                 // Green dot for connected status
@@ -38,11 +38,7 @@ fn render_left_section(ui: &mut egui::Ui, _: &Theme) {
                     Color32::from_rgb(50, 180, 50),
                 );
                 ui.add_space(12.0);
-                ui.label(
-                    RichText::new("Connected")
-                        .size(13.0)
-                        .color(Color32::from_rgb(70, 80, 90)),
-                );
+                ui.label(RichText::new("Connected").size(13.0).color(theme.text));
             });
         });
 
@@ -56,7 +52,7 @@ fn render_left_section(ui: &mut egui::Ui, _: &Theme) {
     ui.label(
         RichText::new(format!("📅 {}", date_str))
             .size(13.0)
-            .color(Color32::from_rgb(70, 80, 90)),
+            .color(theme.text),
     );
 
     ui.add_space(8.0);
@@ -64,7 +60,7 @@ fn render_left_section(ui: &mut egui::Ui, _: &Theme) {
     ui.label(
         RichText::new(format!("🕒 {}", time_str))
             .size(13.0)
-            .color(Color32::from_rgb(70, 80, 90)),
+            .color(theme.text),
     );
 }
 
@@ -115,16 +111,21 @@ fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut egui::Ui, t
     });
 }
 
-fn render_notification_bell(app: &mut CircleApp, ui: &mut egui::Ui, _: &Theme) -> egui::Response {
+fn render_notification_bell(
+    app: &mut CircleApp,
+    ui: &mut egui::Ui,
+    theme: &Theme,
+) -> egui::Response {
     let unread_count = app.notification_manager.unread_count();
     let notif_frame = Frame::new()
         .fill(if unread_count > 0 {
             Color32::from_rgb(240, 70, 70)
         } else {
-            Color32::from_rgb(200, 210, 220)
+            theme.secondary_background
         })
-        .corner_radius(10)
-        .inner_margin(Margin::symmetric(8, 4));
+        .corner_radius(12)
+        .inner_margin(Margin::symmetric(8, 4))
+        .stroke(Stroke::new(1.0, theme.border));
 
     let response = notif_frame
         .show(ui, |ui| {
@@ -132,7 +133,11 @@ fn render_notification_bell(app: &mut CircleApp, ui: &mut egui::Ui, _: &Theme) -
                 egui::Label::new(
                     RichText::new(format!("🔔 {}", unread_count))
                         .size(13.0)
-                        .color(Color32::WHITE)
+                        .color(if unread_count > 0 {
+                            Color32::WHITE
+                        } else {
+                            theme.text
+                        })
                         .strong(),
                 )
                 .sense(Sense::click()),
@@ -156,9 +161,10 @@ fn render_notification_bell(app: &mut CircleApp, ui: &mut egui::Ui, _: &Theme) -
 fn render_user_status(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
     let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
     let user_frame = Frame::new()
-        .fill(theme.hover)
+        .fill(theme.secondary_background)
         .corner_radius(12)
         .inner_margin(Margin::symmetric(10, 4))
+        .stroke(Stroke::new(1.0, theme.border))
         .show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.painter().circle_filled(

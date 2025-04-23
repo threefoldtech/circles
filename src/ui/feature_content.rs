@@ -15,7 +15,7 @@ pub fn render_feature_content(
     theme: &Theme,
 ) {
     // Render the circle dialog if open
-    render_circle_dialog(app, ctx);
+    render_circle_dialog(app, ctx, theme);
     CentralPanel::default()
         .frame(app_layout.clone())
         .show(ctx, |ui| match app.active_feature {
@@ -31,12 +31,15 @@ pub fn render_feature_content(
         });
 }
 
-fn render_circle_dialog(app: &mut CircleApp, ctx: &Context) {
+fn render_circle_dialog(app: &mut CircleApp, ctx: &Context, theme: &Theme) {
     if app.circle_dialog_state.is_open {
         if let Some(user) = &app.user {
-            if let Some(new_circle) =
-                circle_dialog::render_circle_dialog(&mut app.circle_dialog_state, ctx, user.id)
-            {
+            if let Some(new_circle) = circle_dialog::render_circle_dialog(
+                &mut app.circle_dialog_state,
+                ctx,
+                user.id,
+                theme,
+            ) {
                 app.add_circle(new_circle.clone());
 
                 // Set the newly created circle as the active circle

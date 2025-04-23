@@ -54,52 +54,45 @@ impl NotificationManager {
             return;
         }
 
-        // Buttons
+        // Buttons with better layout
         ui.horizontal(|ui| {
-            ui.with_layout(
-                Layout::centered_and_justified(Direction::LeftToRight),
-                |ui| {
-                    ui.add_space(16.0);
-                    // Clear All button
-                    let clear_button = ui.add(
-                        egui::Button::new(
-                            RichText::new("Clear All").size(13.0).color(Color32::WHITE),
-                        )
-                        .corner_radius(6)
-                        .fill(theme.error)
-                        .stroke(Stroke::NONE)
-                        .min_size(Vec2::new(40.0, 36.0)),
-                    );
-
-                    if clear_button.hovered() {
-                        ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
-                    }
-                    if clear_button.clicked() {
-                        self.clear();
-                    }
-
-                    ui.add_space(8.0);
-
-                    // Mark All Read button
-                    let mark_read_button = ui.add(
-                        egui::Button::new(
-                            RichText::new("Mark All Read")
-                                .size(13.0)
-                                .color(Color32::WHITE),
-                        )
-                        .corner_radius(6)
-                        .fill(theme.active)
-                        .stroke(Stroke::NONE)
-                        .min_size(Vec2::new(40.0, 36.0)),
-                    );
-                    if mark_read_button.hovered() {
-                        ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
-                    }
-                    if mark_read_button.clicked() {
-                        self.mark_all_read();
-                    }
-                },
+            // Left side - Clear All button
+            let clear_button = ui.add(
+                egui::Button::new(RichText::new("Clear All").size(13.0).color(Color32::WHITE))
+                    .corner_radius(6)
+                    .fill(theme.error)
+                    .stroke(Stroke::NONE)
+                    .min_size(Vec2::new(100.0, 36.0)),
             );
+
+            if clear_button.hovered() {
+                ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
+            }
+            if clear_button.clicked() {
+                self.clear();
+            }
+
+            // Push the Mark All Read button to the right
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                // Mark All Read button
+                let mark_read_button = ui.add(
+                    egui::Button::new(
+                        RichText::new("Mark All Read")
+                            .size(13.0)
+                            .color(Color32::WHITE),
+                    )
+                    .corner_radius(6)
+                    .fill(theme.active)
+                    .stroke(Stroke::NONE)
+                    .min_size(Vec2::new(100.0, 36.0)),
+                );
+                if mark_read_button.hovered() {
+                    ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
+                }
+                if mark_read_button.clicked() {
+                    self.mark_all_read();
+                }
+            });
         });
 
         ui.separator();
@@ -114,6 +107,9 @@ impl NotificationManager {
                     ui.vertical(|ui| {
                         // Title with timestamp
                         ui.horizontal(|ui| {
+                            // Set a maximum width for the title to prevent panel expansion
+                            let title_width = ui.available_width() - 50.0; // Reserve space for timestamp
+                            ui.set_max_width(title_width);
                             ui.label(
                                 RichText::new(&notification.title)
                                     .size(14.0)
@@ -141,12 +137,15 @@ impl NotificationManager {
                             });
                         });
 
-                        // Message
-                        ui.label(
-                            RichText::new(&notification.message)
-                                .size(13.0)
-                                .color(theme.text),
-                        );
+                        // Message with word wrapping to prevent panel expansion
+                        ui.horizontal(|ui| {
+                            ui.set_max_width(ui.available_width());
+                            ui.label(
+                                RichText::new(&notification.message)
+                                    .size(13.0)
+                                    .color(theme.text),
+                            );
+                        });
 
                         // Action button if URL exists
                         if let Some(action_url) = &notification.action_url {

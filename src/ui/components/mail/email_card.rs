@@ -1,4 +1,4 @@
-use crate::{app::CircleApp, models::dummy_data::Email};
+use crate::{app::CircleApp, models::dummy_data::Email, utils::config::Theme};
 use chrono::{DateTime, Utc};
 use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, epaint};
 
@@ -9,12 +9,13 @@ pub fn render_email_card(
     email: &Email,
     index: usize,
     app: &mut CircleApp,
+    theme: &Theme,
 ) -> bool {
     let mut clicked = false;
 
     let frame = egui::Frame::new()
-        .fill(Color32::from_rgb(255, 255, 255))
-        .stroke(Stroke::new(1.0, Color32::from_rgb(200, 200, 210)))
+        .fill(theme.panel)
+        .stroke(Stroke::new(1.0, theme.border))
         .corner_radius(6)
         .inner_margin(Margin::same(10))
         .outer_margin(Margin::same(2));
@@ -37,51 +38,41 @@ pub fn render_email_card(
                 ui.horizontal(|ui| {
                     let sender_text = RichText::new(format!("👤 {}", email.sender))
                         .font(FontId::new(13.0, FontFamily::Proportional))
-                        .color(Color32::from_rgb(80, 80, 100))
+                        .color(theme.text)
                         .strong();
                     ui.label(sender_text).on_hover_ui(|ui| {
                         ui.style_mut().visuals.popup_shadow = epaint::Shadow::NONE;
-                        ui.style_mut().visuals.override_text_color =
-                            Some(Color32::from_rgb(255, 255, 255));
-                        ui.style_mut().visuals.window_fill = Color32::from_rgb(255, 255, 255);
-                        ui.label(
-                            egui::RichText::new("Sender").color(Color32::from_rgb(255, 255, 255)),
-                        );
+                        ui.style_mut().visuals.override_text_color = Some(theme.text);
+                        ui.style_mut().visuals.window_fill = theme.panel;
+                        ui.label(egui::RichText::new("Sender").color(theme.text));
                     });
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         let time_text = RichText::new(format_time_ago(&email.timestamp))
                             .font(FontId::new(11.0, FontFamily::Proportional))
-                            .color(Color32::from_rgb(120, 120, 140));
+                            .color(theme.secondary_text);
                         ui.label(time_text).on_hover_ui(|ui| {
                             ui.style_mut().visuals.popup_shadow = epaint::Shadow::NONE;
-                            ui.style_mut().visuals.override_text_color =
-                                Some(Color32::from_rgb(255, 255, 255));
-                            ui.style_mut().visuals.window_fill = Color32::from_rgb(255, 255, 255);
-                            ui.label(
-                                egui::RichText::new("Sent time")
-                                    .color(Color32::from_rgb(255, 255, 255)),
-                            );
+                            ui.style_mut().visuals.override_text_color = Some(theme.text);
+                            ui.style_mut().visuals.window_fill = theme.panel;
+                            ui.label(egui::RichText::new("Sent time").color(theme.text));
                         });
                     });
                 });
 
                 let subject_color = if !email.read {
-                    Color32::from_rgb(60, 60, 80)
+                    theme.text
                 } else {
-                    Color32::from_rgb(80, 80, 100)
+                    theme.secondary_text
                 };
                 let subject_text = RichText::new(&email.subject)
                     .font(FontId::new(12.0, FontFamily::Proportional))
                     .color(subject_color);
                 ui.label(subject_text).on_hover_ui(|ui| {
                     ui.style_mut().visuals.popup_shadow = epaint::Shadow::NONE;
-                    ui.style_mut().visuals.override_text_color =
-                        Some(Color32::from_rgb(255, 255, 255));
-                    ui.style_mut().visuals.window_fill = Color32::from_rgb(255, 255, 255);
-                    ui.label(
-                        egui::RichText::new("Subject").color(Color32::from_rgb(255, 255, 255)),
-                    );
+                    ui.style_mut().visuals.override_text_color = Some(theme.text);
+                    ui.style_mut().visuals.window_fill = theme.panel;
+                    ui.label(egui::RichText::new("Subject").color(theme.text));
                 });
 
                 let preview = if email.content.len() > 60 {
@@ -91,17 +82,13 @@ pub fn render_email_card(
                 };
                 let preview_text = RichText::new(preview)
                     .font(FontId::new(11.0, FontFamily::Proportional))
-                    .color(Color32::from_rgb(120, 120, 140))
+                    .color(theme.secondary_text)
                     .weak();
                 ui.label(preview_text).on_hover_ui(|ui| {
                     ui.style_mut().visuals.popup_shadow = epaint::Shadow::NONE;
-                    ui.style_mut().visuals.override_text_color =
-                        Some(Color32::from_rgb(255, 255, 255));
-                    ui.style_mut().visuals.window_fill = Color32::from_rgb(255, 255, 255);
-                    ui.label(
-                        egui::RichText::new("Message preview")
-                            .color(Color32::from_rgb(255, 255, 255)),
-                    );
+                    ui.style_mut().visuals.override_text_color = Some(theme.text);
+                    ui.style_mut().visuals.window_fill = theme.panel;
+                    ui.label(egui::RichText::new("Message preview").color(theme.text));
                 });
             });
         });
@@ -139,11 +126,10 @@ pub fn render_email_card(
         }
 
         if response.hovered() {
-            ui.painter().rect_filled(
-                response.rect.expand(2.0),
-                6,
-                Color32::from_rgb(200, 220, 255).gamma_multiply(0.2),
-            );
+            // Use a semi-transparent hover color to ensure text remains visible
+            let hover_color = theme.hover.gamma_multiply(0.5);
+            ui.painter()
+                .rect_filled(response.rect.expand(2.0), 6, hover_color);
             ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
         }
     });

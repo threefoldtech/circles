@@ -85,9 +85,10 @@ pub fn render_top_panel(
                             });
 
                         let circle_frame = Frame::new()
-                            .fill(Color32::WHITE)
-                            .corner_radius(20)
+                            .fill(theme.secondary_background)
+                            .corner_radius(12)
                             .inner_margin(egui::Margin::symmetric(12, 6))
+                            .stroke(Stroke::new(1.0, theme.border))
                             .show(ui, |ui| {
                                 ui.horizontal(|ui| {
                                     if app.active_circle().is_some() {
@@ -103,7 +104,7 @@ pub fn render_top_panel(
                                         RichText::new(circle_text)
                                             .size(14.0)
                                             .strong()
-                                            .color(Color32::from_rgb(40, 50, 60)),
+                                            .color(theme.text),
                                     );
                                 });
                             });
@@ -140,7 +141,7 @@ fn create_nav_button(
         .color(if is_active {
             Color32::WHITE
         } else {
-            Color32::from_rgb(70, 80, 90)
+            theme.text
         });
 
     let button = Button::new(button_text)
@@ -150,7 +151,7 @@ fn create_nav_button(
         .fill(if is_active {
             theme.accent
         } else {
-            Color32::from_rgb(230, 235, 240)
+            theme.secondary_background
         })
         .stroke(Stroke::NONE);
 

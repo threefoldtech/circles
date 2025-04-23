@@ -22,8 +22,10 @@ pub fn render_bot_channel(app: &CircleApp, ui: &mut egui::Ui) {
                 .max_height(available_height)
                 .id_salt("bot_messages_scroll_area")
                 .show(ui, |ui| {
-                    // Display bot messages
+                    // Display bot messages with theme-aware styling
+                    ui.style_mut().visuals.override_text_color = Some(theme.text);
                     render_bot_messages(ui);
+                    ui.style_mut().visuals.override_text_color = None; // Reset after rendering
                 });
             
             ui.add_space(16.0);
@@ -52,14 +54,14 @@ pub fn render_bot_channel(app: &CircleApp, ui: &mut egui::Ui) {
                 ui.label(
                     RichText::new("Circles Bot is active")
                         .size(14.0)
-                        .color(Color32::from_rgb(100, 110, 120))
+                        .color(theme.text)
                 );
                 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label(
                         RichText::new("You can only receive messages in this channel")
                             .size(14.0)
-                            .color(Color32::from_rgb(100, 110, 120))
+                            .color(theme.secondary_text)
                             .italics()
                     );
                 });

@@ -18,20 +18,20 @@ pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui, theme: &Theme) {
                 RichText::new("WelcomeBot")
                     .size(32.0)
                     .strong()
-                    .color(Color32::from_rgb(66, 133, 244)),
+                    .color(theme.accent),
             );
             ui.add_space(20.0);
             ui.label(
                 RichText::new("Your new collaboration platform for teams and individuals")
                     .size(18.0)
-                    .color(Color32::from_rgb(70, 80, 90)),
+                    .color(theme.text),
             );
             ui.add_space(60.0);
             ui.label(
                 RichText::new("To get started:")
                     .size(16.0)
                     .strong()
-                    .color(Color32::from_rgb(40, 50, 60)),
+                    .color(theme.header_text),
             );
             ui.add_space(10.0);
 
@@ -43,11 +43,7 @@ pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui, theme: &Theme) {
             ];
 
             for instruction in INSTRUCTIONS {
-                ui.label(
-                    RichText::new(instruction)
-                        .size(16.0)
-                        .color(Color32::from_rgb(70, 80, 90)),
-                );
+                ui.label(RichText::new(instruction).size(16.0).color(theme.text));
                 ui.add_space(8.0);
             }
         });

@@ -103,7 +103,7 @@ pub fn render_email_detail(app: &mut CircleApp, ui: &mut egui::Ui, email: &Email
 
         // Email content
         egui::Frame::new()
-            .fill(Color32::WHITE)
+            .fill(theme.panel)
             .inner_margin(Margin::same(24))
             .stroke(Stroke::new(1.0, theme.border))
             .corner_radius(8.0)
