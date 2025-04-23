@@ -4,7 +4,6 @@ use egui::{Area, Id, Margin, Stroke};
 
 pub struct NotificationsPanelProps<'a> {
     pub pos: Pos2,
-    pub width: f32,
     pub height: f32,
     pub theme: &'a Theme,
 }
@@ -23,7 +22,9 @@ pub fn render_notifications_panel(
                 .rect_filled(overlay_rect, 0.0, Color32::from_black_alpha(90));
         });
 
-    let panel_rect = Rect::from_min_size(props.pos, Vec2::new(props.width, props.height));
+    // Fixed width of 300px for the panel
+    let panel_width = 300.0;
+    let panel_rect = Rect::from_min_size(props.pos, Vec2::new(panel_width, props.height));
 
     Area::new(Id::new("notification_panel"))
         .order(Order::Foreground)
@@ -34,9 +35,9 @@ pub fn render_notifications_panel(
                 .stroke(Stroke::new(1.0, props.theme.border))
                 .inner_margin(Margin::same(16))
                 .show(ui, |ui| {
-                    ui.set_min_size(Vec2::new(props.width, props.height));
-                    ui.set_max_size(Vec2::new(props.width, props.height));
-                    ui.set_max_width(props.width); // Ensure content doesn't expand the panel width
+                    ui.set_min_size(Vec2::new(panel_width, props.height));
+                    ui.set_max_size(Vec2::new(panel_width, props.height));
+                    ui.set_max_width(panel_width); // Ensure content doesn't expand the panel width
                     ui.vertical(|ui| {
                         ui.heading(
                             RichText::new("Notifications")

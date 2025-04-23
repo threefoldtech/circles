@@ -1,4 +1,5 @@
 use crate::app::CircleApp;
+use crate::ui::components::notification_dialog::render_notification_dialog;
 use crate::ui::footer;
 use crate::ui::navbar;
 use crate::ui::sidebar;
@@ -26,6 +27,13 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
 
     // Render the footer with connection status, user status, date, and notifications
     footer::render_status_bar(app, ctx, &app_layout, &theme);
+
+    // Render notification dialog at the app level to prevent interaction issues
+    render_notification_dialog(
+        &mut app.notification_manager.notification_dialog,
+        ctx,
+        &theme,
+    );
 }
 
 // Setup egui style

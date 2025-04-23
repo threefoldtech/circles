@@ -74,11 +74,11 @@ fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut egui::Ui, t
         // Render notifications panel if shown
         if app.notification_manager.show_panel {
             let screen_rect = ui.ctx().screen_rect();
-            let panel_width = 320.0;
             let panel_height = 600.0;
 
+            // Fixed width of 300px is used inside the panel component
             let panel_pos = Pos2::new(
-                screen_rect.right() - panel_width - 20.0,
+                screen_rect.right() - 320.0, // 300px + 20px margin
                 screen_rect.bottom() - panel_height - 50.0,
             );
 
@@ -87,7 +87,6 @@ fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut egui::Ui, t
                 ctx,
                 NotificationsPanelProps {
                     pos: panel_pos,
-                    width: panel_width,
                     height: panel_height,
                     theme,
                 },
@@ -95,11 +94,17 @@ fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut egui::Ui, t
 
             // Handle outside clicks
             if ui.input(|i| i.pointer.any_released()) {
-                let mouse_pos = ui.input(|i| i.pointer.interact_pos());
-                if let Some(pos) = mouse_pos {
-                    let bell_rect = notif_frame.rect.expand(20.0);
-                    if !panel_rect.contains(pos) && !bell_rect.contains(pos) {
-                        app.notification_manager.show_panel = false;
+                // Check if a notification dialog was opened
+                let notification_dialog_open = app.notification_manager.notification_dialog.is_open;
+
+                // Only close the panel if no notification dialog was opened
+                if !notification_dialog_open {
+                    let mouse_pos = ui.input(|i| i.pointer.interact_pos());
+                    if let Some(pos) = mouse_pos {
+                        let bell_rect = notif_frame.rect.expand(20.0);
+                        if !panel_rect.contains(pos) && !bell_rect.contains(pos) {
+                            app.notification_manager.show_panel = false;
+                        }
                     }
                 }
             }
