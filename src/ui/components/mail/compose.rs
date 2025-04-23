@@ -96,22 +96,6 @@ pub fn open_compose_screen(app: &mut CircleApp, _: &mut egui::Ui) {
         original_content: None,
         mode: ComposeDraftMode::New,
     });
-
-    let config = NotificationConfig::new(
-        "New Draft Created",
-        "Started composing new email",
-        NotificationType::Info,
-    )
-    .with_timeout(30000);
-    if let Err(e) = send_desktop_notification(&config) {
-        eprintln!("Failed to send desktop notification: {}", e);
-    }
-
-    app.notification_manager.add(AppNotification::new(
-        "New Draft",
-        "Started composing new email",
-        NotificationPriority::Low,
-    ));
 }
 
 /// Represents a file attachment

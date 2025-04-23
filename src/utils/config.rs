@@ -47,6 +47,20 @@ pub struct Theme {
     pub team: Color32,
     pub private: Color32,
     pub error: Color32,
+
+    // Bot message colors
+    pub welcome_message_bg: Color32,
+    pub welcome_message_border: Color32,
+    pub update_message_bg: Color32,
+    pub update_message_border: Color32,
+    pub connection_message_bg: Color32,
+    pub connection_message_border: Color32,
+    pub feature_message_bg: Color32,
+    pub feature_message_border: Color32,
+    pub tip_message_bg: Color32,
+    pub tip_message_border: Color32,
+    pub cat_message_bg: Color32,
+    pub cat_message_border: Color32,
 }
 
 impl Theme {
@@ -71,6 +85,20 @@ impl Theme {
             team: Color32::from_rgb(2, 132, 199),         // Vibrant blue
             private: Color32::from_rgb(168, 85, 247),     // Soft purple
             error: Color32::from_rgb(239, 68, 68),        // Soft red
+
+            // Bot message colors - Light mode
+            welcome_message_bg: Color32::from_rgb(240, 249, 255), // Light blue
+            welcome_message_border: Color32::from_rgb(187, 222, 251), // Light blue border
+            update_message_bg: Color32::from_rgb(237, 247, 237),  // Light green
+            update_message_border: Color32::from_rgb(200, 230, 201), // Light green border
+            connection_message_bg: Color32::from_rgb(232, 245, 253), // Light blue
+            connection_message_border: Color32::from_rgb(187, 222, 251), // Light blue border
+            feature_message_bg: Color32::from_rgb(243, 229, 245), // Light purple
+            feature_message_border: Color32::from_rgb(206, 147, 216), // Light purple border
+            tip_message_bg: Color32::from_rgb(255, 243, 224),     // Light orange
+            tip_message_border: Color32::from_rgb(255, 224, 178), // Light orange border
+            cat_message_bg: Color32::from_rgb(255, 240, 245),     // Light pink
+            cat_message_border: Color32::from_rgb(255, 182, 193), // Light pink border
         }
     }
 
@@ -91,6 +119,20 @@ impl Theme {
             team: Color32::from_rgb(2, 132, 199),          // Vibrant blue
             private: Color32::from_rgb(168, 85, 247),      // Soft purple
             error: Color32::from_rgb(239, 68, 68),         // Soft red
+
+            // Bot message colors - Dark mode
+            welcome_message_bg: Color32::from_rgb(30, 41, 59), // Dark blue
+            welcome_message_border: Color32::from_rgb(51, 65, 85), // Dark blue border
+            update_message_bg: Color32::from_rgb(20, 83, 45),  // Dark green
+            update_message_border: Color32::from_rgb(34, 197, 94), // Green border
+            connection_message_bg: Color32::from_rgb(30, 58, 138), // Dark blue
+            connection_message_border: Color32::from_rgb(59, 130, 246), // Blue border
+            feature_message_bg: Color32::from_rgb(88, 28, 135), // Dark purple
+            feature_message_border: Color32::from_rgb(147, 51, 234), // Purple border
+            tip_message_bg: Color32::from_rgb(120, 53, 15),    // Dark orange
+            tip_message_border: Color32::from_rgb(249, 115, 22), // Orange border
+            cat_message_bg: Color32::from_rgb(131, 24, 67),    // Dark pink
+            cat_message_border: Color32::from_rgb(244, 114, 182), // Pink border
         }
     }
 
