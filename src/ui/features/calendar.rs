@@ -189,7 +189,6 @@ impl Calendar {
                         }
                         "Today" => {
                             self.state.selected_date = Local::now();
-                            self.state.view_mode = CalendarViewMode::Day;
                         }
                         "Day" => {
                             self.state.view_mode = CalendarViewMode::Day;
