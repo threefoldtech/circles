@@ -20,7 +20,49 @@ pub fn render_feature_content(
         .frame(app_layout.clone())
         .show(ctx, |ui| match app.active_feature {
             ActiveFeature::Mail => mail::render_mail(app, ui),
-            ActiveFeature::Calendar => calendar::Calendar::new().render(ui),
+            ActiveFeature::Calendar => {
+                // Use egui's memory system to persist the calendar state between frames
+                let calendar_id = "main_calendar";
+
+                // Get or create the calendar with persisted state
+                let mut calendar = ui.ctx().memory_mut(|mem| {
+                    if let Some(calendar) = mem
+                        .data
+                        .get_persisted::<calendar::Calendar>(egui::Id::new(calendar_id))
+                    {
+                        // If we have a persisted calendar, update its events from the app
+                        let mut calendar = calendar.clone();
+
+                        // Only update events if the app has events and they differ from the calendar
+                        if !app.calendar_events.is_empty()
+                            && app.calendar_events.len() != calendar.get_events().len()
+                        {
+                            calendar = calendar::Calendar::with_events(app.calendar_events.clone());
+                        }
+
+                        calendar
+                    } else {
+                        // Create a new calendar with events if available
+                        if app.calendar_events.is_empty() {
+                            calendar::Calendar::new()
+                        } else {
+                            calendar::Calendar::with_events(app.calendar_events.clone())
+                        }
+                    }
+                });
+
+                // Render the calendar
+                calendar.render(ui, theme);
+
+                // Store the calendar state for the next frame
+                ui.ctx().memory_mut(|mem| {
+                    mem.data
+                        .insert_persisted(egui::Id::new(calendar_id), calendar.clone());
+                });
+
+                // Store any new events back in the app
+                app.calendar_events = calendar.get_events().clone();
+            }
             ActiveFeature::Chat => chat::render_chat(app, ui),
             ActiveFeature::Documents => documents::render_documents(app, ui),
             ActiveFeature::AITools => ai_tools::render_ai_tools(app, ui),

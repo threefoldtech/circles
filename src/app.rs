@@ -3,6 +3,7 @@ use crate::models::dummy_data::{self, CircleFeatureData};
 use crate::models::user::{User, UserPreferences};
 use crate::ui::app_layout;
 use crate::ui::components::notifications::NotificationManager;
+use crate::ui::features::calendar::Event;
 use crate::utils::config::Theme;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -42,6 +43,8 @@ pub struct CircleApp {
     pub notification_manager: NotificationManager,
     /// Flag to track if the app is currently refreshing
     pub is_refreshing: bool,
+    /// Calendar events
+    pub calendar_events: Vec<Event>,
 }
 
 /// Enum representing available features in the application
@@ -148,6 +151,7 @@ impl CircleApp {
             compose_draft: None,
             notification_manager: NotificationManager::new(50), // Keep last 50 notifications
             is_refreshing: false,
+            calendar_events: Vec::new(),
         }
     }
 
