@@ -1,11 +1,4 @@
-use crate::{
-    models::{
-        notification::{AppNotification, NotificationPriority},
-        user::Theme as ThemeMode,
-    },
-    ui::app_layout::create_content_frame,
-    utils::config::Theme,
-};
+use crate::{models::user::Theme as ThemeMode, ui::app_layout::create_content_frame};
 use egui::{Button, Color32, RichText, Stroke, Ui, Vec2};
 
 use crate::app::CircleApp;
@@ -151,8 +144,6 @@ fn render_circle_settings(ui: &mut Ui, app: &CircleApp) {
 }
 
 fn render_save_button(ui: &mut Ui, app: &mut CircleApp, ctx: &egui::Context) {
-    let theme = app.get_current_theme();
-
     ui.horizontal(|ui| {
         ui.add_space(ui.available_width() - 120.0 - 16.0);
         if ui
@@ -168,7 +159,7 @@ fn render_save_button(ui: &mut Ui, app: &mut CircleApp, ctx: &egui::Context) {
             )
             .clicked()
         {
-            if let Some(user) = &mut app.user {
+            if let Some(_) = &mut app.user {
                 // Save the current preferences
                 app.save_user_preferences(ctx);
 

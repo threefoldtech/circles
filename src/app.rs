@@ -290,7 +290,7 @@ impl CircleApp {
     }
 
     pub fn save_user_preferences(&mut self, ctx: &egui::Context) {
-        if let Some(user) = &self.user {
+        if let Some(_) = &self.user {
             // Here you would typically save to disk or database
             // For now, we'll just ensure the theme is applied
             self.apply_theme(ctx);

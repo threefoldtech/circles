@@ -66,10 +66,6 @@ pub struct Theme {
 }
 
 impl Theme {
-    pub fn new() -> Self {
-        Self::light()
-    }
-
     pub fn light() -> Self {
         Self {
             light_color: Color32::from_rgb(255, 255, 255), // White

@@ -9,8 +9,6 @@ use crate::ui::components::mail::compose::{open_compose_screen, render_compose_s
 use crate::ui::components::mail::email_card::{get_folder_icon, render_email_card};
 use crate::ui::components::mail::email_details::render_email_detail;
 
-use crate::utils::config::Theme;
-
 pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
     let theme = app.get_current_theme();
 

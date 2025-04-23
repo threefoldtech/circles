@@ -4,7 +4,7 @@ use crate::ui::footer;
 use crate::ui::navbar;
 use crate::ui::sidebar;
 use crate::utils::config::{LayoutConfig, Theme};
-use eframe::egui::{self, Color32, Context, Frame, Margin, Stroke, Vec2};
+use eframe::egui::{self, Context, Frame, Margin, Stroke, Vec2};
 
 use super::feature_content;
 

@@ -1,4 +1,4 @@
-use egui::{Button, Color32, RichText, Stroke, Ui, Vec2};
+use egui::{Button, RichText, Stroke, Ui, Vec2};
 
 use super::super::state::{CalendarState, CalendarViewMode};
 use crate::utils::config::Theme;

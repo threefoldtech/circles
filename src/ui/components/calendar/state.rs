@@ -28,8 +28,6 @@ pub struct CalendarState {
     pub show_event_dialog: bool,
     pub new_event: Option<Event>,
     pub selected_time_slot: Option<(NaiveDate, NaiveTime)>,
-    pub drag_start: Option<(f32, f32)>,
-    pub drag_end: Option<(f32, f32)>,
 }
 
 impl Default for CalendarState {
@@ -43,8 +41,6 @@ impl Default for CalendarState {
             show_event_dialog: false,
             new_event: None,
             selected_time_slot: None,
-            drag_start: None,
-            drag_end: None,
         }
     }
 }

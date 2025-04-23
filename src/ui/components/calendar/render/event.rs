@@ -4,6 +4,7 @@ use egui::{Button, Frame, Margin, RichText, Stroke, Ui};
 use super::super::event::Event;
 use crate::utils::config::Theme;
 
+#[allow(dead_code)]
 pub fn render_event(ui: &mut Ui, event: &Event, theme: &Theme) {
     Frame::default()
         .fill(event.color.linear_multiply(0.7))

@@ -18,10 +18,6 @@ impl Event {
     pub fn duration_minutes(&self) -> i64 {
         (self.end_time - self.start_time).num_minutes()
     }
-
-    pub fn overlaps_with(&self, other: &Event) -> bool {
-        (self.start_time <= other.end_time) && (self.end_time >= other.start_time)
-    }
 }
 
 impl Default for Event {

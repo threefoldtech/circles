@@ -39,25 +39,6 @@ pub fn render_bot_channel(app: &CircleApp, ui: &mut egui::Ui) {
                             theme.secondary_background;
                         ui.style_mut().visuals.widgets.hovered.bg_fill = theme.hover;
                         ui.style_mut().visuals.widgets.active.bg_fill = theme.active;
-                        // ui.style_mut().visuals.widgets.noninteractive.bg_stroke =
-                        //     Stroke::new(1.0, theme.border);
-                        // ui.style_mut().visuals.widgets.inactive.bg_stroke =
-                        //     Stroke::new(1.0, theme.border);
-                        // ui.style_mut().visuals.widgets.hovered.bg_stroke =
-                        //     Stroke::new(1.0, theme.border);
-                        // ui.style_mut().visuals.widgets.active.bg_stroke =
-                        //     Stroke::new(1.0, theme.border);
-
-                        // Set text colors
-                        // ui.style_mut().visuals.widgets.noninteractive.fg_stroke =
-                        //     Stroke::new(1.0, theme.text);
-                        // ui.style_mut().visuals.widgets.inactive.fg_stroke =
-                        //     Stroke::new(1.0, theme.text);
-                        // ui.style_mut().visuals.widgets.hovered.fg_stroke =
-                        //     Stroke::new(1.0, theme.text);
-                        // ui.style_mut().visuals.widgets.active.fg_stroke =
-                        //     Stroke::new(1.0, theme.text);
-
                         // Display bot messages
                         render_bot_messages(ui, &theme);
                     });
@@ -108,11 +89,6 @@ fn render_bot_messages(ui: &mut egui::Ui, theme: &crate::utils::config::Theme) {
 
     // Render each message
     for (i, message) in messages.iter().enumerate() {
-        // Skip cat messages
-        if let BotMessageType::CatMessage { .. } = message.message_type {
-            continue;
-        }
-
         // Create a frame for each message with a consistent background using theme colors
         let frame = egui::Frame::new()
             .fill(theme.panel) // Use panel color from theme

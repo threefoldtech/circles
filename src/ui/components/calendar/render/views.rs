@@ -1,7 +1,6 @@
 use chrono::{Datelike, Duration, Local, NaiveDate, TimeZone, Timelike};
-use egui::{Button, Frame, Grid, Margin, RichText, ScrollArea, Sense, Stroke, Ui};
+use egui::{Button, Frame, Grid, Margin, RichText, ScrollArea, Stroke, Ui};
 
-use super::super::event::Event;
 use super::super::state::{CalendarState, CalendarViewMode};
 use crate::utils::config::Theme;
 
@@ -214,7 +213,7 @@ pub fn render_week_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
 pub fn render_day_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
     let selected_date = state.selected_date;
     let selected_date_naive = selected_date.date_naive();
-    let current_date = Local::now().date_naive();
+    let _current_date = Local::now().date_naive();
 
     ui.vertical(|ui| {
         super::navigation::render_navigation_header(ui, state, theme);
@@ -302,7 +301,7 @@ fn render_time_slot(
     height: f32,
     theme: &Theme,
 ) {
-    Frame::none()
+    Frame::default()
         .stroke(Stroke::new(0.5, theme.border))
         .inner_margin(Margin::same(2))
         .fill(theme.panel)

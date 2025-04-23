@@ -1,9 +1,7 @@
 use chrono::{Local, NaiveDate, NaiveTime, TimeZone, Utc};
-use egui::{Button, Color32, RichText, Ui, Window, color_picker};
+use egui::{Button, RichText, Ui, Window, color_picker};
 
-use super::super::event::Event;
 use super::super::state::CalendarState;
-use crate::ui::features::calendar::Calendar;
 use crate::utils::config::Theme;
 
 pub fn render_event_dialog(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {

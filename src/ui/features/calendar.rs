@@ -1,10 +1,10 @@
-use chrono::{DateTime, Duration, Local, NaiveDate, NaiveTime};
+use chrono::{Duration, NaiveDate, NaiveTime};
 use egui::Ui;
 
 use crate::ui::components::calendar::event::Event;
 use crate::ui::components::calendar::render::{
-    render_day_view, render_event_dialog, render_month_view, render_navigation_header,
-    render_toolbar, render_week_view, render_year_view,
+    render_day_view, render_event_dialog, render_month_view, render_toolbar, render_week_view,
+    render_year_view,
 };
 use crate::ui::components::calendar::state::{CalendarState, CalendarViewMode};
 use crate::utils::config::Theme;
@@ -61,21 +61,6 @@ impl Calendar {
         }
     }
 
-    pub fn navigate(&mut self, forward: bool) {
-        let duration = match self.state.view_mode {
-            CalendarViewMode::Year => Duration::days(365),
-            CalendarViewMode::Month => Duration::days(30),
-            CalendarViewMode::Week => Duration::days(7),
-            CalendarViewMode::Day => Duration::days(1),
-        };
-
-        self.state.selected_date = if forward {
-            self.state.selected_date + duration
-        } else {
-            self.state.selected_date - duration
-        };
-    }
-
     // Static method to navigate a calendar state directly
     pub fn navigate_state(state: &mut CalendarState, forward: bool) {
         let duration = match state.view_mode {
@@ -90,13 +75,6 @@ impl Calendar {
         } else {
             state.selected_date - duration
         };
-    }
-
-    pub fn handle_time_slot_click(&mut self, date: NaiveDate, hour: u32) {
-        let naive_time = NaiveTime::from_hms_opt(hour, 0, 0).unwrap();
-        self.state.selected_time_slot = Some((date, naive_time));
-        self.state.new_event = Some(Event::default());
-        self.state.show_event_dialog = true;
     }
 
     // Static method to add an event to a calendar state directly
