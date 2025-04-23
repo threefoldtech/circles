@@ -46,20 +46,15 @@ pub fn send_desktop_notification(config: &NotificationConfig) -> Result<(), Box<
 
     let adjusted_timeout = 30000; // 30 seconds for testing
 
-    let handle = Notification::new()
+    Notification::new()
         .appname("Circle")
         .summary(&config.title)
         .body(&config.body)
         .icon(icon)
-        .timeout(Timeout::Milliseconds(adjusted_timeout as u32)) // ✅ fix here
-        .urgency(urgency)
+        .timeout(Timeout::Milliseconds(adjusted_timeout as u32))
         .show()?;
 
-    println!(
-        "Notification sent with ID: {} (timeout: {}ms)",
-        handle.id(),
-        adjusted_timeout
-    );
+    println!("Notification sent (timeout: {}ms)", adjusted_timeout);
 
     Ok(())
 }
