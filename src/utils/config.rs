@@ -51,6 +51,10 @@ pub struct Theme {
 
 impl Theme {
     pub fn new() -> Self {
+        Self::light()
+    }
+
+    pub fn light() -> Self {
         Self {
             accent: Color32::from_rgb(59, 130, 246),      // Royal blue
             background: Color32::from_rgb(248, 250, 252), // Warm cream
@@ -68,5 +72,61 @@ impl Theme {
             private: Color32::from_rgb(168, 85, 247),     // Soft purple
             error: Color32::from_rgb(239, 68, 68),        // Soft red
         }
+    }
+
+    pub fn dark() -> Self {
+        Self {
+            accent: Color32::from_rgb(96, 165, 250),       // Bright blue
+            background: Color32::from_rgb(15, 23, 42),     // Very dark slate
+            panel: Color32::from_rgb(30, 41, 59),          // Dark slate
+            text: Color32::from_rgb(241, 245, 249),        // Very light gray
+            header_text: Color32::from_rgb(226, 232, 240), // Light gray
+            secondary_text: Color32::from_rgb(148, 163, 184), // Medium gray
+            secondary_background: Color32::from_rgb(30, 41, 59), // Darker slate
+            border: Color32::from_rgb(51, 65, 85),         // Dark gray
+            active: Color32::from_rgb(59, 130, 246),       // Royal blue
+            hover: Color32::from_rgb(51, 65, 85),          // Medium slate
+            shadow: Color32::from_black_alpha(50),         // Darker shadow
+            success: Color32::from_rgb(34, 197, 94),       // Green
+            team: Color32::from_rgb(2, 132, 199),          // Vibrant blue
+            private: Color32::from_rgb(168, 85, 247),      // Soft purple
+            error: Color32::from_rgb(239, 68, 68),         // Soft red
+        }
+    }
+
+    pub fn from_mode(mode: &crate::models::user::Theme) -> Self {
+        match mode {
+            crate::models::user::Theme::Dark => Self::dark(),
+            crate::models::user::Theme::Light => Self::light(),
+            crate::models::user::Theme::System => {
+                // TODO: Implement system theme detection
+                Self::light()
+            }
+        }
+    }
+
+    pub fn to_visuals(&self) -> egui::Visuals {
+        let mut visuals = egui::Visuals::default();
+
+        visuals.override_text_color = Some(self.text);
+        visuals.widgets.noninteractive.bg_fill = self.background;
+        visuals.widgets.inactive.bg_fill = self.panel;
+        visuals.widgets.hovered.bg_fill = self.hover;
+        visuals.widgets.active.bg_fill = self.active;
+        visuals.selection.bg_fill = self.accent;
+
+        // Set additional visual properties based on theme
+        visuals.window_fill = self.panel;
+        visuals.panel_fill = self.panel;
+        visuals.faint_bg_color = self.secondary_background;
+        visuals.extreme_bg_color = self.background;
+
+        // Adjust widgets
+        visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, self.text);
+        visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, self.text);
+        visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.5, self.text);
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(2.0, self.text);
+
+        visuals
     }
 }

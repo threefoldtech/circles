@@ -5,10 +5,11 @@ use eframe::egui::{self, Color32};
 use egui::RichText;
 
 /// Render the bot channel UI
-pub fn render_bot_channel(_app: &CircleApp, ui: &mut egui::Ui) {
+pub fn render_bot_channel(app: &CircleApp, ui: &mut egui::Ui) {
     ui.add_space(16.0);
     
-    create_content_frame().show(ui, |ui| {
+    let theme = app.get_current_theme();
+    create_content_frame(&theme).show(ui, |ui| {
         ui.vertical(|ui| {
             // Message history area
             // Use a much smaller height to ensure messages are visible above the footer

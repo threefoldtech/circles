@@ -6,6 +6,7 @@ use crate::ui::components::button;
 
 #[allow(unused_variables)]
 pub fn render_documents(app: &CircleApp, ui: &mut egui::Ui) {
+    let theme = app.get_current_theme();
     ui.horizontal(|ui| {
         ui.add_space(8.0);
         if ui
@@ -21,5 +22,5 @@ pub fn render_documents(app: &CircleApp, ui: &mut egui::Ui) {
         ui.add_space(8.0);
     });
     ui.add_space(16.0);
-    create_content_frame().show(ui, |ui| ui.label("Documents feature not yet implemented"));
+    create_content_frame(&theme).show(ui, |ui| ui.label("Documents feature not yet implemented"));
 }

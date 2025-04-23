@@ -1,8 +1,9 @@
 use crate::models::circle::Circle;
 use crate::models::dummy_data::{self, CircleFeatureData};
-use crate::models::user::User;
+use crate::models::user::{User, UserPreferences};
 use crate::ui::app_layout;
 use crate::ui::components::notifications::NotificationManager;
+use crate::utils::config::Theme;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -75,6 +76,7 @@ impl CircleApp {
             name: "Default User".to_string(), // More polished default name
             email: "user@circleapp.com".to_string(), // Branded email
             created_at: chrono::Utc::now(),
+            preferences: UserPreferences::default(),
         });
 
         // Start with an empty circles list
@@ -261,6 +263,43 @@ impl CircleApp {
     /// Open the circle creation dialog
     pub fn open_circle_dialog(&mut self) {
         self.circle_dialog_state.is_open = true;
+    }
+
+    /// Set the theme for the application
+    pub fn set_theme(&mut self, ctx: &egui::Context, theme: crate::models::user::Theme) {
+        if let Some(user) = &mut self.user {
+            user.preferences.theme = theme;
+            // Apply the theme immediately
+            self.apply_theme(ctx);
+        }
+    }
+
+    fn apply_theme(&mut self, ctx: &egui::Context) {
+        // Force a UI refresh to apply the new theme
+        self.is_refreshing = true;
+
+        // If you're using eframe, you might also want to update the native window
+        let theme = self.get_current_theme();
+        ctx.set_visuals(theme.to_visuals());
+        // if let Some(ctx) = &mut ctx {
+        // }
+    }
+
+    pub fn save_user_preferences(&mut self, ctx: &egui::Context) {
+        if let Some(user) = &self.user {
+            // Here you would typically save to disk or database
+            // For now, we'll just ensure the theme is applied
+            self.apply_theme(ctx);
+        }
+    }
+
+    /// Get the current theme of the application
+    pub fn get_current_theme(&self) -> Theme {
+        if let Some(user) = &self.user {
+            Theme::from_mode(&user.preferences.theme)
+        } else {
+            Theme::light() // Default to light theme when no user is logged in
+        }
     }
 }
 

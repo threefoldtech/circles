@@ -14,5 +14,6 @@ pub fn render_chat(app: &CircleApp, ui: &mut egui::Ui) {
         ui.add_space(8.0);
     });
     ui.add_space(16.0);
-    create_content_frame().show(ui, |ui| ui.label("Chat feature not yet implemented"));
+    let theme = app.get_current_theme();
+    create_content_frame(&theme).show(ui, |ui| ui.label("Chat feature not yet implemented"));
 }

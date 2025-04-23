@@ -12,7 +12,7 @@ use crate::ui::components::mail::email_details::render_email_detail;
 use crate::utils::config::Theme;
 
 pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
-    let theme = Theme::new();
+    let theme = app.get_current_theme();
 
     // Only show top bar buttons if we're not in compose mode
     if !app.compose_dialog_open {
@@ -98,7 +98,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
 
     // Main content
     if let Some(feature_data) = &mut app.active_feature_data.clone() {
-        create_content_frame()
+        create_content_frame(&theme)
             .fill(theme.secondary_background)
             .corner_radius(8.0)
             .inner_margin(Margin::same(12))
@@ -285,7 +285,7 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
                 }
             });
     } else {
-        create_content_frame()
+        create_content_frame(&theme)
             .fill(theme.secondary_background)
             .corner_radius(8.0)
             .inner_margin(Margin::same(12))

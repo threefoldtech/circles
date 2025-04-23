@@ -13,6 +13,8 @@ pub struct User {
     pub email: String,
     /// Creation timestamp
     pub created_at: DateTime<Utc>,
+    /// User preferences
+    pub preferences: UserPreferences,
 }
 
 /// User preferences

@@ -4,23 +4,29 @@ use crate::app::{ActiveFeature, CircleApp};
 use crate::ui::features::{
     ai_tools, bot_channel, calendar, chat, documents, mail, video_conf, welcome,
 };
+use crate::utils::config::Theme;
 use eframe::egui::{CentralPanel, Context, Frame};
 
 // Feature content rendering
-pub fn render_feature_content(app: &mut CircleApp, ctx: &Context, app_layout: &Frame) {
+pub fn render_feature_content(
+    app: &mut CircleApp,
+    ctx: &Context,
+    app_layout: &Frame,
+    theme: &Theme,
+) {
     // Render the circle dialog if open
     render_circle_dialog(app, ctx);
     CentralPanel::default()
         .frame(app_layout.clone())
         .show(ctx, |ui| match app.active_feature {
             ActiveFeature::Mail => mail::render_mail(app, ui),
-            ActiveFeature::Calendar => calendar::render_calendar(app, ui),
+            ActiveFeature::Calendar => calendar::Calendar::new().render(ui),
             ActiveFeature::Chat => chat::render_chat(app, ui),
             ActiveFeature::Documents => documents::render_documents(app, ui),
             ActiveFeature::AITools => ai_tools::render_ai_tools(app, ui),
             ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
-            ActiveFeature::Settings => settings::render_settings(app, ui),
-            ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui),
+            ActiveFeature::Settings => settings::render_settings(app, ui, ctx),
+            ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui, theme),
             ActiveFeature::BotChannel => bot_channel::render_bot_channel(app, ui),
         });
 }

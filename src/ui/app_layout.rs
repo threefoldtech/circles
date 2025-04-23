@@ -9,7 +9,7 @@ use super::feature_content;
 
 // Main rendering function
 pub fn render(app: &mut CircleApp, ctx: &Context) {
-    let theme = Theme::new();
+    let theme = app.get_current_theme();
     let config = LayoutConfig::new();
 
     setup_style(ctx, &theme, &config);
@@ -22,7 +22,7 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
     sidebar::render_sidebar(app, ctx, &app_layout, &theme, &config);
 
     // Render the main content area
-    feature_content::render_feature_content(app, ctx, &app_layout);
+    feature_content::render_feature_content(app, ctx, &app_layout, &theme);
 
     // Render the footer with connection status, user status, date, and notifications
     footer::render_status_bar(app, ctx, &app_layout, &theme);
@@ -72,9 +72,9 @@ fn create_app_layout(theme: &Theme) -> Frame {
         .inner_margin(Margin::same(8))
 }
 
-pub fn create_content_frame() -> Frame {
+pub fn create_content_frame(theme: &Theme) -> Frame {
     Frame::new()
-        .fill(Color32::WHITE)
+        .fill(theme.panel)
         .stroke(Stroke::NONE)
         .corner_radius(0)
         .inner_margin(Margin::same(16))
