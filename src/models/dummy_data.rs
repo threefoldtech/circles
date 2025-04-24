@@ -239,6 +239,7 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
     let sent_id = Uuid::new_v4();
     let drafts_id = Uuid::new_v4();
     let trash_id = Uuid::new_v4();
+    let spam_id = Uuid::new_v4();
 
     // Generate emails
     let emails = vec![
@@ -340,6 +341,28 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
             read: true,
             folder_id: trash_id,
         },
+
+        // Spam emails
+        Email {
+            id: Uuid::new_v4(),
+            sender: "spam1@example.com".to_string(),
+            recipients: vec!["me@example.com".to_string()],
+            subject: "Special offer just for you!".to_string(),
+            content: "Claim your exclusive offer now! Click here to redeem your prize...".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 1, 12, 0, 0).unwrap(),
+            read: false,
+            folder_id: spam_id,
+        },
+        Email {
+            id: Uuid::new_v4(),
+            sender: "spam2@example.com".to_string(),
+            recipients: vec!["me@example.com".to_string()],
+            subject: "Limited time offer".to_string(),
+            content: "Don't miss out on this limited time offer! Get 50% off your next purchase...".to_string(),
+            timestamp: Utc.with_ymd_and_hms(2025, 4, 1, 11, 30, 0).unwrap(),
+            read: false,
+            folder_id: spam_id,
+        },
     ];
 
     // Generate folders
@@ -363,6 +386,11 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
             id: trash_id,
             name: "Trash".to_string(),
             unread_count: 0,
+        },
+        Folder {
+            id: spam_id,
+            name: "Spam".to_string(),
+            unread_count: 2, // Two unread emails in spam
         },
     ];
 
