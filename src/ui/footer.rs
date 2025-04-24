@@ -40,7 +40,7 @@ impl<'a> StatusFrameProps<'a> {
     pub fn build(&self) -> Frame {
         Frame::new()
             .fill(if self.has_unread {
-                Color32::from_rgb(240, 70, 70)
+                self.theme.error
             } else {
                 self.theme.secondary_background
             })
@@ -52,11 +52,11 @@ impl<'a> StatusFrameProps<'a> {
 
 pub fn create_styled_text(
     text: impl Into<String>,
-    theme: &Theme,
+    color: Color32,
     size: f32,
     strong: bool,
 ) -> RichText {
-    let mut rich_text = RichText::new(text).size(size).color(theme.text);
+    let mut rich_text = RichText::new(text).size(size).color(color);
     if strong {
         rich_text = rich_text.strong();
     }
@@ -80,7 +80,12 @@ pub fn set_hover_cursor(ui: &mut Ui, response: &Response) {
 pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
     TopBottomPanel::bottom("status_bar")
         .exact_height(40.0)
-        .frame(app_layout.clone().corner_radius(0))
+        .frame(
+            app_layout
+                .clone()
+                .corner_radius(0)
+                .fill(theme.secondary_background),
+        )
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
                 render_left_section(ui, theme);
@@ -96,14 +101,14 @@ fn render_date_time(ui: &mut Ui, theme: &Theme) {
 
     ui.label(create_styled_text(
         format!("📅 {}", date_str),
-        theme,
+        theme.text,
         13.0,
         false,
     ));
     ui.add_space(8.0);
     ui.label(create_styled_text(
         format!("🕒 {}", time_str),
-        theme,
+        theme.text,
         13.0,
         false,
     ));
@@ -119,7 +124,7 @@ fn render_left_section(ui: &mut Ui, theme: &Theme) {
             ui.horizontal(|ui| {
                 render_status_dot(ui, theme, 6.0);
                 ui.add_space(12.0);
-                ui.label(create_styled_text("Connected", theme, 13.0, true));
+                ui.label(create_styled_text("Connected", theme.text, 13.0, true));
             });
         });
 
@@ -135,7 +140,7 @@ fn render_user_status(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
         .build()
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(create_styled_text(user_name, theme, 13.0, true));
+                ui.label(create_styled_text(user_name, theme.text, 13.0, true));
                 ui.add_space(4.0);
                 render_status_dot(ui, theme, 6.0);
             });
@@ -164,7 +169,16 @@ fn render_notification_bell(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) -> 
 
     notif_frame
         .show(ui, |ui| {
-            let label = create_styled_text(format!("🔔 {}", unread_count), theme, 13.0, true);
+            let label = create_styled_text(
+                format!("🔔 {}", unread_count),
+                if unread_count > 0 {
+                    theme.light_color
+                } else {
+                    theme.text
+                },
+                13.0,
+                true,
+            );
             let response = ui.add(egui::Label::new(label).sense(Sense::click()));
 
             if response.clicked() {

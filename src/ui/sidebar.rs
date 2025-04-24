@@ -20,7 +20,7 @@ pub fn render_sidebar(
     SidePanel::left("sidebar")
         .resizable(false)
         .exact_width(config.sidebar_width)
-        .frame(app_layout.clone())
+        .frame(app_layout.clone().fill(theme.secondary_background))
         .show(ctx, |ui| {
             ui.vertical(|ui| {
                 // Circle selector

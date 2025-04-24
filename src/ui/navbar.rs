@@ -96,7 +96,12 @@ pub fn render_top_panel(
                             .build()
                             .show(ui, |ui| {
                                 ui.horizontal(|ui| {
-                                    ui.label(create_styled_text(circle_text, theme, 13.0, true));
+                                    ui.label(create_styled_text(
+                                        circle_text,
+                                        theme.text,
+                                        13.0,
+                                        true,
+                                    ));
                                     if app.active_circle().is_some() {
                                         ui.add_space(4.0);
                                         render_status_dot(ui, theme, 6.0);
