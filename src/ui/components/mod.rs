@@ -1,5 +1,6 @@
 pub mod bot_message;
 pub mod button;
+pub mod calendar;
 pub mod circle_dialog;
 pub mod mail;
 pub mod notification_dialog;

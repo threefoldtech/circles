@@ -1,6 +1,5 @@
-use crate::utils::config::Theme;
 use chrono::{DateTime, Utc};
-use eframe::egui::{self, Color32, RichText, Stroke, Vec2};
+use eframe::egui::{self, Color32, RichText, Vec2};
 
 /// Different types of bot messages
 #[derive(Debug, Clone)]
@@ -19,10 +18,6 @@ pub enum BotMessageType {
     },
     Tip {
         tip: String,
-    },
-    CatMessage {
-        message: String,
-        image_emoji: String,
     },
 }
 
@@ -47,9 +42,6 @@ impl BotMessage {
 
     /// Render the bot message content (without the frame)
     pub fn render(&self, ui: &mut egui::Ui) {
-        // Get the theme from the app
-        let is_dark_mode = ui.ctx().style().visuals.dark_mode;
-
         // Use theme colors from the UI style
         let text_color = ui.style().visuals.text_color();
         let secondary_text_color = ui.style().visuals.weak_text_color();
@@ -246,53 +238,6 @@ impl BotMessage {
                 ui.add_space(8.0);
 
                 ui.label(RichText::new(tip).size(14.0).color(text_color));
-            }
-            BotMessageType::CatMessage {
-                message,
-                image_emoji,
-            } => {
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new(image_emoji).size(20.0));
-
-                    ui.vertical(|ui| {
-                        ui.label(
-                            RichText::new("Cat Bot")
-                                .size(16.0)
-                                .strong()
-                                .color(text_color),
-                        );
-                        ui.label(
-                            RichText::new("Meow Message")
-                                .size(14.0)
-                                .strong()
-                                .color(text_color),
-                        );
-                    });
-
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                        ui.label(
-                            RichText::new(format_timestamp(self.timestamp))
-                                .size(12.0)
-                                .color(secondary_text_color),
-                        );
-                    });
-                });
-
-                ui.add_space(8.0);
-
-                ui.label(RichText::new(message).size(14.0).color(text_color));
-
-                // Add a playful element - paw prints
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label(
-                            RichText::new("🐾 🐾 🐾")
-                                .size(14.0)
-                                .color(ui.style().visuals.selection.bg_fill),
-                        );
-                    });
-                });
             }
         }
     }

@@ -1,6 +1,6 @@
 // File: src/ui/features/welcome.rs
 use crate::{app::CircleApp, utils::config::Theme};
-use eframe::egui::{Color32, Frame, Margin, RichText, Ui};
+use eframe::egui::{Frame, Margin, RichText, Ui};
 
 // Renders the welcome screen for the Circle Collaboration System
 pub fn render_welcome_screen(_: &CircleApp, ui: &mut Ui, theme: &Theme) {

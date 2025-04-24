@@ -1,7 +1,8 @@
 use crate::models::notification::AppNotification;
+use crate::ui::components::button::render_button;
 use crate::utils::config::Theme;
 use chrono::{DateTime, Local, Utc};
-use eframe::egui::{self, Color32, RichText, Stroke, Vec2};
+use eframe::egui::{Color32, RichText};
 
 /// State for the notification dialog
 #[derive(Debug)]
@@ -147,16 +148,7 @@ pub fn render_notification_dialog(
 
                 // Action URL if available
                 if let Some(action_url) = &notification.action_url {
-                    if ui
-                        .add(
-                            egui::Button::new(
-                                RichText::new("Open Link").size(16.0).color(Color32::WHITE),
-                            )
-                            .min_size(Vec2::new(120.0, 36.0))
-                            .corner_radius(8.0)
-                            .fill(theme.accent)
-                            .stroke(Stroke::new(1.0, theme.border)),
-                        )
+                    if render_button(ui, "Open Link", true, theme, None)
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
                         .clicked()
                     {
@@ -170,14 +162,7 @@ pub fn render_notification_dialog(
 
                 // Close button at the bottom
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                    if ui
-                        .add(
-                            egui::Button::new(RichText::new("Close").size(16.0).color(theme.text))
-                                .min_size(Vec2::new(120.0, 36.0))
-                                .corner_radius(8.0)
-                                .fill(theme.secondary_background)
-                                .stroke(Stroke::new(1.0, theme.border)),
-                        )
+                    if render_button(ui, "Close", false, theme, None)
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
                         .clicked()
                     {

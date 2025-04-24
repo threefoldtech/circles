@@ -1,10 +1,13 @@
 use crate::app::{ActiveFeature, CircleApp};
+use crate::ui::components::button::render_button;
+use crate::ui::footer::{
+    StatusFrameProps, create_styled_text, render_status_dot, set_hover_cursor,
+};
 use crate::utils::config::{LayoutConfig, NAV_ITEMS, Theme};
 use eframe::egui::{
-    Align, Button, Color32, Context, CursorIcon, Frame, Layout, RichText, Sense, Stroke,
-    TopBottomPanel, Ui, Vec2,
+    Align, Context, CursorIcon, Frame, Layout, Margin, Stroke, TopBottomPanel, Ui, Vec2,
 };
-use egui::Direction;
+use egui::{Direction, RichText};
 
 // Header rendering functions
 pub fn render_top_panel(
@@ -16,30 +19,37 @@ pub fn render_top_panel(
 ) {
     TopBottomPanel::top("top_panel")
         .exact_height(config.navbar_height)
-        .frame(app_layout.clone().corner_radius(0))
+        .frame(
+            app_layout
+                .clone()
+                .corner_radius(0)
+                .fill(theme.secondary_background),
+        )
         .show(ctx, |ui| {
             ui.vertical(|ui| {
-                ui.add_space(16.0);
-                ui.horizontal(|ui| {
-                    // Left side - App logo
-                    ui.add_space(16.0);
+                // ui.add_space(16.0);
 
-                    // Logo circle
-                    let logo_size = 28.0;
-                    let (_, logo_rect) = ui.allocate_space(Vec2::new(logo_size, logo_size));
-                    ui.painter()
-                        .circle_filled(logo_rect.center(), logo_size / 2.0, theme.accent);
-                    ui.painter().text(
-                        logo_rect.center(),
-                        egui::Align2::CENTER_CENTER,
-                        "C",
-                        egui::FontId::proportional(18.0),
-                        Color32::WHITE,
-                    );
-
-                    // ui.add_space(150.0);
-                    // App logo and name
+                // Entire header row
+                ui.horizontal_top(|ui| {
+                    // === Left Side: Logo ===
                     ui.horizontal(|ui| {
+                        // ui.add_space(16.0);
+
+                        let logo_size = 28.0;
+                        let (_, logo_rect) = ui.allocate_space(Vec2::new(logo_size, logo_size));
+                        ui.painter().circle_filled(
+                            logo_rect.center(),
+                            logo_size / 2.0,
+                            theme.accent,
+                        );
+                        ui.painter().text(
+                            logo_rect.center(),
+                            egui::Align2::CENTER_CENTER,
+                            "C",
+                            egui::FontId::proportional(18.0),
+                            theme.light_color,
+                        );
+
                         ui.heading(
                             RichText::new("Circle Collaboration System")
                                 .size(20.0)
@@ -48,15 +58,13 @@ pub fn render_top_panel(
                         );
                     });
 
-                    ui.add_space(150.0); // Set any space to center the buttons
-
                     // Render the navigation bar with feature buttons
                     if !app.is_first_time {
-                        // Center - Navigation buttons
+                        // === Centered Buttons (if circle is active) ===
+                        ui.add_space(280.0); // Set any space to center the buttons
                         ui.with_layout(
                             Layout::centered_and_justified(Direction::LeftToRight),
                             |ui| {
-                                ui.add_space(16.0);
                                 ui.horizontal(|ui| {
                                     for (icon, text, feature) in NAV_ITEMS {
                                         if create_nav_button(
@@ -75,46 +83,36 @@ pub fn render_top_panel(
                         );
                     }
 
-                    // Right side - Active circle
+                    // === Right Side: Circle Status ===
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        ui.add_space(16.0);
                         let circle_text = app
                             .active_circle()
                             .map_or("No circle selected".to_string(), |c| {
                                 format!("Active: {}", c.name)
                             });
 
-                        let circle_frame = Frame::new()
-                            .fill(theme.secondary_background)
-                            .corner_radius(12)
-                            .inner_margin(egui::Margin::symmetric(12, 6))
-                            .stroke(Stroke::new(1.0, theme.border))
+                        let status_frame = StatusFrameProps::new(theme)
+                            .with_margin(Margin::symmetric(10, 4))
+                            .build()
                             .show(ui, |ui| {
                                 ui.horizontal(|ui| {
+                                    ui.label(create_styled_text(
+                                        circle_text,
+                                        theme.text,
+                                        13.0,
+                                        true,
+                                    ));
                                     if app.active_circle().is_some() {
-                                        ui.painter().circle_filled(
-                                            ui.min_rect().left_center() + Vec2::new(6.0, 0.0),
-                                            6.0,
-                                            theme.success,
-                                        );
-                                        ui.add_space(16.0);
+                                        ui.add_space(4.0);
+                                        render_status_dot(ui, theme, 6.0);
                                     }
-
-                                    ui.label(
-                                        RichText::new(circle_text)
-                                            .size(14.0)
-                                            .strong()
-                                            .color(theme.text),
-                                    );
                                 });
                             });
 
-                        if circle_frame.response.hovered() {
-                            ui.output_mut(|o| o.cursor_icon = CursorIcon::PointingHand);
-                        }
+                        set_hover_cursor(ui, &status_frame.response);
                     });
                 });
-                ui.add_space(8.0);
+
                 ui.painter().hline(
                     ui.available_rect_before_wrap().x_range(),
                     ui.cursor().top(),
@@ -132,41 +130,18 @@ fn create_nav_button(
     active_feature: ActiveFeature,
     theme: &Theme,
 ) -> bool {
-    // let config = get_layout_config();
     let is_active = active_feature == feature;
 
-    // Create a button with icon and text
-    let button_text = RichText::new(format!("{} {}", icon, text))
-        .size(14.0)
-        .color(if is_active {
-            Color32::WHITE
-        } else {
-            theme.text
-        });
-
-    let button = Button::new(button_text)
-        .min_size(Vec2::new(110.0, 40.0)) // Slightly wider to accommodate icons
-        .corner_radius(6)
-        .sense(Sense::click_and_drag())
-        .fill(if is_active {
-            theme.accent
-        } else {
-            theme.secondary_background
-        })
-        .stroke(Stroke::NONE);
-
-    let response = ui
-        .add(button)
+    let response = render_button(ui, text, is_active, theme, Some(icon))
         .on_hover_ui(|ui| {
             ui.style_mut().visuals.widgets.hovered.bg_fill = theme.accent;
             ui.label(
-                RichText::new(format!("{} {}", icon, text))
+                egui::RichText::new(format!("{} {}", icon, text))
                     .size(12.0)
-                    .color(Color32::WHITE),
+                    .color(theme.light_color),
             );
         })
         .on_hover_cursor(CursorIcon::PointingHand);
-
     if response.hovered() {
         ui.ctx().request_repaint();
     }

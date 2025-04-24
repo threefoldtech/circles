@@ -9,6 +9,7 @@ use crate::{
         dummy_data::Email,
         features::{ComposeDraft, ComposeDraftMode},
     },
+    ui::components::button::render_button,
     utils::config::Theme,
     utils::notifications::{NotificationConfig, NotificationType, send_desktop_notification},
 };
@@ -467,15 +468,15 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
             // Bottom buttons
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    // Custom styling for attach button (not using standard active/inactive states)
+                    let attach_text = RichText::new("📎 Attach").size(14.0).color(theme.accent);
                     if ui
                         .add(
-                            egui::Button::new(
-                                RichText::new("📎 Attach").size(14.0).color(theme.accent),
-                            )
-                            .fill(theme.background)
-                            .stroke(Stroke::new(1.0, theme.accent))
-                            .min_size(Vec2::new(100.0, 36.0))
-                            .corner_radius(6.0),
+                            egui::Button::new(attach_text)
+                                .fill(theme.background)
+                                .stroke(Stroke::new(1.0, theme.accent))
+                                .min_size(Vec2::new(110.0, 40.0))
+                                .corner_radius(6.0),
                         )
                         .clicked()
                     {
@@ -493,31 +494,21 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                 });
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui
-                        .add(
-                            egui::Button::new(
-                                RichText::new("Send").size(14.0).color(Color32::WHITE),
-                            )
-                            .fill(theme.accent)
-                            .min_size(Vec2::new(100.0, 36.0))
-                            .corner_radius(6.0),
-                        )
-                        .clicked()
-                    {
+                    if render_button(ui, "Send", true, theme, None).clicked() {
                         action = Some(("send", draft.clone()));
                     }
 
+                    // Custom styling for discard button (not using standard active/inactive states)
+                    let discard_text = RichText::new("Discard")
+                        .size(14.0)
+                        .color(Color32::from_rgb(200, 50, 50));
                     if ui
                         .add(
-                            egui::Button::new(
-                                RichText::new("Discard")
-                                    .size(14.0)
-                                    .color(Color32::from_rgb(200, 50, 50)),
-                            )
-                            .fill(theme.background)
-                            .stroke(Stroke::new(1.0, Color32::from_rgb(200, 50, 50)))
-                            .min_size(Vec2::new(100.0, 36.0))
-                            .corner_radius(6.0),
+                            egui::Button::new(discard_text)
+                                .fill(theme.background)
+                                .stroke(Stroke::new(1.0, Color32::from_rgb(200, 50, 50)))
+                                .min_size(Vec2::new(110.0, 40.0))
+                                .corner_radius(6.0),
                         )
                         .clicked()
                     {

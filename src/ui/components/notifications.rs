@@ -1,11 +1,10 @@
 use chrono::{DateTime, Local, Utc};
-use egui::{Align, Button, Color32, Direction, Frame, Layout, Margin, RichText, Stroke, Vec2};
+use egui::{Align, Button, Color32, Frame, Layout, Margin, RichText, Stroke, Vec2};
 use std::collections::VecDeque;
 
 use crate::{
     models::notification::AppNotification,
-    ui::components::notification_dialog::{NotificationDialogState, render_notification_dialog},
-    utils::config::Theme,
+    ui::components::notification_dialog::NotificationDialogState, utils::config::Theme,
 };
 
 #[derive(Debug)]
@@ -155,9 +154,6 @@ impl NotificationManager {
                 ui.vertical(|ui| {
                     // Title with timestamp
                     ui.horizontal(|ui| {
-                        // Set a maximum width for the title to prevent panel expansion
-                        let title_width = ui.available_width() - 50.0; // Reserve space for timestamp
-
                         // Use the existing truncate_text helper function
                         let truncated_title = Self::truncate_text(&notification.title, 30);
 
@@ -194,9 +190,6 @@ impl NotificationManager {
 
                     // Message with truncation
                     ui.horizontal(|ui| {
-                        // Ensure the message container has a fixed width
-                        let message_width = available_width - 24.0; // Account for inner margin
-
                         // Use the existing truncate_text helper function
                         let truncated_message = Self::truncate_text(&notification.message, 60);
 

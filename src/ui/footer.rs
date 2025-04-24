@@ -5,14 +5,87 @@ use crate::ui::components::notifications_panel::{
 use crate::utils::config::Theme;
 use chrono::Local;
 use eframe::egui::{
-    Align, Color32, Context, Frame, Layout, Margin, Pos2, RichText, Sense, Stroke, TopBottomPanel,
-    Vec2,
+    Align, Color32, Context, Frame, Layout, Margin, Pos2, Response, RichText, Sense, Stroke,
+    TopBottomPanel, Ui, Vec2,
 };
+
+pub struct StatusFrameProps<'a> {
+    theme: &'a Theme,
+    has_unread: bool,
+    inner_margin: Margin,
+    corner_radius: f32,
+}
+
+impl<'a> StatusFrameProps<'a> {
+    pub fn new(theme: &'a Theme) -> Self {
+        Self {
+            theme,
+            has_unread: false,
+            inner_margin: Margin::symmetric(10, 4),
+            corner_radius: 12.0,
+        }
+    }
+
+    pub fn with_unread(self, has_unread: bool) -> Self {
+        Self { has_unread, ..self }
+    }
+
+    pub fn with_margin(self, margin: Margin) -> Self {
+        Self {
+            inner_margin: margin,
+            ..self
+        }
+    }
+
+    pub fn build(&self) -> Frame {
+        Frame::new()
+            .fill(if self.has_unread {
+                self.theme.error
+            } else {
+                self.theme.secondary_background
+            })
+            .corner_radius(self.corner_radius)
+            .inner_margin(self.inner_margin)
+            .stroke(Stroke::new(1.0, self.theme.border))
+    }
+}
+
+pub fn create_styled_text(
+    text: impl Into<String>,
+    color: Color32,
+    size: f32,
+    strong: bool,
+) -> RichText {
+    let mut rich_text = RichText::new(text).size(size).color(color);
+    if strong {
+        rich_text = rich_text.strong();
+    }
+    rich_text
+}
+
+pub fn render_status_dot(ui: &mut Ui, theme: &Theme, offset: f32) {
+    ui.painter().circle_filled(
+        ui.min_rect().left_center() + Vec2::new(offset, 0.0),
+        4.0,
+        theme.active,
+    );
+}
+
+pub fn set_hover_cursor(ui: &mut Ui, response: &Response) {
+    if response.hovered() {
+        ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
+    }
+}
 
 pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame, theme: &Theme) {
     TopBottomPanel::bottom("status_bar")
         .exact_height(40.0)
-        .frame(app_layout.clone().corner_radius(0))
+        .frame(
+            app_layout
+                .clone()
+                .corner_radius(0)
+                .fill(theme.secondary_background),
+        )
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
                 render_left_section(ui, theme);
@@ -21,173 +94,137 @@ pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame,
         });
 }
 
-fn render_left_section(ui: &mut egui::Ui, theme: &Theme) {
-    // Left side - Connection status
-    ui.add_space(16.0);
-    let _status_frame = Frame::new()
-        .fill(theme.secondary_background)
-        .corner_radius(12)
-        .inner_margin(Margin::symmetric(10, 4))
-        .stroke(Stroke::new(1.0, theme.border))
-        .show(ui, |ui| {
-            ui.horizontal(|ui| {
-                // Green dot for connected status
-                ui.painter().circle_filled(
-                    ui.min_rect().left_center() + Vec2::new(6.0, 0.0),
-                    4.0,
-                    Color32::from_rgb(50, 180, 50),
-                );
-                ui.add_space(12.0);
-                ui.label(RichText::new("Connected").size(13.0).color(theme.text));
-            });
-        });
-
-    ui.add_space(12.0);
-
-    // Current date and time
+fn render_date_time(ui: &mut Ui, theme: &Theme) {
     let now = Local::now();
     let date_str = now.format("%a, %d %b %Y").to_string();
     let time_str = now.format("%H:%M:%S").to_string();
 
-    ui.label(
-        RichText::new(format!("📅 {}", date_str))
-            .size(13.0)
-            .color(theme.text),
-    );
-
+    ui.label(create_styled_text(
+        format!("📅 {}", date_str),
+        theme.text,
+        13.0,
+        false,
+    ));
     ui.add_space(8.0);
-
-    ui.label(
-        RichText::new(format!("🕒 {}", time_str))
-            .size(13.0)
-            .color(theme.text),
-    );
+    ui.label(create_styled_text(
+        format!("🕒 {}", time_str),
+        theme.text,
+        13.0,
+        false,
+    ));
 }
 
-fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut egui::Ui, theme: &Theme) {
+fn render_left_section(ui: &mut Ui, theme: &Theme) {
+    ui.add_space(16.0);
+
+    let status_frame = StatusFrameProps::new(theme)
+        .with_margin(Margin::symmetric(10, 4))
+        .build()
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                render_status_dot(ui, theme, 6.0);
+                ui.add_space(12.0);
+                ui.label(create_styled_text("Connected", theme.text, 13.0, true));
+            });
+        });
+
+    set_hover_cursor(ui, &status_frame.response);
+    ui.add_space(12.0);
+    render_date_time(ui, theme);
+}
+
+fn render_user_status(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
+    let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
+    let user_frame = StatusFrameProps::new(theme)
+        .with_margin(Margin::symmetric(10, 4))
+        .build()
+        .show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(create_styled_text(user_name, theme.text, 13.0, true));
+                ui.add_space(4.0);
+                render_status_dot(ui, theme, 6.0);
+            });
+        });
+
+    set_hover_cursor(ui, &user_frame.response);
+}
+
+fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut Ui, theme: &Theme) {
     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
         ui.add_space(16.0);
 
-        // Notifications indicator
-        let notif_frame = render_notification_bell(app, ui, theme);
-
-        // Render notifications panel if shown
-        if app.notification_manager.show_panel {
-            let screen_rect = ui.ctx().screen_rect();
-            let panel_height = 600.0;
-
-            // Fixed width of 300px is used inside the panel component
-            let panel_pos = Pos2::new(
-                screen_rect.right() - 320.0, // 300px + 20px margin
-                screen_rect.bottom() - panel_height - 50.0,
-            );
-
-            let panel_rect = render_notifications_panel(
-                app,
-                ctx,
-                NotificationsPanelProps {
-                    pos: panel_pos,
-                    height: panel_height,
-                    theme,
-                },
-            );
-
-            // Handle outside clicks
-            if ui.input(|i| i.pointer.any_released()) {
-                // Check if a notification dialog was opened
-                let notification_dialog_open = app.notification_manager.notification_dialog.is_open;
-
-                // Only close the panel if no notification dialog was opened
-                if !notification_dialog_open {
-                    let mouse_pos = ui.input(|i| i.pointer.interact_pos());
-                    if let Some(pos) = mouse_pos {
-                        let bell_rect = notif_frame.rect.expand(20.0);
-                        if !panel_rect.contains(pos) && !bell_rect.contains(pos) {
-                            app.notification_manager.show_panel = false;
-                        }
-                    }
-                }
-            }
-        }
-
+        let notif_response = render_notification_bell(app, ui, theme);
+        handle_notifications_panel(app, ctx, ui, theme, notif_response.rect);
         ui.add_space(12.0);
-
         render_user_status(app, ui, theme);
     });
 }
 
-fn render_notification_bell(
-    app: &mut CircleApp,
-    ui: &mut egui::Ui,
-    theme: &Theme,
-) -> egui::Response {
+fn render_notification_bell(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) -> Response {
     let unread_count = app.notification_manager.unread_count();
-    let notif_frame = Frame::new()
-        .fill(if unread_count > 0 {
-            Color32::from_rgb(240, 70, 70)
-        } else {
-            theme.secondary_background
-        })
-        .corner_radius(12)
-        .inner_margin(Margin::symmetric(8, 4))
-        .stroke(Stroke::new(1.0, theme.border));
+    let notif_frame = StatusFrameProps::new(theme)
+        .with_unread(unread_count > 0)
+        .with_margin(Margin::symmetric(8, 4))
+        .build();
 
-    let response = notif_frame
+    notif_frame
         .show(ui, |ui| {
-            let response = ui.add(
-                egui::Label::new(
-                    RichText::new(format!("🔔 {}", unread_count))
-                        .size(13.0)
-                        .color(if unread_count > 0 {
-                            Color32::WHITE
-                        } else {
-                            theme.text
-                        })
-                        .strong(),
-                )
-                .sense(Sense::click()),
+            let label = create_styled_text(
+                format!("🔔 {}", unread_count),
+                if unread_count > 0 {
+                    theme.light_color
+                } else {
+                    theme.text
+                },
+                13.0,
+                true,
             );
+            let response = ui.add(egui::Label::new(label).sense(Sense::click()));
 
             if response.clicked() {
                 app.notification_manager.show_panel = !app.notification_manager.show_panel;
             }
-
-            if response.hovered() {
-                ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
-            }
-
+            set_hover_cursor(ui, &response);
             response
         })
-        .inner;
-
-    response
+        .inner
 }
 
-fn render_user_status(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
-    let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
-    let user_frame = Frame::new()
-        .fill(theme.secondary_background)
-        .corner_radius(12)
-        .inner_margin(Margin::symmetric(10, 4))
-        .stroke(Stroke::new(1.0, theme.border))
-        .show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.painter().circle_filled(
-                    ui.min_rect().left_center() + Vec2::new(6.0, 0.0),
-                    4.0,
-                    theme.success,
-                );
-                ui.add_space(12.0);
-                ui.label(
-                    RichText::new(format!("{}", user_name))
-                        .size(13.0)
-                        .color(theme.text)
-                        .strong(),
-                );
-            });
-        });
+fn handle_notifications_panel(
+    app: &mut CircleApp,
+    ctx: &Context,
+    ui: &mut Ui,
+    theme: &Theme,
+    bell_rect: eframe::epaint::Rect,
+) {
+    if app.notification_manager.show_panel {
+        let screen_rect = ctx.screen_rect();
+        let panel_height = 600.0;
+        let panel_pos = Pos2::new(
+            screen_rect.right() - 320.0,
+            screen_rect.bottom() - panel_height - 50.0,
+        );
 
-    if user_frame.response.hovered() {
-        ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
+        let panel_rect = render_notifications_panel(
+            app,
+            ctx,
+            NotificationsPanelProps {
+                pos: panel_pos,
+                height: panel_height,
+                theme,
+            },
+        );
+
+        if ui.input(|i| i.pointer.any_released()) {
+            let notification_dialog_open = app.notification_manager.notification_dialog.is_open;
+            if !notification_dialog_open {
+                if let Some(pos) = ui.input(|i| i.pointer.interact_pos()) {
+                    let bell_rect = bell_rect.expand(20.0);
+                    if !panel_rect.contains(pos) && !bell_rect.contains(pos) {
+                        app.notification_manager.show_panel = false;
+                    }
+                }
+            }
+        }
     }
 }
