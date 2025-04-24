@@ -72,32 +72,32 @@ fn create_action_button(ui: &mut Ui, text: &str, theme: &Theme, is_active: bool)
 
 // Button for view mode selection
 fn create_view_button(ui: &mut Ui, text: &str, theme: &Theme, is_active: bool) -> egui::Response {
-    let (text_color, bg_color) = if is_active {
-        (theme.light_color, theme.accent)
+    let fill_color = if is_active {
+        theme.accent
     } else {
-        (theme.text, theme.panel)
+        theme.secondary_background
     };
 
-    let mut response = ui.add(
-        Button::new(RichText::new(text).color(text_color).size(14.0))
-            .fill(bg_color)
-            .stroke(Stroke::new(1.0, theme.border))
-            .min_size(Vec2::new(70.0, 32.0))
-            .corner_radius(6.0),
-    );
+    let text_color = if is_active {
+        theme.light_color
+    } else {
+        theme.text
+    };
 
-    // Add hover effect and accessibility
+    let label = RichText::new(text).size(14.0).color(text_color);
+
+    let button = Button::new(label)
+        .fill(fill_color)
+        .corner_radius(4.0)
+        .min_size(Vec2::new(100.0, 32.0));
+
+    let mut response = ui
+        .add(button)
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+
     if response.hovered() && !is_active {
-        ui.painter().rect_filled(response.rect, 6.0, theme.hover);
-
-        // Add accessibility tooltip
         let hover_text = format!("Switch to {} view", text);
         response = response.on_hover_text(hover_text);
-    }
-
-    // Add keyboard navigation support
-    if is_active {
-        response = response.highlight();
     }
 
     response
