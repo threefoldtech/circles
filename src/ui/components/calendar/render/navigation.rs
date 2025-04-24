@@ -1,5 +1,5 @@
 use chrono::Datelike;
-use egui::{Button, RichText, Ui, Vec2};
+use egui::{Button, Key, RichText, Stroke, Ui, Vec2};
 
 use super::super::state::{CalendarState, CalendarViewMode};
 use crate::ui::features::calendar::Calendar;
@@ -9,43 +9,70 @@ pub fn render_navigation_header(ui: &mut Ui, state: &mut CalendarState, theme: &
     let header_text = get_header_text(state);
     let is_today = state.selected_date.date_naive() == chrono::Local::now().date_naive();
 
-    ui.horizontal(|ui| {
-        if ui
-            .add(
-                Button::new(RichText::new("◀").color(theme.accent)).min_size(Vec2::new(32.0, 32.0)),
-            )
-            .clicked()
-        {
-            Calendar::navigate_state(state, false);
-        }
+    // Create a centered container for the navigation header
+    ui.vertical_centered(|ui| {
+        ui.add_space(8.0);
 
-        ui.with_layout(
-            egui::Layout::top_down_justified(egui::Align::Center),
-            |ui| {
-                ui.add_space(8.0);
-                ui.strong(
-                    RichText::new(header_text)
-                        .color(if is_today {
-                            theme.error
-                        } else {
-                            theme.header_text
-                        })
-                        .size(16.0),
-                );
-                ui.add_space(8.0);
-            },
-        );
+        // Navigation controls in a horizontal layout
+        ui.horizontal(|ui| {
+            // Previous button with theme-based styling
+            let prev_button = ui.add(
+                Button::new(RichText::new("◀").color(theme.text).size(16.0))
+                    .min_size(Vec2::new(40.0, 40.0))
+                    .stroke(Stroke::new(1.0, theme.border))
+                    .fill(theme.panel)
+                    .corner_radius(20.0),
+            );
 
-        if ui
-            .add(
-                Button::new(RichText::new("▶").color(theme.accent)).min_size(Vec2::new(32.0, 32.0)),
-            )
-            .clicked()
-        {
-            Calendar::navigate_state(state, true);
-        }
+            if prev_button.clicked() || ui.input(|i| i.key_pressed(Key::ArrowLeft)) {
+                Calendar::navigate_state(state, false);
+            }
+
+            // Add accessibility
+            prev_button.on_hover_text("Previous");
+
+            ui.add_space(16.0);
+
+            // Month/year display with proper styling
+            ui.add(egui::Label::new(
+                RichText::new(header_text)
+                    .color(if is_today {
+                        theme.accent
+                    } else {
+                        theme.header_text
+                    })
+                    .size(20.0)
+                    .strong(),
+            ));
+
+            ui.add_space(16.0);
+
+            // Next button with theme-based styling
+            let next_button = ui.add(
+                Button::new(RichText::new("▶").color(theme.text).size(16.0))
+                    .min_size(Vec2::new(40.0, 40.0))
+                    .stroke(Stroke::new(1.0, theme.border))
+                    .fill(theme.panel)
+                    .corner_radius(20.0),
+            );
+
+            if next_button.clicked() || ui.input(|i| i.key_pressed(Key::ArrowRight)) {
+                Calendar::navigate_state(state, true);
+            }
+
+            // Add accessibility
+            next_button.on_hover_text("Next");
+        });
+
+        ui.add_space(8.0);
     });
-    ui.separator();
+
+    // Add a subtle separator with theme color
+    let separator = ui.separator();
+    ui.painter().line_segment(
+        [separator.rect.left_top(), separator.rect.right_top()],
+        (1.0, theme.border),
+    );
 }
 
 fn get_header_text(state: &CalendarState) -> String {
