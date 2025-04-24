@@ -69,23 +69,23 @@ pub fn render_circle_dialog(
     let mut created_circle = None;
     let mut should_close = false;
 
-    // Create a modal dialog with increased width and height
+    // Create a modal dialog with standardized width and height
     egui::Window::new("Create New Circle")
-        .fixed_size([520.0, 620.0]) // Increased width and height for better content display
-        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]) // Point 2: Already centered
+        .fixed_size([600.0, 620.0]) // Fixed size to match event dialog
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]) // Centered horizontally
         .collapsible(false)
         .resizable(false)
         .frame(
             egui::Frame::window(&ctx.style())
-                .fill(theme.panel)
-                .corner_radius(12)
+                .fill(theme.background)
+                .corner_radius(16)
                 .shadow(egui::epaint::Shadow {
                     color: Color32::from_black_alpha(25),
                     offset: [0, 4],
                     blur: 8,
                     spread: 0,
                 })
-                .inner_margin(egui::Margin::same(24)), // Further increased padding for better spacing
+                .inner_margin(egui::Margin::same(24)), // Appropriate padding for content
         )
         .show(ctx, |ui| {
             // Main layout

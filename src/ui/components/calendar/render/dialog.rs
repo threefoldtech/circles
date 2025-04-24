@@ -16,28 +16,37 @@ pub fn render_event_dialog(ui: &mut Ui, state: &mut CalendarState, theme: &Theme
     let mut cancel_dialog = false;
 
     // Show the dialog window
+    // Create a standardized window with consistent styling to match circle dialog
     Window::new("Event Details")
         .collapsible(false)
         .resizable(false)
+        .fixed_size([600.0, 620.0]) // Fixed size to match circle dialog
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]) // Centered horizontally
+        .frame(
+            egui::Frame::window(&ui.ctx().style())
+                .fill(theme.background)
+                .corner_radius(16)
+                .shadow(egui::epaint::Shadow {
+                    color: egui::Color32::from_black_alpha(25),
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
+                })
+                .inner_margin(egui::Margin::same(24)),
+        )
         .show(ui.ctx(), |ui| {
-            // Set the background color for the entire panel
-            egui::Frame::new().fill(theme.background).show(ui, |ui| {
-                // Add a header with themed background
-                egui::Frame::new()
-                    .fill(theme.secondary_background)
-                    .inner_margin(egui::vec2(12.0, 8.0))
-                    .outer_margin(egui::vec2(0.0, 0.0))
-                    .show(ui, |ui| {
-                        ui.centered_and_justified(|ui| {
-                            ui.heading(
-                                RichText::new("Event Details")
-                                    .color(theme.header_text)
-                                    .size(18.0),
-                            );
-                        });
-                    });
-
-                ui.add_space(8.0);
+            // Main layout
+            ui.vertical(|ui| {
+                // Heading
+                ui.vertical_centered(|ui| {
+                    ui.heading(
+                        RichText::new("Event Details")
+                            .size(24.0)
+                            .strong()
+                            .color(theme.text),
+                    );
+                    ui.add_space(20.0);
+                });
 
                 // Get a mutable reference to the event
                 if let Some(event) = &mut state.new_event {
@@ -54,239 +63,215 @@ pub fn render_event_dialog(ui: &mut Ui, state: &mut CalendarState, theme: &Theme
                         }
                     }
 
-                    // Render form fields with consistent spacing
-                    ui.vertical(|ui| {
-                        ui.add_space(4.0);
+                    // Set theme-appropriate background for all widgets
+                    ui.style_mut().visuals.extreme_bg_color = theme.secondary_background;
+                    ui.style_mut().visuals.widgets.inactive.bg_fill = theme.secondary_background;
+                    ui.style_mut().visuals.widgets.active.bg_fill = theme.hover;
+                    ui.style_mut().visuals.widgets.hovered.bg_fill = theme.hover;
 
-                        // Title
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("Title:").color(theme.text).strong());
+                    // Title
+                    ui.label(
+                        RichText::new("Title *")
+                            .strong()
+                            .size(16.0)
+                            .color(theme.text),
+                    );
+                    ui.add(
+                        egui::TextEdit::singleline(&mut event.title)
+                            .margin(egui::Vec2::new(10.0, 8.0))
+                            .desired_width(f32::INFINITY)
+                            .font(egui::FontId::proportional(16.0)),
+                    );
+                    ui.add_space(16.0);
 
-                            // Styled input field with secondary background
-                            egui::Frame::new()
-                                .fill(theme.secondary_background)
-                                .inner_margin(egui::vec2(8.0, 8.0))
-                                .outer_margin(egui::vec2(0.0, 0.0))
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    ui.set_width(ui.available_width());
-                                    ui.text_edit_singleline(&mut event.title);
-                                });
-                        });
-                        ui.add_space(12.0);
+                    // Description
+                    ui.label(
+                        RichText::new("Description")
+                            .strong()
+                            .size(16.0)
+                            .color(theme.text),
+                    );
+                    ui.add(
+                        egui::TextEdit::multiline(&mut event.description)
+                            .margin(egui::Vec2::new(10.0, 8.0))
+                            .desired_width(f32::INFINITY)
+                            .desired_rows(4)
+                            .font(egui::FontId::proportional(16.0)),
+                    );
+                    ui.add_space(16.0);
 
-                        // Description
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("Description:").color(theme.text).strong());
+                    // Start Time
+                    ui.label(
+                        RichText::new("Start Time *")
+                            .strong()
+                            .size(16.0)
+                            .color(theme.text),
+                    );
+                    ui.horizontal(|ui| {
+                        let mut date = event.start_time.format("%Y-%m-%d").to_string();
+                        let mut time = event.start_time.format("%H:%M").to_string();
 
-                            // Styled input field with secondary background
-                            egui::Frame::new()
-                                .fill(theme.secondary_background)
-                                .inner_margin(egui::vec2(8.0, 8.0))
-                                .outer_margin(egui::vec2(0.0, 0.0))
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    ui.set_width(ui.available_width());
-                                    ui.set_min_height(80.0);
-                                    ui.text_edit_multiline(&mut event.description);
-                                });
-                        });
-                        ui.add_space(12.0);
+                        ui.add(
+                            egui::TextEdit::singleline(&mut date)
+                                .margin(egui::Vec2::new(10.0, 8.0))
+                                .desired_width(200.0)
+                                .hint_text("YYYY-MM-DD")
+                                .font(egui::FontId::proportional(16.0)),
+                        );
 
-                        // Start Time
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("Start Time:").color(theme.text).strong());
+                        ui.add_space(8.0);
 
-                            let mut date = event.start_time.format("%Y-%m-%d").to_string();
-                            let mut time = event.start_time.format("%H:%M").to_string();
+                        ui.add(
+                            egui::TextEdit::singleline(&mut time)
+                                .margin(egui::Vec2::new(10.0, 8.0))
+                                .desired_width(100.0)
+                                .hint_text("HH:MM")
+                                .font(egui::FontId::proportional(16.0)),
+                        );
 
-                            ui.horizontal(|ui| {
-                                // Date input with styled background
-                                egui::Frame::new()
-                                    .fill(theme.secondary_background)
-                                    .inner_margin(egui::vec2(8.0, 8.0))
-                                    .outer_margin(egui::vec2(0.0, 0.0))
-                                    .corner_radius(4.0)
-                                    .show(ui, |ui| {
-                                        ui.set_min_width(120.0);
-                                        ui.text_edit_singleline(&mut date);
-                                    });
-
-                                ui.add_space(8.0);
-
-                                // Time input with styled background
-                                egui::Frame::new()
-                                    .fill(theme.secondary_background)
-                                    .inner_margin(egui::vec2(8.0, 8.0))
-                                    .outer_margin(egui::vec2(0.0, 0.0))
-                                    .corner_radius(4.0)
-                                    .show(ui, |ui| {
-                                        ui.set_min_width(80.0);
-                                        ui.text_edit_singleline(&mut time);
-                                    });
-                            });
-
-                            if let Ok(parsed_date) = NaiveDate::parse_from_str(&date, "%Y-%m-%d") {
-                                if let Ok(parsed_time) = NaiveTime::parse_from_str(&time, "%H:%M") {
-                                    if let Some(parsed_datetime) = parsed_date
-                                        .and_time(parsed_time)
-                                        .and_local_timezone(Utc)
-                                        .single()
-                                    {
-                                        event.start_time = parsed_datetime;
-                                    }
+                        if let Ok(parsed_date) = NaiveDate::parse_from_str(&date, "%Y-%m-%d") {
+                            if let Ok(parsed_time) = NaiveTime::parse_from_str(&time, "%H:%M") {
+                                if let Some(parsed_datetime) = parsed_date
+                                    .and_time(parsed_time)
+                                    .and_local_timezone(Utc)
+                                    .single()
+                                {
+                                    event.start_time = parsed_datetime;
                                 }
                             }
-                        });
-                        ui.add_space(12.0);
-
-                        // End Time
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("End Time:").color(theme.text).strong());
-
-                            let mut date = event.end_time.format("%Y-%m-%d").to_string();
-                            let mut time = event.end_time.format("%H:%M").to_string();
-
-                            ui.horizontal(|ui| {
-                                // Date input with styled background
-                                egui::Frame::new()
-                                    .fill(theme.secondary_background)
-                                    .inner_margin(egui::vec2(8.0, 8.0))
-                                    .outer_margin(egui::vec2(0.0, 0.0))
-                                    .corner_radius(4.0)
-                                    .show(ui, |ui| {
-                                        ui.set_min_width(120.0);
-                                        ui.text_edit_singleline(&mut date);
-                                    });
-
-                                ui.add_space(8.0);
-
-                                // Time input with styled background
-                                egui::Frame::new()
-                                    .fill(theme.secondary_background)
-                                    .inner_margin(egui::vec2(8.0, 8.0))
-                                    .outer_margin(egui::vec2(0.0, 0.0))
-                                    .corner_radius(4.0)
-                                    .show(ui, |ui| {
-                                        ui.set_min_width(80.0);
-                                        ui.text_edit_singleline(&mut time);
-                                    });
-                            });
-
-                            if let Ok(parsed_date) = NaiveDate::parse_from_str(&date, "%Y-%m-%d") {
-                                if let Ok(parsed_time) = NaiveTime::parse_from_str(&time, "%H:%M") {
-                                    if let Some(parsed_datetime) = parsed_date
-                                        .and_time(parsed_time)
-                                        .and_local_timezone(Utc)
-                                        .single()
-                                    {
-                                        event.end_time = parsed_datetime;
-                                    }
-                                }
-                            }
-                        });
-                        ui.add_space(12.0);
-
-                        // Location
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("Location:").color(theme.text).strong());
-
-                            let mut location_text = event.location.clone().unwrap_or_default();
-
-                            // Styled input field with secondary background
-                            egui::Frame::new()
-                                .fill(theme.secondary_background)
-                                .inner_margin(egui::vec2(8.0, 8.0))
-                                .outer_margin(egui::vec2(0.0, 0.0))
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    ui.set_width(ui.available_width());
-                                    ui.text_edit_singleline(&mut location_text);
-                                });
-
-                            event.location = if location_text.is_empty() {
-                                None
-                            } else {
-                                Some(location_text)
-                            };
-                        });
-                        ui.add_space(12.0);
-
-                        // Attendees
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("Attendees:").color(theme.text).strong());
-
-                            let attendees_str = event.attendees.join(", ");
-                            let mut new_attendees = attendees_str.clone();
-
-                            // Styled input field with secondary background
-                            egui::Frame::new()
-                                .fill(theme.secondary_background)
-                                .inner_margin(egui::vec2(8.0, 8.0))
-                                .outer_margin(egui::vec2(0.0, 0.0))
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    ui.set_width(ui.available_width());
-                                    ui.text_edit_singleline(&mut new_attendees);
-                                });
-
-                            // Small helper text
-                            ui.add_space(4.0);
-                            ui.label(
-                                RichText::new("(comma-separated)")
-                                    .color(theme.secondary_text)
-                                    .small(),
-                            );
-
-                            if new_attendees != attendees_str {
-                                event.attendees = new_attendees
-                                    .split(',')
-                                    .map(|s| s.trim().to_string())
-                                    .filter(|s| !s.is_empty())
-                                    .collect();
-                            }
-                        });
-                        ui.add_space(12.0);
-
-                        // Color
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("Color:").color(theme.text).strong());
-
-                            // Frame for the color picker
-                            egui::Frame::new()
-                                .fill(theme.secondary_background)
-                                .inner_margin(egui::vec2(8.0, 8.0))
-                                .outer_margin(egui::vec2(0.0, 0.0))
-                                .corner_radius(4.0)
-                                .show(ui, |ui| {
-                                    color_picker::color_edit_button_srgba(
-                                        ui,
-                                        &mut event.color,
-                                        color_picker::Alpha::Opaque,
-                                    );
-                                });
-                        });
-                        ui.add_space(16.0);
-
-                        // Action buttons with better spacing
-                        ui.horizontal(|ui| {
-                            ui.with_layout(
-                                egui::Layout::right_to_left(egui::Align::Center),
-                                |ui| {
-                                    if render_button(ui, "Cancel", false, theme, None).clicked() {
-                                        cancel_dialog = true;
-                                    }
-
-                                    ui.add_space(12.0);
-
-                                    if render_button(ui, "Save", true, theme, None).clicked() {
-                                        save_event = true;
-                                        cancel_dialog = true;
-                                    }
-                                },
-                            );
-                        });
+                        }
                     });
+                    ui.add_space(16.0);
+
+                    // End Time
+                    ui.label(
+                        RichText::new("End Time *")
+                            .strong()
+                            .size(16.0)
+                            .color(theme.text),
+                    );
+                    ui.horizontal(|ui| {
+                        let mut date = event.end_time.format("%Y-%m-%d").to_string();
+                        let mut time = event.end_time.format("%H:%M").to_string();
+
+                        ui.add(
+                            egui::TextEdit::singleline(&mut date)
+                                .margin(egui::Vec2::new(10.0, 8.0))
+                                .desired_width(200.0)
+                                .hint_text("YYYY-MM-DD")
+                                .font(egui::FontId::proportional(16.0)),
+                        );
+
+                        ui.add_space(8.0);
+
+                        ui.add(
+                            egui::TextEdit::singleline(&mut time)
+                                .margin(egui::Vec2::new(10.0, 8.0))
+                                .desired_width(100.0)
+                                .hint_text("HH:MM")
+                                .font(egui::FontId::proportional(16.0)),
+                        );
+
+                        if let Ok(parsed_date) = NaiveDate::parse_from_str(&date, "%Y-%m-%d") {
+                            if let Ok(parsed_time) = NaiveTime::parse_from_str(&time, "%H:%M") {
+                                if let Some(parsed_datetime) = parsed_date
+                                    .and_time(parsed_time)
+                                    .and_local_timezone(Utc)
+                                    .single()
+                                {
+                                    event.end_time = parsed_datetime;
+                                }
+                            }
+                        }
+                    });
+                    ui.add_space(16.0);
+
+                    // Location
+                    ui.label(
+                        RichText::new("Location")
+                            .strong()
+                            .size(16.0)
+                            .color(theme.text),
+                    );
+                    let mut location_text = event.location.clone().unwrap_or_default();
+                    ui.add(
+                        egui::TextEdit::singleline(&mut location_text)
+                            .margin(egui::Vec2::new(10.0, 8.0))
+                            .desired_width(f32::INFINITY)
+                            .font(egui::FontId::proportional(16.0)),
+                    );
+                    event.location = if location_text.is_empty() {
+                        None
+                    } else {
+                        Some(location_text)
+                    };
+                    ui.add_space(16.0);
+
+                    // Attendees
+                    ui.label(
+                        RichText::new("Attendees")
+                            .strong()
+                            .size(16.0)
+                            .color(theme.text),
+                    );
+                    let attendees_str = event.attendees.join(", ");
+                    let mut new_attendees = attendees_str.clone();
+                    ui.add(
+                        egui::TextEdit::singleline(&mut new_attendees)
+                            .margin(egui::Vec2::new(10.0, 8.0))
+                            .desired_width(f32::INFINITY)
+                            .hint_text("Enter attendees, comma separated")
+                            .font(egui::FontId::proportional(16.0)),
+                    );
+                    ui.label(
+                        RichText::new("(comma-separated)")
+                            .color(theme.secondary_text)
+                            .small(),
+                    );
+                    if new_attendees != attendees_str {
+                        event.attendees = new_attendees
+                            .split(',')
+                            .map(|s| s.trim().to_string())
+                            .filter(|s| !s.is_empty())
+                            .collect();
+                    }
+                    ui.add_space(16.0);
+
+                    // Color
+                    ui.label(RichText::new("Color").strong().size(16.0).color(theme.text));
+                    color_picker::color_edit_button_srgba(
+                        ui,
+                        &mut event.color,
+                        color_picker::Alpha::Opaque,
+                    );
+                    ui.add_space(28.0);
+
+                    // Separator before buttons
+                    ui.separator();
+                    ui.add_space(12.0);
+
+                    // Action buttons
+                    ui.horizontal(|ui| {
+                        // Cancel button
+                        if render_button(ui, "Cancel", false, theme, None)
+                            .on_hover_cursor(egui::CursorIcon::PointingHand)
+                            .clicked()
+                        {
+                            cancel_dialog = true;
+                        }
+
+                        ui.allocate_space(ui.available_size_before_wrap());
+
+                        // Save button
+                        if render_button(ui, "Save Event", true, theme, None)
+                            .on_hover_cursor(egui::CursorIcon::PointingHand)
+                            .clicked()
+                        {
+                            save_event = true;
+                            cancel_dialog = true;
+                        }
+                    });
+                    ui.add_space(16.0);
                 }
             });
         });

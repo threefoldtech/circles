@@ -46,16 +46,16 @@ pub fn render_notification_dialog(
     let notification = state.notification.as_ref().unwrap();
     let mut should_close = false;
 
-    // Create a modal dialog
+    // Create a standardized modal dialog
     egui::Window::new("Notification Details")
-        .fixed_size([500.0, 300.0])
+        .fixed_size([600.0, 620.0]) // Fixed size to match other dialogs
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
         .collapsible(false)
         .resizable(false)
         .frame(
             egui::Frame::window(&ctx.style())
-                .fill(theme.panel)
-                .corner_radius(12)
+                .fill(theme.background)
+                .corner_radius(16)
                 .shadow(egui::epaint::Shadow {
                     color: Color32::from_black_alpha(25),
                     offset: [0, 4],
