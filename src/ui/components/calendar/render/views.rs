@@ -7,15 +7,48 @@ use crate::utils::config::Theme;
 pub fn render_year_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
     let year = state.selected_date.year();
 
-    Grid::new("year_grid").spacing([20.0, 20.0]).show(ui, |ui| {
-        for month_chunk in (1..=12).collect::<Vec<u32>>().chunks(3) {
-            for &month in month_chunk {
-                let month_date = Local.with_ymd_and_hms(year, month, 1, 0, 0, 0).unwrap();
-                render_mini_month(ui, state, month_date, theme);
-            }
-            ui.end_row();
-        }
-    });
+    // Set full width for the calendar
+    ui.set_width(ui.available_width());
+
+    // Render the navigation header (now centered)
+    super::navigation::render_navigation_header(ui, state, theme);
+
+    // Create a container for the year view
+    egui::Frame::new()
+        .fill(theme.background)
+        .outer_margin(8.0)
+        .show(ui, |ui| {
+            // Year header
+            ui.vertical_centered(|ui| {
+                ui.heading(
+                    RichText::new(format!("Calendar {}", year))
+                        .color(theme.header_text)
+                        .size(24.0)
+                        .strong(),
+                );
+                ui.add_space(16.0);
+            });
+
+            // Create a scrollable area for the months grid
+            ScrollArea::both()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    // Use a grid layout with responsive spacing
+                    Grid::new("year_grid")
+                        .spacing([24.0, 24.0])
+                        .min_col_width(ui.available_width() / 3.0 - 24.0)
+                        .show(ui, |ui| {
+                            for month_chunk in (1..=12).collect::<Vec<u32>>().chunks(3) {
+                                for &month in month_chunk {
+                                    let month_date =
+                                        Local.with_ymd_and_hms(year, month, 1, 0, 0, 0).unwrap();
+                                    render_mini_month(ui, state, month_date, theme);
+                                }
+                                ui.end_row();
+                            }
+                        });
+                });
+        });
 }
 
 pub fn render_mini_month(
@@ -27,18 +60,33 @@ pub fn render_mini_month(
     let month_name = date.format("%B").to_string();
     let current_date = Local::now().date_naive();
 
+    // Create a styled frame for each month with adequate padding
     Frame::default()
         .stroke(Stroke::new(1.0, theme.border))
         .fill(theme.panel)
+        .inner_margin(16.0) // Add padding inside each month box
+        .corner_radius(6.0)
         .show(ui, |ui| {
-            ui.vertical(|ui| {
-                ui.heading(RichText::new(month_name).color(theme.header_text));
+            ui.vertical_centered(|ui| {
+                // Center the month name
+                ui.heading(
+                    RichText::new(month_name)
+                        .color(theme.header_text)
+                        .size(18.0)
+                        .strong(),
+                );
 
+                ui.add_space(8.0);
+
+                // Grid for days of the week and calendar days
                 Grid::new(format!("month_grid_{}", date.month()))
-                    .spacing([4.0, 4.0])
+                    .spacing([8.0, 8.0]) // Increase spacing for better touch targets
                     .show(ui, |ui| {
+                        // Day headers centered
                         for day in ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] {
-                            ui.label(RichText::new(day).color(theme.secondary_text).small());
+                            ui.centered_and_justified(|ui| {
+                                ui.label(RichText::new(day).color(theme.secondary_text).size(14.0));
+                            });
                         }
                         ui.end_row();
 
@@ -52,32 +100,70 @@ pub fn render_mini_month(
                                 let is_current_month = current_day.month() == date.month();
                                 let is_today = current_day.date_naive() == current_date;
                                 let current_date_naive = current_day.date_naive();
+                                let has_events = state.event_map.get(&current_date_naive).is_some();
 
-                                let text = style_day_text(
-                                    day_num,
-                                    is_current_month,
-                                    is_today,
-                                    current_date_naive,
-                                    state,
-                                    theme,
-                                );
+                                // Create a frame for each day cell for hover effects
+                                let day_frame = egui::Frame::new()
+                                    .fill(if is_today {
+                                        theme.hover.linear_multiply(0.7)
+                                    } else {
+                                        egui::Color32::TRANSPARENT
+                                    })
+                                    .corner_radius(4.0)
+                                    .inner_margin(4.0);
 
-                                let response = ui.add(Button::new(text).frame(false));
+                                day_frame.show(ui, |ui| {
+                                    ui.centered_and_justified(|ui| {
+                                        let text = style_day_text(
+                                            day_num,
+                                            is_current_month,
+                                            is_today,
+                                            current_date_naive,
+                                            state,
+                                            theme,
+                                        );
 
-                                if is_today {
-                                    let rect = response.rect;
-                                    ui.painter().circle(
-                                        rect.center(),
-                                        rect.height() / 2.0,
-                                        theme.hover,
-                                        Stroke::new(1.0, theme.error),
-                                    );
-                                }
+                                        let response = ui.add(
+                                            Button::new(text)
+                                                .frame(false)
+                                                .min_size(Vec2::new(24.0, 24.0)),
+                                        );
 
-                                if response.clicked() {
-                                    state.selected_date = current_day;
-                                    state.view_mode = CalendarViewMode::Day;
-                                }
+                                        // Add hover effect
+                                        if response.hovered() && !is_today {
+                                            ui.painter().rect_filled(
+                                                response.rect,
+                                                4.0,
+                                                theme.hover.linear_multiply(0.3),
+                                            );
+                                        }
+
+                                        // Show event indicator
+                                        if has_events && is_current_month {
+                                            let rect = response.rect;
+                                            let indicator_radius = 2.0;
+                                            ui.painter().circle_filled(
+                                                egui::pos2(rect.center().x, rect.bottom() - 2.0),
+                                                indicator_radius,
+                                                theme.accent,
+                                            );
+                                        }
+
+                                        if is_today {
+                                            let rect = response.rect;
+                                            ui.painter().circle_stroke(
+                                                rect.center(),
+                                                rect.height() / 2.0,
+                                                Stroke::new(1.5, theme.accent),
+                                            );
+                                        }
+
+                                        if response.clicked() {
+                                            state.selected_date = current_day;
+                                            state.view_mode = CalendarViewMode::Day;
+                                        }
+                                    });
+                                });
 
                                 current_day += Duration::days(1);
                             }
