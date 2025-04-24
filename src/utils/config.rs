@@ -24,7 +24,7 @@ impl LayoutConfig {
         Self {
             spacing: 12.0,
             sidebar_width: 300.0,
-            navbar_height: 95.0,
+            navbar_height: 55.0,
         }
     }
 }
