@@ -1,5 +1,6 @@
+use crate::ui::components::button::render_button;
 use crate::{app::CircleApp, models::dummy_data::Email, utils::config::Theme};
-use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, Vec2};
+use egui::{FontFamily, FontId, Margin, RichText, Stroke};
 
 use super::compose::{create_forward_draft, create_reply_draft};
 
@@ -124,19 +125,8 @@ pub fn render_email_detail(app: &mut CircleApp, ui: &mut egui::Ui, email: &Email
         // Action buttons
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let button_size = Vec2::new(100.0, 36.0);
-
                 // Reply button
-                let reply_button = egui::Button::new(
-                    RichText::new("Reply")
-                        .font(FontId::new(14.0, FontFamily::Proportional))
-                        .color(Color32::WHITE),
-                )
-                .fill(theme.accent)
-                .corner_radius(6.0)
-                .min_size(button_size);
-
-                if ui.add(reply_button).clicked() {
+                if render_button(ui, "Reply", true, theme, None).clicked() {
                     app.compose_draft = Some(create_reply_draft(email));
                     app.compose_dialog_open = true;
                     app.email_dialog_open = false;
@@ -145,16 +135,7 @@ pub fn render_email_detail(app: &mut CircleApp, ui: &mut egui::Ui, email: &Email
                 ui.add_space(8.0);
 
                 // Forward button
-                let forward_button = egui::Button::new(
-                    RichText::new("Forward")
-                        .font(FontId::new(14.0, FontFamily::Proportional))
-                        .color(Color32::WHITE),
-                )
-                .fill(theme.accent)
-                .corner_radius(6.0)
-                .min_size(button_size);
-
-                if ui.add(forward_button).clicked() {
+                if render_button(ui, "Forward", true, theme, None).clicked() {
                     app.compose_draft = Some(create_forward_draft(email));
                     app.compose_dialog_open = true;
                     app.email_dialog_open = false;

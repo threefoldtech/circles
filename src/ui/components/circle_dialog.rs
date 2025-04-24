@@ -1,6 +1,7 @@
 use crate::models::circle::{Circle, CircleType, JoinPolicy, NotificationSettings, Visibility};
+use crate::ui::components::button::render_button;
 use crate::utils::config::Theme;
-use eframe::egui::{self, Color32, RichText, Stroke, Vec2};
+use eframe::egui::{self, Color32, RichText, Vec2};
 
 /// State for the circle creation dialog
 #[derive(Debug)]
@@ -224,18 +225,7 @@ pub fn render_circle_dialog(
                 ui.add_space(12.0);
                 ui.horizontal(|ui| {
                     // Cancel button
-                    let cancel_button = egui::Button::new(
-                        RichText::new("Cancel")
-                            .size(16.0) // Optimized button text font size
-                            .color(theme.text),
-                    )
-                    .min_size(Vec2::new(110.0, 38.0)) // Slightly larger button
-                    .corner_radius(8.0)
-                    .fill(theme.secondary_background)
-                    .stroke(Stroke::new(1.0, theme.border));
-
-                    if ui
-                        .add(cancel_button)
+                    if render_button(ui, "Cancel", false, theme, None)
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
                         .clicked()
                     {
@@ -245,18 +235,7 @@ pub fn render_circle_dialog(
                     ui.allocate_space(ui.available_size_before_wrap());
 
                     // Create button
-                    let create_button = egui::Button::new(
-                        RichText::new("Create Circle")
-                            .size(16.0) // Optimized button text font size
-                            .color(Color32::WHITE),
-                    )
-                    .min_size(Vec2::new(130.0, 38.0)) // Slightly larger button
-                    .corner_radius(8.0)
-                    .fill(theme.accent)
-                    .stroke(Stroke::new(1.0, theme.border));
-
-                    if ui
-                        .add(create_button)
+                    if render_button(ui, "Create Circle", true, theme, None)
                         .on_hover_cursor(egui::CursorIcon::PointingHand)
                         .clicked()
                     {

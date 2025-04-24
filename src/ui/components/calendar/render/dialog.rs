@@ -1,7 +1,8 @@
 use chrono::{Local, NaiveDate, NaiveTime, TimeZone, Utc};
-use egui::{Button, RichText, Ui, Window, color_picker};
+use egui::{RichText, Ui, Window, color_picker};
 
 use super::super::state::CalendarState;
+use crate::ui::components::button::render_button;
 use crate::utils::config::Theme;
 
 pub fn render_event_dialog(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
@@ -133,17 +134,11 @@ pub fn render_event_dialog(ui: &mut Ui, state: &mut CalendarState, theme: &Theme
 
                     // Action buttons
                     ui.horizontal(|ui| {
-                        if ui
-                            .add(Button::new(RichText::new("Save").color(theme.accent)))
-                            .clicked()
-                        {
+                        if render_button(ui, "Save", true, theme, None).clicked() {
                             save_event = true;
                             cancel_dialog = true;
                         }
-                        if ui
-                            .add(Button::new(RichText::new("Cancel").color(theme.text)))
-                            .clicked()
-                        {
+                        if render_button(ui, "Cancel", false, theme, None).clicked() {
                             cancel_dialog = true;
                         }
                     });

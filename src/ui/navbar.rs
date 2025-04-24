@@ -1,13 +1,13 @@
 use crate::app::{ActiveFeature, CircleApp};
+use crate::ui::components::button::render_button;
 use crate::ui::footer::{
     StatusFrameProps, create_styled_text, render_status_dot, set_hover_cursor,
 };
 use crate::utils::config::{LayoutConfig, NAV_ITEMS, Theme};
 use eframe::egui::{
-    Align, Button, Color32, Context, CursorIcon, Frame, Layout, Margin, RichText, Sense, Stroke,
-    TopBottomPanel, Ui, Vec2,
+    Align, Context, CursorIcon, Frame, Layout, Margin, Stroke, TopBottomPanel, Ui, Vec2,
 };
-use egui::Direction;
+use egui::{Direction, RichText};
 
 // Header rendering functions
 pub fn render_top_panel(
@@ -47,7 +47,7 @@ pub fn render_top_panel(
                             egui::Align2::CENTER_CENTER,
                             "C",
                             egui::FontId::proportional(18.0),
-                            Color32::WHITE,
+                            theme.light_color,
                         );
 
                         ui.heading(
@@ -130,41 +130,18 @@ fn create_nav_button(
     active_feature: ActiveFeature,
     theme: &Theme,
 ) -> bool {
-    // let config = get_layout_config();
     let is_active = active_feature == feature;
 
-    // Create a button with icon and text
-    let button_text = RichText::new(format!("{} {}", icon, text))
-        .size(14.0)
-        .color(if is_active {
-            theme.light_color
-        } else {
-            theme.text
-        });
-
-    let button = Button::new(button_text)
-        .min_size(Vec2::new(100.0, 35.0)) // Slightly wider to accommodate icons
-        .corner_radius(6)
-        .sense(Sense::click_and_drag())
-        .fill(if is_active {
-            theme.accent
-        } else {
-            theme.secondary_background
-        })
-        .stroke(Stroke::NONE);
-
-    let response = ui
-        .add(button)
+    let response = render_button(ui, text, is_active, theme, Some(icon))
         .on_hover_ui(|ui| {
             ui.style_mut().visuals.widgets.hovered.bg_fill = theme.accent;
             ui.label(
-                RichText::new(format!("{} {}", icon, text))
+                egui::RichText::new(format!("{} {}", icon, text))
                     .size(12.0)
                     .color(theme.light_color),
             );
         })
         .on_hover_cursor(CursorIcon::PointingHand);
-
     if response.hovered() {
         ui.ctx().request_repaint();
     }
