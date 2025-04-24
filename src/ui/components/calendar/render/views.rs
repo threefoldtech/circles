@@ -263,14 +263,60 @@ pub fn render_month_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) 
                                                 .min_size(Vec2::new(ui.available_width(), 20.0)),
                                         );
 
-                                        // Show event indicators
+                                        // Show actual events instead of just indicators
                                         if has_events {
-                                            ui.horizontal(|ui| {
-                                                ui.add(
-                                                    egui::widgets::Separator::default()
-                                                        .horizontal(),
-                                                );
-                                            });
+                                            if let Some(day_events) =
+                                                state.event_map.get(&current_date_naive)
+                                            {
+                                                // Limit to first 2 events to avoid overcrowding
+                                                let events_to_show = day_events.iter().take(2);
+
+                                                for event in events_to_show {
+                                                    ui.add_space(2.0);
+
+                                                    // Calculate a reasonable width based on available space
+                                                    let available_width = ui.available_width();
+                                                    // Calculate width based on event duration
+                                                    let duration_mins = event.duration_minutes();
+
+                                                    // Base width on duration but with reasonable limits
+                                                    let base_width =
+                                                        (duration_mins as f32 / 60.0) * 100.0;
+                                                    let max_width =
+                                                        (available_width * 0.8).min(200.0);
+                                                    // Ensure min_width is never greater than max_width
+                                                    let min_width = (80.0_f32).min(max_width);
+
+                                                    let event_width =
+                                                        base_width.clamp(min_width, max_width);
+
+                                                    let event_button = Button::new(
+                                                        RichText::new(&event.title)
+                                                            .color(theme.light_color)
+                                                            .size(10.0),
+                                                    )
+                                                    .fill(event.color)
+                                                    .corner_radius(2.0)
+                                                    .min_size(egui::Vec2::new(event_width, 16.0));
+
+                                                    if ui.add(event_button).clicked() {
+                                                        state.selected_event = Some(event.id);
+                                                    }
+                                                }
+
+                                                // If there are more events than we're showing
+                                                if day_events.len() > 2 {
+                                                    ui.add_space(2.0);
+                                                    ui.label(
+                                                        RichText::new(format!(
+                                                            "+{} more",
+                                                            day_events.len() - 2
+                                                        ))
+                                                        .size(9.0)
+                                                        .color(theme.secondary_text),
+                                                    );
+                                                }
+                                            }
                                         }
 
                                         if response.clicked() {
@@ -470,6 +516,25 @@ pub fn render_day_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
                                             .collect();
 
                                         for event in all_day_events {
+                                            // Calculate width based on event duration
+                                            let duration_mins = event.duration_minutes();
+                                            let available_width = ui.available_width();
+
+                                            // For all-day events, use a reasonable width
+                                            let event_width = if duration_mins >= 24 * 60 {
+                                                // All-day event - use a reasonable fixed width
+                                                (available_width * 0.6).min(250.0)
+                                            } else {
+                                                // Regular event - base width on duration
+                                                let base_width = (duration_mins as f32
+                                                    / (24.0 * 60.0))
+                                                    * available_width;
+                                                let max_width = available_width * 0.8;
+                                                // Ensure min_width is never greater than max_width
+                                                let min_width = (150.0_f32).min(max_width);
+                                                base_width.clamp(min_width, max_width)
+                                            };
+
                                             let event_button = Button::new(
                                                 RichText::new(&event.title)
                                                     .color(theme.light_color)
@@ -477,11 +542,7 @@ pub fn render_day_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
                                             )
                                             .fill(event.color)
                                             .corner_radius(4.0)
-                                            .min_size(egui::Vec2::new(
-                                                ui.available_width() - 150.0,
-                                                30.0,
-                                            ));
-
+                                            .min_size(egui::Vec2::new(event_width, 30.0));
                                             if ui.add(event_button).clicked() {
                                                 state.selected_event = Some(event.id);
                                             }
@@ -580,7 +641,11 @@ fn render_time_slot(
             if let Some(day_events) = state.event_map.get(&date) {
                 let hour_events: Vec<_> = day_events
                     .iter()
-                    .filter(|e| e.start_time.hour() == hour)
+                    .filter(|e| {
+                        // Convert UTC time to local time before comparing hours
+                        let local_time = e.start_time.with_timezone(&chrono::Local);
+                        local_time.hour() == hour
+                    })
                     .collect();
 
                 if !hour_events.is_empty() {
@@ -589,6 +654,15 @@ fn render_time_slot(
                         let event_height = (duration_mins as f32 / 60.0) * height;
 
                         // Create a styled event button with theme colors
+                        // Calculate width based on duration
+                        let duration_hours = duration_mins as f32 / 60.0;
+
+                        // For hourly events, use a width proportional to duration
+                        // but with reasonable limits
+                        let base_width = (duration_hours * 80.0).max(60.0);
+                        let max_width = (width * 0.8).max(60.0); // Ensure max_width is at least 60.0
+                        let event_width = base_width.min(max_width);
+
                         let event_button = Button::new(
                             RichText::new(&event.title)
                                 .color(theme.light_color)
@@ -597,7 +671,7 @@ fn render_time_slot(
                         )
                         .fill(event.color)
                         .corner_radius(4.0)
-                        .min_size(egui::Vec2::new(width - 8.0, event_height.min(height - 8.0)));
+                        .min_size(egui::Vec2::new(event_width, event_height.min(height - 8.0)));
 
                         let mut response = ui.add(event_button);
 
