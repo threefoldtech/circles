@@ -9,13 +9,14 @@ pub fn render_navigation_header(ui: &mut Ui, state: &mut CalendarState, theme: &
     let header_text = get_header_text(state);
     let is_today = state.selected_date.date_naive() == chrono::Local::now().date_naive();
 
-    // Create a centered container for the navigation header
-    ui.vertical_centered(|ui| {
-        ui.add_space(8.0);
+    let separator = ui.separator();
+    ui.painter().line_segment(
+        [separator.rect.left_top(), separator.rect.right_top()],
+        (1.0, theme.border),
+    );
 
-        // Navigation controls in a horizontal layout
-        ui.horizontal(|ui| {
-            // Previous button with theme-based styling
+    ui.columns(3, |columns| {
+        columns[0].vertical_centered(|ui| {
             let prev_button = ui.add(
                 Button::new(RichText::new("◀").color(theme.text).size(16.0))
                     .min_size(Vec2::new(40.0, 40.0))
@@ -28,12 +29,16 @@ pub fn render_navigation_header(ui: &mut Ui, state: &mut CalendarState, theme: &
                 Calendar::navigate_state(state, false);
             }
 
-            // Add accessibility
-            prev_button.on_hover_text("Previous");
+            prev_button
+                .on_hover_text(
+                    RichText::new("Previous")
+                        .color(theme.light_color)
+                        .size(12.0),
+                )
+                .on_hover_cursor(egui::CursorIcon::PointingHand);
+        });
 
-            ui.add_space(16.0);
-
-            // Month/year display with proper styling
+        columns[1].vertical_centered(|ui| {
             ui.add(egui::Label::new(
                 RichText::new(header_text)
                     .color(if is_today {
@@ -44,10 +49,9 @@ pub fn render_navigation_header(ui: &mut Ui, state: &mut CalendarState, theme: &
                     .size(20.0)
                     .strong(),
             ));
+        });
 
-            ui.add_space(16.0);
-
-            // Next button with theme-based styling
+        columns[2].vertical_centered(|ui| {
             let next_button = ui.add(
                 Button::new(RichText::new("▶").color(theme.text).size(16.0))
                     .min_size(Vec2::new(40.0, 40.0))
@@ -60,14 +64,12 @@ pub fn render_navigation_header(ui: &mut Ui, state: &mut CalendarState, theme: &
                 Calendar::navigate_state(state, true);
             }
 
-            // Add accessibility
-            next_button.on_hover_text("Next");
+            next_button
+                .on_hover_text(RichText::new("Next").color(theme.light_color).size(12.0))
+                .on_hover_cursor(egui::CursorIcon::PointingHand);
         });
-
-        ui.add_space(8.0);
     });
 
-    // Add a subtle separator with theme color
     let separator = ui.separator();
     ui.painter().line_segment(
         [separator.rect.left_top(), separator.rect.right_top()],
