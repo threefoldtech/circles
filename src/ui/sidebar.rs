@@ -30,8 +30,36 @@ pub fn render_sidebar(
                 ui.add_space(16.0);
                 render_circle_list(ui, app, theme);
                 ui.add_space(8.0);
+
+                // Add a spacer to push the settings button to the bottom
+                ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
+                    ui.add_space(8.0);
+                    render_settings_button(ui, app, theme);
+                    ui.add_space(8.0);
+                });
             });
         });
+}
+
+fn render_settings_button(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
+    let settings_button = Button::new(RichText::new("⚙️ Settings").size(14.0).color(theme.text))
+        .min_size(Vec2::new(200.0, 36.0))
+        .corner_radius(8.0)
+        .fill(theme.secondary_background)
+        .stroke(Stroke::new(1.0, theme.border));
+
+    if ui
+        .add(settings_button)
+        .on_hover_text(
+            RichText::new("App Settings")
+                .size(12.0)
+                .color(Color32::WHITE),
+        )
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .clicked()
+    {
+        app.set_active_feature(ActiveFeature::AppSettings);
+    }
 }
 
 fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
@@ -118,7 +146,7 @@ fn render_circle_list(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
             ui.label(
                 RichText::new("No system circles available")
                     .size(13.0)
-                    .color(Color32::from_rgb(100, 110, 120)),
+                    .color(theme.secondary_text),
             );
         } else {
             ScrollArea::vertical().show(ui, |ui| {
@@ -144,11 +172,7 @@ fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         search_frame.show(ui, |ui| {
             ui.set_max_width(228.0);
             ui.horizontal(|ui| {
-                ui.label(
-                    RichText::new("🔍")
-                        .size(16.0)
-                        .color(Color32::from_rgb(70, 80, 90)),
-                );
+                ui.label(RichText::new("🔍").size(16.0).color(theme.text));
                 ui.add_space(8.0);
                 let original_style = ui.style().clone();
                 ui.style_mut().visuals.widgets.inactive.bg_fill = Color32::TRANSPARENT;
@@ -157,10 +181,7 @@ fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
 
                 ui.add(
                     egui::TextEdit::singleline(&mut app.search_query)
-                        .hint_text(
-                            RichText::new("Search circles...")
-                                .color(Color32::from_rgb(120, 130, 140)),
-                        )
+                        .hint_text(RichText::new("Search circles...").color(theme.text))
                         .text_color(theme.text)
                         .frame(false)
                         .margin(Vec2::new(0.0, 0.0))
@@ -191,7 +212,7 @@ fn render_circle_section(
                 ui.label(
                     RichText::new(empty_message)
                         .size(13.0)
-                        .color(Color32::from_rgb(100, 110, 120)),
+                        .color(theme.secondary_text),
                 );
             } else {
                 ScrollArea::vertical().show(ui, |ui| {
@@ -271,7 +292,11 @@ fn render_circle_item(
                 ui.label(
                     RichText::new(format!("{} Circle", circle_type_name(circle_type)))
                         .size(12.0)
-                        .color(Color32::from_rgb(100, 110, 120)),
+                        .color(if is_active {
+                            theme.text
+                        } else {
+                            theme.secondary_text
+                        }),
                 );
             });
 

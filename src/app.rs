@@ -59,6 +59,8 @@ pub enum ActiveFeature {
     AITools,
     VideoConference,
     Settings,
+    /// App-wide settings screen
+    AppSettings,
     /// Special welcome screen for first-time users
     Welcome,
     /// Special feature for the Circles Bot Channel
@@ -272,16 +274,7 @@ impl CircleApp {
         self.circle_dialog_state.is_open = true;
     }
 
-    /// Set the theme for the application
-    pub fn set_theme(&mut self, ctx: &egui::Context, theme: crate::models::user::Theme) {
-        if let Some(user) = &mut self.user {
-            user.preferences.theme = theme;
-            // Apply the theme immediately
-            self.apply_theme(ctx);
-        }
-    }
-
-    fn apply_theme(&mut self, ctx: &egui::Context) {
+    pub fn apply_theme(&mut self, ctx: &egui::Context) {
         // Force a UI refresh to apply the new theme
         self.is_refreshing = true;
 

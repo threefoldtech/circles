@@ -1,5 +1,5 @@
 use super::components::circle_dialog;
-use super::features::settings;
+use super::features::{app_settings, settings};
 use crate::app::{ActiveFeature, CircleApp};
 use crate::ui::features::{
     ai_tools, bot_channel, calendar, chat, documents, mail, video_conf, welcome,
@@ -68,6 +68,7 @@ pub fn render_feature_content(
             ActiveFeature::AITools => ai_tools::render_ai_tools(app, ui),
             ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
             ActiveFeature::Settings => settings::render_settings(app, ui, ctx),
+            ActiveFeature::AppSettings => app_settings::render_app_settings(app, ui, ctx, theme),
             ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui, theme),
             ActiveFeature::BotChannel => bot_channel::render_bot_channel(app, ui),
         });

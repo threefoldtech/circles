@@ -102,8 +102,8 @@ impl Theme {
             crate::models::user::Theme::Dark => Self::dark(),
             crate::models::user::Theme::Light => Self::light(),
             crate::models::user::Theme::System => {
-                // TODO: Implement system theme detection
-                Self::light()
+                // Default to dark mode as per user feedback
+                Self::dark()
             }
         }
     }

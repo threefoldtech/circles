@@ -1,7 +1,4 @@
-use crate::{
-    models::user::Theme as ThemeMode, ui::app_layout::create_content_frame,
-    ui::components::button::render_button,
-};
+use crate::{ui::app_layout::create_content_frame, ui::components::button::render_button};
 use eframe::egui::Stroke;
 use egui::{RichText, Ui};
 
@@ -17,7 +14,13 @@ pub fn render_settings(app: &mut CircleApp, ui: &mut Ui, ctx: &egui::Context) {
         ui.set_min_width(ui.available_width());
 
         ui.vertical(|ui| {
-            render_theme_settings(ui, app, ctx);
+            // Circle Settings Header
+            ui.label(
+                RichText::new("Circle Settings")
+                    .size(20.0)
+                    .strong()
+                    .color(theme.text),
+            );
             ui.add_space(16.0);
 
             render_notification_settings(ui, app);
@@ -28,51 +31,6 @@ pub fn render_settings(app: &mut CircleApp, ui: &mut Ui, ctx: &egui::Context) {
 
             render_save_button(ui, app, ctx);
         });
-    });
-}
-
-fn render_theme_settings(ui: &mut Ui, app: &mut CircleApp, ctx: &egui::Context) {
-    let theme = app.get_current_theme();
-
-    ui.label(
-        RichText::new("Theme Settings")
-            .size(16.0)
-            .strong()
-            .color(theme.text),
-    );
-    ui.add_space(8.0);
-    ui.painter().hline(
-        ui.available_rect_before_wrap().x_range(),
-        ui.cursor().top(),
-        Stroke::new(1.0, theme.border),
-    );
-    ui.add_space(12.0);
-
-    let mut current_theme = app
-        .user
-        .as_ref()
-        .map(|u| u.preferences.theme)
-        .unwrap_or(ThemeMode::System);
-
-    ui.horizontal(|ui| {
-        if ui
-            .radio_value(&mut current_theme, ThemeMode::Light, "Light")
-            .clicked()
-        {
-            app.set_theme(ctx, ThemeMode::Light);
-        }
-        if ui
-            .radio_value(&mut current_theme, ThemeMode::Dark, "Dark")
-            .clicked()
-        {
-            app.set_theme(ctx, ThemeMode::Dark);
-        }
-        if ui
-            .radio_value(&mut current_theme, ThemeMode::System, "System")
-            .clicked()
-        {
-            app.set_theme(ctx, ThemeMode::System);
-        }
     });
 }
 
