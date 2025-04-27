@@ -457,6 +457,7 @@ pub fn render_day_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
     let selected_date = state.selected_date;
     let selected_date_naive = selected_date.date_naive();
     let current_date = Local::now().date_naive();
+    let current_time = Local::now();
     let is_today = selected_date_naive == current_date;
 
     ui.vertical(|ui| {
@@ -471,123 +472,326 @@ pub fn render_day_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
             .fill(theme.background)
             .outer_margin(8.0)
             .show(ui, |ui| {
-                // Header with date information
-                if is_today {
-                    ui.horizontal_centered(|ui| {
-                        ui.add(egui::Label::new(
-                            RichText::new("Today")
-                                .color(theme.accent)
-                                .size(16.0)
-                                .strong(),
-                        ));
-                    });
-                }
+                // Header with date information - more prominent for today (Google Calendar style)
+                ui.horizontal_centered(|ui| {
+                    if is_today {
+                        // Add a colored background for "Today" label (Google Calendar style)
+                        let today_label = RichText::new("Today")
+                            .color(egui::Color32::WHITE)
+                            .size(16.0)
+                            .strong();
 
-                // Scrollable area for the day's events
-                ScrollArea::both()
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        ui.set_width(ui.available_width());
+                        let today_button = egui::Button::new(today_label)
+                            .fill(egui::Color32::from_rgb(234, 67, 53)) // Google red
+                            .rounding(egui::Rounding::same(12))
+                            .min_size(Vec2::new(80.0, 28.0));
 
-                        // All-day events section
-                        egui::Frame::new()
-                            .fill(theme.panel)
-                            .stroke(Stroke::new(1.0, theme.border))
-                            .corner_radius(4.0)
-                            .outer_margin(4.0)
-                            .inner_margin(8.0)
-                            .show(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.add(egui::Label::new(
-                                        RichText::new("All Day")
+                        ui.add(today_button);
+
+                        ui.add_space(12.0);
+                    }
+
+                    // Add the date (always shown, more prominent for today)
+                    let date_text = selected_date.format("%A, %B %d").to_string();
+                    ui.add(egui::Label::new(
+                        RichText::new(date_text)
+                            .color(theme.header_text)
+                            .size(24.0)
+                            .strong(),
+                    ));
+                });
+
+                // Split view with mini-month on left and day view on right (Google Calendar style)
+                ui.horizontal(|ui| {
+                    // Left sidebar with mini-month (25% width)
+                    ui.allocate_ui_with_layout(
+                        Vec2::new(ui.available_width() * 0.25, ui.available_height()),
+                        egui::Layout::top_down(egui::Align::Center),
+                        |ui| {
+                            // Mini month view
+                            egui::Frame::new()
+                                .fill(theme.panel)
+                                .stroke(Stroke::new(1.0, theme.border))
+                                .corner_radius(8.0)
+                                .outer_margin(4.0)
+                                .inner_margin(8.0)
+                                .show(ui, |ui| {
+                                    render_mini_month(ui, state, selected_date, theme);
+                                });
+
+                            ui.add_space(16.0);
+
+                            // Upcoming events section
+                            egui::Frame::new()
+                                .fill(theme.panel)
+                                .stroke(Stroke::new(1.0, theme.border))
+                                .corner_radius(8.0)
+                                .outer_margin(4.0)
+                                .inner_margin(8.0)
+                                .show(ui, |ui| {
+                                    ui.heading(
+                                        RichText::new("Upcoming")
                                             .color(theme.header_text)
-                                            .size(14.0)
-                                            .strong(),
-                                    ));
+                                            .size(16.0),
+                                    );
+                                    ui.add_space(8.0);
 
-                                    ui.add_space(16.0);
-
-                                    if let Some(day_events) =
-                                        state.event_map.get(&selected_date_naive)
-                                    {
-                                        let all_day_events: Vec<_> = day_events
-                                            .iter()
-                                            .filter(|e| e.duration_minutes() / 60 >= 24)
-                                            .collect();
-
-                                        for event in all_day_events {
-                                            // Calculate width based on event duration
-                                            let duration_mins = event.duration_minutes();
-                                            let available_width = ui.available_width();
-
-                                            // For all-day events, use a reasonable width
-                                            let event_width = if duration_mins >= 24 * 60 {
-                                                // All-day event - use a reasonable fixed width
-                                                (available_width * 0.6).min(250.0)
-                                            } else {
-                                                // Regular event - base width on duration
-                                                let base_width = (duration_mins as f32
-                                                    / (24.0 * 60.0))
-                                                    * available_width;
-                                                let max_width = available_width * 0.8;
-                                                // Ensure min_width is never greater than max_width
-                                                let min_width = (150.0_f32).min(max_width);
-                                                base_width.clamp(min_width, max_width)
-                                            };
-
-                                            let event_button = Button::new(
-                                                RichText::new(&event.title)
-                                                    .color(theme.light_color)
-                                                    .strong(),
-                                            )
-                                            .fill(event.color)
-                                            .corner_radius(4.0)
-                                            .min_size(egui::Vec2::new(event_width, 30.0));
-                                            if ui.add(event_button).clicked() {
-                                                state.selected_event = Some(event.id);
+                                    // Get events for the next 7 days
+                                    let mut upcoming_events = Vec::new();
+                                    for i in 0..7 {
+                                        let date = current_date + Duration::days(i);
+                                        if let Some(events) = state.event_map.get(&date) {
+                                            for event in events {
+                                                upcoming_events.push((date, event));
                                             }
                                         }
                                     }
-                                });
-                            });
 
-                        ui.add_space(8.0);
+                                    // Sort by date and time
+                                    upcoming_events.sort_by(|a, b| {
+                                        a.0.cmp(&b.0)
+                                            .then_with(|| a.1.start_time.cmp(&b.1.start_time))
+                                    });
 
-                        // Hourly events section
-                        egui::Grid::new("day_view_grid")
-                            .spacing([8.0, 0.0])
-                            .min_col_width(60.0)
-                            .show(ui, |ui| {
-                                let hour_height = 70.0;
+                                    // Display upcoming events (limit to 5)
+                                    for (date, event) in upcoming_events.iter().take(5) {
+                                        let is_event_today = *date == current_date;
 
-                                for hour in 8..21 {
-                                    // Time column
-                                    ui.vertical(|ui| {
-                                        ui.add_space(8.0);
-                                        ui.add(egui::Label::new(
-                                            RichText::new(format!("{:02}:00", hour))
+                                        egui::Frame::new()
+                                            .fill(theme.secondary_background)
+                                            .corner_radius(4.0)
+                                            .outer_margin(2.0)
+                                            .inner_margin(6.0)
+                                            .show(ui, |ui| {
+                                                ui.horizontal(|ui| {
+                                                    // Color dot for event
+                                                    let (rect, _) = ui.allocate_exact_size(
+                                                        Vec2::new(8.0, 8.0),
+                                                        egui::Sense::hover(),
+                                                    );
+                                                    ui.painter().circle_filled(
+                                                        rect.center(),
+                                                        4.0,
+                                                        event.color,
+                                                    );
+
+                                                    ui.add_space(4.0);
+
+                                                    ui.vertical(|ui| {
+                                                        // Event title
+                                                        ui.label(
+                                                            RichText::new(&event.title)
+                                                                .strong()
+                                                                .color(theme.text)
+                                                                .size(14.0),
+                                                        );
+
+                                                        // Date and time
+                                                        let date_text = if is_event_today {
+                                                            format!(
+                                                                "Today, {}",
+                                                                event
+                                                                    .start_time
+                                                                    .with_timezone(&Local)
+                                                                    .format("%H:%M")
+                                                            )
+                                                        } else {
+                                                            format!(
+                                                                "{}, {}",
+                                                                date.format("%a"),
+                                                                event
+                                                                    .start_time
+                                                                    .with_timezone(&Local)
+                                                                    .format("%H:%M")
+                                                            )
+                                                        };
+
+                                                        ui.label(
+                                                            RichText::new(date_text)
+                                                                .color(theme.secondary_text)
+                                                                .size(12.0),
+                                                        );
+                                                    });
+                                                });
+                                            });
+
+                                        ui.add_space(4.0);
+                                    }
+
+                                    if upcoming_events.is_empty() {
+                                        ui.label(
+                                            RichText::new("No upcoming events")
                                                 .color(theme.secondary_text)
-                                                .size(14.0),
-                                        ));
-                                    });
-
-                                    // Event column
-                                    ui.vertical(|ui| {
-                                        render_time_slot(
-                                            ui,
-                                            state,
-                                            selected_date_naive,
-                                            hour as u32,
-                                            ui.available_width(),
-                                            hour_height,
-                                            theme,
+                                                .italics(),
                                         );
+                                    }
+                                });
+                        },
+                    );
+
+                    ui.add_space(8.0);
+
+                    // Right side with day view (75% width)
+                    ui.vertical(|ui| {
+                        ui.set_width(ui.available_width());
+
+                        // Scrollable area for the day's events
+                        ScrollArea::both()
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                ui.set_width(ui.available_width());
+
+                                // All-day events section
+                                egui::Frame::new()
+                                    .fill(theme.panel)
+                                    .stroke(Stroke::new(1.0, theme.border))
+                                    .corner_radius(4.0)
+                                    .outer_margin(4.0)
+                                    .inner_margin(8.0)
+                                    .show(ui, |ui| {
+                                        ui.horizontal(|ui| {
+                                            ui.add(egui::Label::new(
+                                                RichText::new("All Day")
+                                                    .color(theme.header_text)
+                                                    .size(14.0)
+                                                    .strong(),
+                                            ));
+
+                                            ui.add_space(16.0);
+
+                                            if let Some(day_events) =
+                                                state.event_map.get(&selected_date_naive)
+                                            {
+                                                let all_day_events: Vec<_> = day_events
+                                                    .iter()
+                                                    .filter(|e| e.duration_minutes() / 60 >= 24)
+                                                    .collect();
+
+                                                for event in all_day_events {
+                                                    // Calculate width based on event duration
+                                                    let duration_mins = event.duration_minutes();
+                                                    let available_width = ui.available_width();
+
+                                                    // For all-day events, use a reasonable width
+                                                    let event_width = if duration_mins >= 24 * 60 {
+                                                        // All-day event - use a reasonable fixed width
+                                                        (available_width * 0.6).min(250.0)
+                                                    } else {
+                                                        // Regular event - base width on duration
+                                                        let base_width = (duration_mins as f32
+                                                            / (24.0 * 60.0))
+                                                            * available_width;
+                                                        let max_width = available_width * 0.8;
+                                                        // Ensure min_width is never greater than max_width
+                                                        let min_width = (150.0_f32).min(max_width);
+                                                        base_width.clamp(min_width, max_width)
+                                                    };
+
+                                                    let event_button = Button::new(
+                                                        RichText::new(&event.title)
+                                                            .color(theme.light_color)
+                                                            .strong(),
+                                                    )
+                                                    .fill(event.color)
+                                                    .corner_radius(4.0)
+                                                    .min_size(egui::Vec2::new(event_width, 30.0));
+                                                    if ui.add(event_button).clicked() {
+                                                        state.selected_event = Some(event.id);
+                                                    }
+                                                }
+                                            }
+                                        });
                                     });
 
-                                    ui.end_row();
-                                }
+                                ui.add_space(8.0);
+
+                                // Hourly events section with current time indicator
+                                egui::Grid::new("day_view_grid")
+                                    .spacing([8.0, 0.0])
+                                    .min_col_width(60.0)
+                                    .show(ui, |ui| {
+                                        let hour_height = 70.0;
+
+                                        // Extend hours to match Google Calendar (5am to 11pm)
+                                        for hour in 5..24 {
+                                            // Time column
+                                            ui.vertical(|ui| {
+                                                ui.add_space(8.0);
+                                                ui.add(egui::Label::new(
+                                                    RichText::new(format!("{:02}:00", hour))
+                                                        .color(theme.secondary_text)
+                                                        .size(14.0),
+                                                ));
+                                            });
+
+                                            // Event column
+                                            ui.vertical(|ui| {
+                                                // Get the rect for current time indicator
+                                                let row_rect = ui.available_rect_before_wrap();
+
+                                                render_time_slot(
+                                                    ui,
+                                                    state,
+                                                    selected_date_naive,
+                                                    hour as u32,
+                                                    ui.available_width(),
+                                                    hour_height,
+                                                    theme,
+                                                );
+
+                                                // Draw current time indicator if this is today and we're in the current hour
+                                                if is_today && hour == current_time.hour() {
+                                                    let current_minute_fraction =
+                                                        current_time.minute() as f32 / 60.0;
+                                                    let y_offset = row_rect.top()
+                                                        + (hour_height * current_minute_fraction);
+
+                                                    // Draw the red line for current time (Google Calendar style)
+                                                    let line_start = egui::pos2(
+                                                        row_rect.left() - 10.0,
+                                                        y_offset,
+                                                    );
+                                                    let line_end =
+                                                        egui::pos2(row_rect.right(), y_offset);
+
+                                                    // Draw circle at start of line (Google Calendar style)
+                                                    ui.painter().circle_filled(
+                                                        line_start,
+                                                        6.0,
+                                                        egui::Color32::from_rgb(234, 67, 53), // Google red
+                                                    );
+
+                                                    // Draw the line with animation effect (Google Calendar style)
+                                                    ui.painter().line_segment(
+                                                        [line_start, line_end],
+                                                        (2.5, egui::Color32::from_rgb(234, 67, 53)), // Google red
+                                                    );
+
+                                                    // Add current time text
+                                                    let time_text = format!(
+                                                        "{:02}:{:02}",
+                                                        current_time.hour(),
+                                                        current_time.minute()
+                                                    );
+                                                    ui.painter().text(
+                                                        egui::pos2(
+                                                            line_start.x + 10.0,
+                                                            line_start.y - 10.0,
+                                                        ),
+                                                        egui::Align2::LEFT_BOTTOM,
+                                                        time_text,
+                                                        egui::FontId::proportional(11.0),
+                                                        egui::Color32::from_rgb(234, 67, 53),
+                                                    );
+                                                }
+                                            });
+
+                                            ui.end_row();
+                                        }
+                                    });
                             });
                     });
+                });
             });
     });
 }
