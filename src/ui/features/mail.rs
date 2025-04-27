@@ -1,5 +1,7 @@
 use eframe::egui;
 use egui::{Margin, RichText};
+use std::time::{Duration, Instant};
+use uuid::Uuid;
 
 use crate::app::CircleApp;
 use crate::ui::components::button::render_button;
@@ -25,8 +27,6 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
         }
     }
 
-    ui.add_space(16.0);
-
     if app.email_dialog_open {
         render_email_view(app, ui, &theme);
     } else {
@@ -41,29 +41,44 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
 fn render_top_bar(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
     ui.horizontal(|ui| {
         ui.add_space(12.0);
-        let compose = render_button(ui, "Compose", true, theme, Some("✏️"));
-        if compose.clicked() {
-            open_compose_screen(app, ui);
-        }
-        if compose.hovered() {
-            ui.ctx().request_repaint();
-            ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-        }
-
+        render_compose_button(ui, app, theme);
         ui.add_space(10.0);
-        let icon = if app.is_refreshing { "⌛" } else { "🔄" };
-        let refresh = render_button(ui, "Refresh", true, theme, Some(icon));
-        if refresh.clicked() {
-            app.is_refreshing = true;
-            ui.ctx().request_repaint();
-        }
-        if refresh.hovered() {
-            ui.ctx().request_repaint();
-            ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
-        }
-
+        render_refresh_button(ui, app, theme);
         ui.add_space(10.0);
     });
+}
+
+fn render_compose_button(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
+    let compose = render_button(ui, "Compose", true, theme, Some("✏️"));
+    if compose.clicked() {
+        open_compose_screen(app, ui);
+    }
+    if compose.hovered() {
+        ui.ctx().request_repaint();
+        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+}
+
+pub fn render_refresh_button(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
+    let icon = if app.is_refreshing { "⌛" } else { "🔄" };
+    let refresh = render_button(ui, "Refresh", true, theme, Some(icon));
+
+    if refresh.clicked() {
+        app.is_refreshing = true;
+        app.refresh_start_time = Instant::now();
+        ui.ctx().request_repaint();
+    }
+
+    if refresh.hovered() {
+        ui.ctx().request_repaint();
+        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+    }
+
+    if app.is_refreshing {
+        if app.refresh_start_time.elapsed() >= Duration::from_millis(2500) {
+            app.is_refreshing = false;
+        }
+    }
 }
 
 fn render_loading_message(ui: &mut egui::Ui, theme: &Theme) {
@@ -116,53 +131,61 @@ fn render_folder_list(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
         .show(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
                 for folder in &["Inbox", "Sent", "Drafts", "Spam", "Trash"] {
-                    let is_selected = app
-                        .active_mail_folder_id
-                        .map(|id| {
-                            folder_data
-                                .iter()
-                                .any(|(fid, name)| *fid == id && name.eq_ignore_ascii_case(folder))
-                        })
-                        .unwrap_or(false);
-
-                    let folder_icon = get_folder_icon(folder);
-                    let fill_color = if is_selected {
-                        theme.accent
-                    } else {
-                        theme.secondary_background
-                    };
-                    let text_color = if is_selected {
-                        theme.light_color
-                    } else {
-                        theme.text
-                    };
-
-                    let label = RichText::new(format!("{} {}", folder_icon, folder))
-                        .size(14.0)
-                        .color(text_color);
-
-                    if ui
-                        .add(
-                            egui::Button::new(label)
-                                .fill(fill_color)
-                                .corner_radius(4.0)
-                                .min_size(egui::Vec2::new(100.0, 32.0)),
-                        )
-                        .on_hover_cursor(egui::CursorIcon::PointingHand)
-                        .clicked()
-                    {
-                        if let Some((folder_id, _)) = folder_data
-                            .iter()
-                            .find(|(_, name)| name.eq_ignore_ascii_case(folder))
-                        {
-                            app.active_mail_folder_id = Some(*folder_id);
-                        }
-                    }
-
+                    render_folder_button(ui, app, folder, &folder_data[..], theme);
                     ui.add_space(8.0);
                 }
             });
         });
+}
+
+fn render_folder_button(
+    ui: &mut egui::Ui,
+    app: &mut CircleApp,
+    folder: &str,
+    folder_data: &[(Uuid, String)],
+    theme: &Theme,
+) {
+    let is_selected = app
+        .active_mail_folder_id
+        .map(|id| {
+            folder_data
+                .iter()
+                .any(|(fid, name)| *fid == id && name.eq_ignore_ascii_case(folder))
+        })
+        .unwrap_or(false);
+
+    let folder_icon = get_folder_icon(folder);
+    let fill_color = if is_selected {
+        theme.accent
+    } else {
+        theme.secondary_background
+    };
+    let text_color = if is_selected {
+        theme.light_color
+    } else {
+        theme.text
+    };
+    let label = RichText::new(format!("{} {}", folder_icon, folder))
+        .size(14.0)
+        .color(text_color);
+
+    if ui
+        .add(
+            egui::Button::new(label)
+                .fill(fill_color)
+                .corner_radius(4.0)
+                .min_size(egui::Vec2::new(100.0, 32.0)),
+        )
+        .on_hover_cursor(egui::CursorIcon::PointingHand)
+        .clicked()
+    {
+        if let Some((folder_id, _)) = folder_data
+            .iter()
+            .find(|(_, name)| name.eq_ignore_ascii_case(folder))
+        {
+            app.active_mail_folder_id = Some(*folder_id);
+        }
+    }
 }
 
 fn render_email_count(app: &CircleApp, ui: &mut egui::Ui, theme: &Theme) {

@@ -43,6 +43,8 @@ pub struct CircleApp {
     pub notification_manager: NotificationManager,
     /// Flag to track if the app is currently refreshing
     pub is_refreshing: bool,
+    /// Start time of the last refresh action
+    pub refresh_start_time: std::time::Instant,
     /// Calendar events
     pub calendar_events: Vec<Event>,
 }
@@ -152,6 +154,7 @@ impl CircleApp {
             notification_manager: NotificationManager::new(50), // Keep last 50 notifications
             is_refreshing: false,
             calendar_events: Vec::new(),
+            refresh_start_time: std::time::Instant::now(),
         }
     }
 

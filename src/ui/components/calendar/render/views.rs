@@ -412,7 +412,7 @@ pub fn render_day_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
                             .strong();
                         let today_button = Button::new(today_label)
                             .fill(egui::Color32::from_rgb(234, 67, 53))
-                            .rounding(egui::Rounding::same(12))
+                            .corner_radius(12)
                             .min_size(Vec2::new(80.0, 28.0));
                         ui.add(today_button);
                         ui.add_space(12.0);
