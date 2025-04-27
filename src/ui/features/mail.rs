@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui::{Margin, RichText};
+use egui::RichText;
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
@@ -27,10 +27,11 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
         }
     }
 
+    ui.add_space(16.0);
+
     if app.email_dialog_open {
         render_email_view(app, ui, &theme);
     } else {
-        render_folder_list(app, ui, &theme);
         ui.add_space(16.0);
         render_email_count(app, ui, &theme);
         ui.add_space(8.0);
@@ -39,39 +40,49 @@ pub fn render_mail(app: &mut CircleApp, ui: &mut egui::Ui) {
 }
 
 fn render_top_bar(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
+    // First row: Compose and Refresh buttons
     ui.horizontal(|ui| {
         ui.add_space(12.0);
         render_compose_button(ui, app, theme);
         ui.add_space(10.0);
         render_refresh_button(ui, app, theme);
-        ui.add_space(10.0);
+    });
+
+    // Second row: Folder buttons
+    ui.horizontal(|ui| {
+        ui.add_space(12.0);
+        render_folder_list(ui, app, theme);
     });
 }
 
 fn render_compose_button(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
-    let compose = render_button(ui, "Compose", true, theme, Some("✏️"));
-    if compose.clicked() {
+    let mut button = render_button(ui, "Compose", true, theme, Some("✏️"));
+    button = button.on_hover_cursor(egui::CursorIcon::PointingHand);
+    button = button.on_hover_text(
+        RichText::new("Compose a new email")
+            .size(12.0)
+            .color(theme.light_color),
+    );
+
+    if button.clicked() {
         open_compose_screen(app, ui);
-    }
-    if compose.hovered() {
-        ui.ctx().request_repaint();
-        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
 }
 
 pub fn render_refresh_button(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
     let icon = if app.is_refreshing { "⌛" } else { "🔄" };
-    let refresh = render_button(ui, "Refresh", true, theme, Some(icon));
+    let mut button = render_button(ui, "Refresh", true, theme, Some(icon));
+    button = button.on_hover_cursor(egui::CursorIcon::PointingHand);
+    button = button.on_hover_text(
+        RichText::new("Refresh emails")
+            .size(12.0)
+            .color(theme.light_color),
+    );
 
-    if refresh.clicked() {
+    if button.clicked() {
         app.is_refreshing = true;
         app.refresh_start_time = Instant::now();
         ui.ctx().request_repaint();
-    }
-
-    if refresh.hovered() {
-        ui.ctx().request_repaint();
-        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
     }
 
     if app.is_refreshing {
@@ -103,7 +114,15 @@ fn render_email_view(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
         });
 
         if let Some(email) = email_opt {
-            if render_button(ui, "Back to emails", false, theme, None).clicked() {
+            let mut button = render_button(ui, "Back to emails", false, theme, None);
+            button = button.on_hover_cursor(egui::CursorIcon::PointingHand);
+            button = button.on_hover_text(
+                RichText::new("Return to email list")
+                    .size(12.0)
+                    .color(theme.light_color),
+            );
+
+            if button.clicked() {
                 app.email_dialog_open = false;
                 app.selected_email_id = None;
             }
@@ -113,7 +132,7 @@ fn render_email_view(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
     }
 }
 
-fn render_folder_list(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
+fn render_folder_list(ui: &mut egui::Ui, app: &mut CircleApp, theme: &Theme) {
     let folder_data = app
         .active_feature_data
         .as_ref()
@@ -126,16 +145,10 @@ fn render_folder_list(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
         })
         .unwrap_or_default();
 
-    egui::Frame::new()
-        .inner_margin(Margin::same(16))
-        .show(ui, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                for folder in &["Inbox", "Sent", "Drafts", "Spam", "Trash"] {
-                    render_folder_button(ui, app, folder, &folder_data[..], theme);
-                    ui.add_space(8.0);
-                }
-            });
-        });
+    for folder in &["Inbox", "Sent", "Drafts", "Spam", "Trash"] {
+        render_folder_button(ui, app, folder, &folder_data[..], theme);
+        ui.add_space(8.0);
+    }
 }
 
 fn render_folder_button(
@@ -169,16 +182,25 @@ fn render_folder_button(
         .size(14.0)
         .color(text_color);
 
-    if ui
-        .add(
-            egui::Button::new(label)
-                .fill(fill_color)
-                .corner_radius(4.0)
-                .min_size(egui::Vec2::new(100.0, 32.0)),
-        )
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
-        .clicked()
-    {
+    let button = egui::Button::new(label)
+        .fill(fill_color)
+        .corner_radius(4.0)
+        .min_size(egui::Vec2::new(100.0, 32.0));
+
+    let mut response = ui
+        .add(button)
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+    if response.hovered() && !is_selected {
+        let hover_text = format!("View {} folder", folder);
+        response = response.on_hover_text(
+            RichText::new(hover_text)
+                .size(12.0)
+                .color(theme.light_color),
+        );
+    }
+
+    if response.clicked() {
         if let Some((folder_id, _)) = folder_data
             .iter()
             .find(|(_, name)| name.eq_ignore_ascii_case(folder))
