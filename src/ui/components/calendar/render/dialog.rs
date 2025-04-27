@@ -27,7 +27,7 @@ pub fn render_event_dialog(ui: &mut Ui, state: &mut CalendarState, theme: &Theme
                 .fill(theme.background)
                 .corner_radius(16)
                 .shadow(egui::epaint::Shadow {
-                    color: egui::Color32::from_black_alpha(25),
+                    color: theme.shadow,
                     offset: [0, 4],
                     blur: 8,
                     spread: 0,

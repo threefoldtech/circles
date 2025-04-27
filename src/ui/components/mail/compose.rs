@@ -1,4 +1,4 @@
-use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, Vec2};
+use egui::{FontFamily, FontId, Margin, RichText, Stroke, Vec2};
 use rfd::FileDialog;
 use std::path::PathBuf;
 
@@ -359,9 +359,9 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
 
             // Common style override for transparent backgrounds
             let original_style = ui.style().clone();
-            ui.style_mut().visuals.widgets.inactive.bg_fill = Color32::TRANSPARENT;
-            ui.style_mut().visuals.widgets.active.bg_fill = Color32::TRANSPARENT;
-            ui.style_mut().visuals.widgets.hovered.bg_fill = Color32::TRANSPARENT;
+            ui.style_mut().visuals.widgets.inactive.bg_fill = theme.transparent;
+            ui.style_mut().visuals.widgets.active.bg_fill = theme.transparent;
+            ui.style_mut().visuals.widgets.hovered.bg_fill = theme.transparent;
 
             // To field
             ui.horizontal(|ui| {
@@ -370,17 +370,13 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                 input_frame.show(ui, |ui| {
                     ui.set_max_width(500.0);
                     ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new("👤")
-                                .size(16.0)
-                                .color(Color32::from_rgb(70, 80, 90)),
-                        );
+                        ui.label(RichText::new("👤").size(16.0).color(theme.icon_fg));
                         ui.add_space(8.0);
                         ui.add(
                             egui::TextEdit::singleline(&mut draft.to)
                                 .hint_text(
                                     RichText::new("Enter recipient...")
-                                        .color(Color32::from_rgb(120, 130, 140)),
+                                        .color(theme.placeholder_text),
                                 )
                                 .text_color(theme.text)
                                 .frame(false)
@@ -405,17 +401,12 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                 input_frame.show(ui, |ui| {
                     ui.set_max_width(500.0);
                     ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new("📜")
-                                .size(16.0)
-                                .color(Color32::from_rgb(70, 80, 90)),
-                        );
+                        ui.label(RichText::new("📜").size(16.0).color(theme.icon_fg));
                         ui.add_space(8.0);
                         ui.add(
                             egui::TextEdit::singleline(&mut draft.subject)
                                 .hint_text(
-                                    RichText::new("Enter subject...")
-                                        .color(Color32::from_rgb(120, 130, 140)),
+                                    RichText::new("Enter subject...").color(theme.placeholder_text),
                                 )
                                 .text_color(theme.text)
                                 .frame(false)
@@ -435,17 +426,12 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                 input_frame.show(ui, |ui| {
                     ui.set_max_width(500.0);
                     ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new("📝")
-                                .size(16.0)
-                                .color(Color32::from_rgb(70, 80, 90)),
-                        );
+                        ui.label(RichText::new("📝").size(16.0).color(theme.icon_fg));
                         ui.add_space(8.0);
                         ui.add(
                             egui::TextEdit::multiline(&mut draft.body)
                                 .hint_text(
-                                    RichText::new("Enter message...")
-                                        .color(Color32::from_rgb(120, 130, 140)),
+                                    RichText::new("Enter message...").color(theme.placeholder_text),
                                 )
                                 .text_color(theme.text)
                                 .frame(false)
@@ -499,14 +485,12 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
                     }
 
                     // Custom styling for discard button (not using standard active/inactive states)
-                    let discard_text = RichText::new("Discard")
-                        .size(14.0)
-                        .color(Color32::from_rgb(200, 50, 50));
+                    let discard_text = RichText::new("Discard").size(14.0).color(theme.error);
                     if ui
                         .add(
                             egui::Button::new(discard_text)
                                 .fill(theme.background)
-                                .stroke(Stroke::new(1.0, Color32::from_rgb(200, 50, 50)))
+                                .stroke(Stroke::new(1.0, theme.error))
                                 .min_size(Vec2::new(110.0, 40.0))
                                 .corner_radius(6.0),
                         )

@@ -1,7 +1,7 @@
 use crate::app::CircleApp;
 use crate::ui::app_layout::create_content_frame;
 use crate::ui::components::bot_message::{BotMessage, BotMessageType};
-use eframe::egui::{self, Color32};
+use crate::utils::config::Theme;
 use egui::{RichText, Stroke};
 
 /// Render the bot channel UI
@@ -60,7 +60,7 @@ pub fn render_bot_channel(app: &CircleApp, ui: &mut egui::Ui) {
                     .inner_margin(egui::Margin::same(4));
 
                 bot_status_frame.show(ui, |ui| {
-                    ui.label(RichText::new("●").size(10.0).color(Color32::WHITE));
+                    ui.label(RichText::new("●").size(10.0).color(theme.white));
                 });
 
                 ui.label(
@@ -83,7 +83,7 @@ pub fn render_bot_channel(app: &CircleApp, ui: &mut egui::Ui) {
 }
 
 /// Render the bot messages
-fn render_bot_messages(ui: &mut egui::Ui, theme: &crate::utils::config::Theme) {
+fn render_bot_messages(ui: &mut egui::Ui, theme: &Theme) {
     // Create example messages using our component
     let messages = get_example_messages();
 
@@ -97,7 +97,7 @@ fn render_bot_messages(ui: &mut egui::Ui, theme: &crate::utils::config::Theme) {
             .inner_margin(egui::Margin::same(16));
 
         frame.show(ui, |ui| {
-            message.render(ui);
+            message.render(ui, theme);
         });
 
         // Add space between messages, but not after the last one

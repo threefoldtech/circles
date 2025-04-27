@@ -26,11 +26,11 @@ pub fn render_day_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
                 ui.vertical_centered(|ui| {
                     if is_today {
                         let today_label = RichText::new("Today")
-                            .color(egui::Color32::WHITE)
+                            .color(theme.white)
                             .size(16.0)
                             .strong();
                         let today_button = Button::new(today_label)
-                            .fill(egui::Color32::from_rgb(234, 67, 53))
+                            .fill(theme.calendar_today)
                             .corner_radius(12)
                             .min_size(Vec2::new(80.0, 28.0));
                         ui.add(today_button);

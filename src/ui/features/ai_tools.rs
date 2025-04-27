@@ -1,4 +1,4 @@
-use egui::{Color32, RichText, Ui};
+use egui::{RichText, Ui};
 
 use crate::{app::CircleApp, ui::app_layout::create_content_frame};
 
@@ -9,7 +9,7 @@ pub fn render_ai_tools(app: &CircleApp, ui: &mut Ui) {
         ui.label(
             RichText::new("AI Tools feature not yet implemented")
                 .size(14.0)
-                .color(Color32::from_rgb(100, 110, 120)),
+                .color(theme.secondary_text),
         );
     });
 }

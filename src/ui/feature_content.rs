@@ -63,8 +63,8 @@ pub fn render_feature_content(
                 // Store any new events back in the app
                 app.calendar_events = calendar.get_events().clone();
             }
-            ActiveFeature::Chat => chat::render_chat(app, ui),
-            ActiveFeature::Documents => documents::render_documents(app, ui),
+            ActiveFeature::Chat => chat::render_chat(app, ui, theme),
+            ActiveFeature::Documents => documents::render_documents(app, ui, theme),
             ActiveFeature::AITools => ai_tools::render_ai_tools(app, ui),
             ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
             ActiveFeature::Settings => settings::render_settings(app, ui, ctx),

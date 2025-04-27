@@ -3,20 +3,23 @@ use eframe::egui;
 use crate::app::CircleApp;
 use crate::ui::app_layout::create_content_frame;
 use crate::ui::components::button;
+use crate::utils::config::Theme;
 
 #[allow(unused_variables)]
-pub fn render_documents(app: &CircleApp, ui: &mut egui::Ui) {
-    let theme = app.get_current_theme();
+pub fn render_documents(app: &CircleApp, ui: &mut egui::Ui, theme: &Theme) {
     ui.horizontal(|ui| {
         ui.add_space(8.0);
         if ui
-            .add(button::create_button("New Document", "➕"))
+            .add(button::create_button("New Document", "➕", &theme))
             .clicked()
         {
             // TODO: Implement new document
         }
         ui.add_space(8.0);
-        if ui.add(button::create_button("Upload", "📤")).clicked() {
+        if ui
+            .add(button::create_button("Upload", "📤", &theme))
+            .clicked()
+        {
             // TODO: Implement upload
         }
         ui.add_space(8.0);

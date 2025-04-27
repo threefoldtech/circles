@@ -3,12 +3,16 @@ use eframe::egui;
 use crate::app::CircleApp;
 use crate::ui::app_layout::create_content_frame;
 use crate::ui::components::button;
+use crate::utils::config::Theme;
 
 #[allow(unused_variables)]
-pub fn render_chat(app: &CircleApp, ui: &mut egui::Ui) {
+pub fn render_chat(app: &CircleApp, ui: &mut egui::Ui, theme: &Theme) {
     ui.horizontal(|ui| {
         ui.add_space(8.0);
-        if ui.add(button::create_button("New Chat", "➕")).clicked() {
+        if ui
+            .add(button::create_button("New Chat", "➕", theme))
+            .clicked()
+        {
             // TODO: Implement new chat
         }
         ui.add_space(8.0);

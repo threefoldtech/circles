@@ -106,7 +106,7 @@ pub fn render_mini_month(
                                     .fill(if is_today {
                                         theme.hover.linear_multiply(0.7)
                                     } else {
-                                        egui::Color32::TRANSPARENT
+                                        theme.transparent
                                     })
                                     .corner_radius(4.0)
                                     .inner_margin(4.0);

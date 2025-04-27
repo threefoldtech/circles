@@ -30,6 +30,7 @@ impl LayoutConfig {
 }
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct Theme {
     pub accent: Color32,
     pub background: Color32,
@@ -48,6 +49,14 @@ pub struct Theme {
     pub team: Color32,
     pub private: Color32,
     pub error: Color32,
+    // Additional theme colors
+    pub white: Color32,
+    pub transparent: Color32,
+    pub icon_bg: Color32,
+    pub icon_fg: Color32,
+    pub placeholder_text: Color32,
+    pub button_primary: Color32,
+    pub calendar_today: Color32,
 }
 
 impl Theme {
@@ -71,6 +80,15 @@ impl Theme {
             team: Color32::from_rgb(2, 132, 199),    // Vibrant blue
             private: Color32::from_rgb(168, 85, 247), // Soft purple
             error: Color32::from_rgb(239, 68, 68),   // Soft red
+
+            // Additional theme colors
+            white: Color32::from_rgb(255, 255, 255), // Pure white
+            transparent: Color32::TRANSPARENT,       // Transparent
+            icon_bg: Color32::from_rgb(230, 235, 240), // Light gray for icon backgrounds
+            icon_fg: Color32::from_rgb(70, 80, 90),  // Dark gray for icon foregrounds
+            placeholder_text: Color32::from_rgb(120, 130, 140), // Medium gray for placeholder text
+            button_primary: Color32::from_rgb(66, 133, 244), // Blue for primary buttons
+            calendar_today: Color32::from_rgb(234, 67, 53), // Red for calendar today highlight
         }
     }
 
@@ -94,6 +112,15 @@ impl Theme {
             team: Color32::from_rgb(2, 132, 199),    // Vibrant blue
             private: Color32::from_rgb(168, 85, 247), // Soft purple
             error: Color32::from_rgb(239, 68, 68),   // Soft red
+
+            // Additional theme colors
+            white: Color32::from_rgb(255, 255, 255), // Pure white
+            transparent: Color32::TRANSPARENT,       // Transparent
+            icon_bg: Color32::from_rgb(51, 65, 85),  // Darker slate for icon backgrounds
+            icon_fg: Color32::from_rgb(180, 190, 200), // Light gray for icon foregrounds
+            placeholder_text: Color32::from_rgb(120, 130, 140), // Medium gray for placeholder text
+            button_primary: Color32::from_rgb(59, 130, 246), // Blue for primary buttons
+            calendar_today: Color32::from_rgb(234, 67, 53), // Red for calendar today highlight
         }
     }
 

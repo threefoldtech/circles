@@ -3,8 +3,7 @@ use crate::app::{ActiveFeature, CircleApp};
 use crate::utils::config::{LayoutConfig, Theme};
 use eframe::egui::{Context, Frame, SidePanel};
 use egui::{
-    Align, Button, Color32, CursorIcon, Layout, Margin, RichText, ScrollArea, Sense, Stroke, Ui,
-    Vec2,
+    Align, Button, CursorIcon, Layout, Margin, RichText, ScrollArea, Sense, Stroke, Ui, Vec2,
 };
 use uuid::Uuid;
 
@@ -50,11 +49,7 @@ fn render_settings_button(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
 
     if ui
         .add(settings_button)
-        .on_hover_text(
-            RichText::new("App Settings")
-                .size(12.0)
-                .color(Color32::WHITE),
-        )
+        .on_hover_text(RichText::new("App Settings").size(12.0).color(theme.white))
         .on_hover_cursor(CursorIcon::PointingHand)
         .clicked()
     {
@@ -73,7 +68,7 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
             );
         });
         ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-            let add_button = Button::new(RichText::new("➕").size(16.0).color(Color32::WHITE))
+            let add_button = Button::new(RichText::new("➕").size(16.0).color(theme.white))
                 .min_size(Vec2::new(32.0, 32.0))
                 .corner_radius(8.0)
                 .fill(theme.accent)
@@ -84,7 +79,7 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
                 .on_hover_text(
                     RichText::new("Create a new circle")
                         .size(12.0)
-                        .color(Color32::WHITE),
+                        .color(theme.white),
                 )
                 .on_hover_cursor(CursorIcon::PointingHand)
                 .clicked()
@@ -175,9 +170,9 @@ fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
                 ui.label(RichText::new("🔍").size(16.0).color(theme.text));
                 ui.add_space(8.0);
                 let original_style = ui.style().clone();
-                ui.style_mut().visuals.widgets.inactive.bg_fill = Color32::TRANSPARENT;
-                ui.style_mut().visuals.widgets.active.bg_fill = Color32::TRANSPARENT;
-                ui.style_mut().visuals.widgets.hovered.bg_fill = Color32::TRANSPARENT;
+                ui.style_mut().visuals.widgets.inactive.bg_fill = theme.transparent;
+                ui.style_mut().visuals.widgets.active.bg_fill = theme.transparent;
+                ui.style_mut().visuals.widgets.hovered.bg_fill = theme.transparent;
 
                 ui.add(
                     egui::TextEdit::singleline(&mut app.search_query)
@@ -254,7 +249,7 @@ fn render_circle_item(
         .fill(if is_active {
             theme.hover
         } else {
-            Color32::TRANSPARENT
+            theme.transparent
         })
         .inner_margin(Margin::symmetric(8, 6))
         .corner_radius(4);
@@ -265,18 +260,14 @@ fn render_circle_item(
         ui.horizontal(|ui| {
             ui.set_min_width(ui.available_width());
             let icon_frame = Frame::new()
-                .fill(if is_active {
-                    color
-                } else {
-                    Color32::from_rgb(230, 235, 240)
-                })
+                .fill(if is_active { color } else { theme.icon_bg })
                 .corner_radius(12)
                 .inner_margin(Margin::same(6));
 
             // Allocate space for the icon and get its rectangle
             let icon_response = icon_frame.show(ui, |ui| {
                 ui.label(RichText::new(icon).size(16.0).color(if is_active {
-                    Color32::WHITE
+                    theme.white
                 } else {
                     color
                 }));

@@ -1,7 +1,7 @@
 use crate::models::circle::{Circle, CircleType, JoinPolicy, NotificationSettings, Visibility};
 use crate::ui::components::button::render_button;
 use crate::utils::config::Theme;
-use eframe::egui::{self, Color32, RichText, Vec2};
+use eframe::egui::{self, RichText, Vec2};
 
 /// State for the circle creation dialog
 #[derive(Debug)]
@@ -80,7 +80,7 @@ pub fn render_circle_dialog(
                 .fill(theme.background)
                 .corner_radius(16)
                 .shadow(egui::epaint::Shadow {
-                    color: Color32::from_black_alpha(25),
+                    color: theme.shadow,
                     offset: [0, 4],
                     blur: 8,
                     spread: 0,
@@ -134,9 +134,7 @@ pub fn render_circle_dialog(
                 // Error message directly below the Circle Name field
                 if let Some(error) = &state.error_message {
                     ui.label(
-                        RichText::new(error)
-                            .color(Color32::from_rgb(200, 40, 40))
-                            .size(14.0), // Optimized error message font size
+                        RichText::new(error).color(theme.error).size(14.0), // Optimized error message font size
                     );
                     ui.add_space(8.0);
                 } else {

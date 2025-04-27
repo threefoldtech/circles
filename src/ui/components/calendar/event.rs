@@ -1,3 +1,4 @@
+use crate::utils::config::Theme;
 use chrono::{DateTime, Duration, Timelike, Utc};
 use egui::Color32;
 use uuid::Uuid;
@@ -40,7 +41,7 @@ impl Default for Event {
             end_time: start_time + Duration::hours(1),
             location: None,
             attendees: Vec::new(),
-            color: Color32::from_rgb(66, 133, 244),
+            color: Theme::light().button_primary, // Use theme color
         }
     }
 }
