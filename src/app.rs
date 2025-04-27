@@ -278,11 +278,9 @@ impl CircleApp {
         // Force a UI refresh to apply the new theme
         self.is_refreshing = true;
 
-        // If you're using eframe, you might also want to update the native window
-        let theme = self.get_current_theme();
+        // Use the context-aware theme method to properly detect system theme
+        let theme = self.get_current_theme_with_context(ctx);
         ctx.set_visuals(theme.to_visuals());
-        // if let Some(ctx) = &mut ctx {
-        // }
     }
 
     pub fn save_user_preferences(&mut self, ctx: &egui::Context) {
@@ -296,7 +294,16 @@ impl CircleApp {
     /// Get the current theme of the application
     pub fn get_current_theme(&self) -> Theme {
         if let Some(user) = &self.user {
-            Theme::from_mode(&user.preferences.theme)
+            Theme::from_mode(&user.preferences.theme, None)
+        } else {
+            Theme::light() // Default to light theme when no user is logged in
+        }
+    }
+
+    /// Get the current theme of the application with context for system theme detection
+    pub fn get_current_theme_with_context(&self, ctx: &egui::Context) -> Theme {
+        if let Some(user) = &self.user {
+            Theme::from_mode(&user.preferences.theme, Some(ctx))
         } else {
             Theme::light() // Default to light theme when no user is logged in
         }

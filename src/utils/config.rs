@@ -124,13 +124,41 @@ impl Theme {
         }
     }
 
-    pub fn from_mode(mode: &crate::models::user::Theme) -> Self {
+    pub fn from_mode(mode: &crate::models::user::Theme, ctx: Option<&egui::Context>) -> Self {
         match mode {
             crate::models::user::Theme::Dark => Self::dark(),
             crate::models::user::Theme::Light => Self::light(),
             crate::models::user::Theme::System => {
-                // Default to dark mode as per user feedback
-                Self::dark()
+                // Detect system theme if context is provided
+                if let Some(ctx) = ctx {
+                    if ctx.style().visuals.dark_mode {
+                        Self::dark()
+                    } else {
+                        Self::light()
+                    }
+                } else {
+                    // Fallback to OS detection without context
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        // For web, we can use the prefers-color-scheme media query
+                        let is_dark = web_sys::window()
+                            .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok())
+                            .flatten()
+                            .map(|m| m.matches())
+                            .unwrap_or(false);
+
+                        if is_dark { Self::dark() } else { Self::light() }
+                    }
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        // For native, try to detect using the system
+                        match dark_light::detect() {
+                            dark_light::Mode::Dark => Self::dark(),
+                            dark_light::Mode::Light | dark_light::Mode::Default => Self::light(),
+                        }
+                    }
+                }
             }
         }
     }
