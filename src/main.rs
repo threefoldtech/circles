@@ -30,11 +30,8 @@ fn main() -> eframe::Result<()> {
         "Circle Collaboration System",
         native_options,
         Box::new(|cc| {
-            // Create the app
-            let app = app::CircleApp::new(cc);
-
             // Create the eframe app with the improved UI
-            Ok(Box::new(EguiApp { app }))
+            Ok(Box::new(EguiApp::new(cc)))
         }),
     )
 }

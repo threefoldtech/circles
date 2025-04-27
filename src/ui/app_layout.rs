@@ -10,7 +10,8 @@ use super::feature_content;
 
 // Main rendering function
 pub fn render(app: &mut CircleApp, ctx: &Context) {
-    let theme = app.get_current_theme();
+    // Use the context-aware theme method to properly detect system theme
+    let theme = app.get_current_theme_with_context(ctx);
     let config = LayoutConfig::new();
 
     setup_style(ctx, &theme, &config);

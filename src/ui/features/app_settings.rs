@@ -105,7 +105,7 @@ fn render_save_button(
 ) {
     ui.horizontal(|ui| {
         ui.add_space(ui.available_width() - 110.0 - 16.0);
-        let theme = app.get_current_theme();
+        let theme = app.get_current_theme_with_context(ctx);
         if render_button(ui, "Save Settings", true, &theme, None).clicked() {
             if let Some(user) = &mut app.user {
                 // Apply the selected theme
