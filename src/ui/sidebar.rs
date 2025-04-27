@@ -255,6 +255,8 @@ fn render_circle_item(
         .corner_radius(4);
 
     let mut clicked = false;
+    let mut right_clicked = false;
+    let mut click_pos = egui::Pos2::ZERO;
 
     circle_frame.show(ui, |ui| {
         ui.horizontal(|ui| {
@@ -304,6 +306,70 @@ fn render_circle_item(
             if response.hovered() {
                 ui.output_mut(|o| o.cursor_icon = CursorIcon::PointingHand);
             }
+
+            // Show context menu on right-click
+            response.context_menu(|ui| {
+                // Add to favorites
+                if ui
+                    .button(
+                        RichText::new("Add to favorites")
+                            .size(14.0)
+                            .color(theme.text),
+                    )
+                    .clicked()
+                {
+                    // TODO: Implement add to favorites functionality
+                    ui.memory_mut(|mem| mem.close_popup());
+                }
+
+                ui.separator();
+
+                // Add members
+                if ui
+                    .button(RichText::new("Add members").size(14.0).color(theme.text))
+                    .clicked()
+                {
+                    // TODO: Implement add members functionality
+                    ui.memory_mut(|mem| mem.close_popup());
+                }
+
+                ui.separator();
+
+                // Rename
+                if ui
+                    .button(RichText::new("Rename").size(14.0).color(theme.text))
+                    .clicked()
+                {
+                    // TODO: Implement rename functionality
+                    ui.memory_mut(|mem| mem.close_popup());
+                }
+
+                ui.separator();
+
+                // Mute notifications
+                if ui
+                    .button(
+                        RichText::new("Mute notifications")
+                            .size(14.0)
+                            .color(theme.text),
+                    )
+                    .clicked()
+                {
+                    // TODO: Implement mute notifications functionality
+                    ui.memory_mut(|mem| mem.close_popup());
+                }
+
+                ui.separator();
+
+                // Delete circle (with red text)
+                if ui
+                    .button(RichText::new("Delete circle").size(14.0).color(theme.error))
+                    .clicked()
+                {
+                    // TODO: Implement delete circle functionality
+                    ui.memory_mut(|mem| mem.close_popup());
+                }
+            });
         });
     });
 
