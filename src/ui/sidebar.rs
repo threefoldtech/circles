@@ -1,5 +1,4 @@
 use crate::app::{ActiveFeature, CircleApp};
-
 use crate::utils::config::{LayoutConfig, Theme};
 use eframe::egui::{Context, Frame, SidePanel};
 use egui::{
@@ -7,8 +6,15 @@ use egui::{
 };
 use uuid::Uuid;
 
-// Panel rendering functions
-// Sidebar with circle selector
+// Constants for spacing and sizes to maintain exact styling
+const HEADER_SPACE: f32 = 12.0;
+const SEARCH_SPACE: f32 = 16.0;
+const SECTION_SPACE: f32 = 8.0;
+const BOTTOM_SPACE: f32 = 8.0;
+const SECTION_GAP: f32 = 6.0;
+const ITEM_SPACE: f32 = 4.0;
+
+// Sidebar rendering
 pub fn render_sidebar(
     app: &mut CircleApp,
     ctx: &Context,
@@ -22,41 +28,22 @@ pub fn render_sidebar(
         .frame(app_layout.clone().fill(theme.secondary_background))
         .show(ctx, |ui| {
             ui.vertical(|ui| {
-                // Circle selector
                 render_circle_header(ui, app, theme);
-                ui.add_space(12.0);
+                ui.add_space(HEADER_SPACE);
                 render_search_box(ui, app, theme);
-                ui.add_space(16.0);
-                render_circle_list(ui, app, theme);
-                ui.add_space(8.0);
-
-                // Add a spacer to push the settings button to the bottom
+                ui.add_space(SEARCH_SPACE);
+                render_circle_sections(ui, app, theme);
+                ui.add_space(SECTION_SPACE);
                 ui.with_layout(Layout::bottom_up(Align::Center), |ui| {
-                    ui.add_space(8.0);
+                    ui.add_space(BOTTOM_SPACE);
                     render_settings_button(ui, app, theme);
-                    ui.add_space(8.0);
+                    ui.add_space(BOTTOM_SPACE);
                 });
             });
         });
 }
 
-fn render_settings_button(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
-    let settings_button = Button::new(RichText::new("⚙️ Settings").size(14.0).color(theme.text))
-        .min_size(Vec2::new(200.0, 36.0))
-        .corner_radius(8.0)
-        .fill(theme.secondary_background)
-        .stroke(Stroke::new(1.0, theme.border));
-
-    if ui
-        .add(settings_button)
-        .on_hover_text(RichText::new("App Settings").size(12.0).color(theme.white))
-        .on_hover_cursor(CursorIcon::PointingHand)
-        .clicked()
-    {
-        app.set_active_feature(ActiveFeature::AppSettings);
-    }
-}
-
+// Circle header with title and add button
 fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
     ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
         ui.vertical(|ui| {
@@ -68,14 +55,8 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
             );
         });
         ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-            let add_button = Button::new(RichText::new("➕").size(16.0).color(theme.white))
-                .min_size(Vec2::new(32.0, 32.0))
-                .corner_radius(8.0)
-                .fill(theme.accent)
-                .stroke(Stroke::NONE);
-
             if ui
-                .add(add_button)
+                .add(create_add_button(theme))
                 .on_hover_text(
                     RichText::new("Create a new circle")
                         .size(12.0)
@@ -90,85 +71,21 @@ fn render_circle_header(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
     });
 }
 
-fn render_circle_list(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
-    let all_circles: Vec<_> = app
-        .circles
-        .iter()
-        .map(|c| (c.id, c.name.clone(), c.circle_type))
-        .collect();
-
-    let (default_circles, user_circles): (Vec<_>, Vec<_>) = all_circles
-        .into_iter()
-        .partition(|(_, name, _)| name == "WelcomeBot" || name == "CirclesBot");
-
-    let active_circle_id = app.active_circle_id;
-
-    // ALL CIRCLES section
-    render_circle_section(
-        ui,
-        "ALL",
-        &user_circles,
-        active_circle_id,
-        app,
-        theme,
-        "No circles yet. Click the + button to create one.",
-        true, // Expand if there are circles
-    );
-
-    // FAVORITES section
-    render_circle_section(
-        ui,
-        "FAVORITE",
-        &[],
-        active_circle_id,
-        app,
-        theme,
-        "No favorites yet",
-        true, // Not expanded by default
-    );
-
-    // OTHERS section
-    egui::CollapsingHeader::new(
-        RichText::new("OTHERS")
-            .size(14.0)
-            .strong()
-            .color(theme.accent),
-    )
-    .default_open(true)
-    .show(ui, |ui| {
-        ui.add_space(8.0);
-        if default_circles.is_empty() {
-            ui.label(
-                RichText::new("No system circles available")
-                    .size(13.0)
-                    .color(theme.secondary_text),
-            );
-        } else {
-            ScrollArea::vertical().show(ui, |ui| {
-                for (id, name, circle_type) in &default_circles {
-                    render_circle_item(ui, *id, name, *circle_type, active_circle_id, app, theme);
-                }
-            });
-        }
-        ui.add_space(8.0);
-    });
-    ui.add_space(6.0);
-}
-
+// Search box
 fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
     let search_frame = Frame::new()
         .fill(theme.hover)
-        .corner_radius(20)
+        .corner_radius(20.0)
         .inner_margin(Margin::same(10))
         .stroke(Stroke::NONE);
 
     ui.horizontal(|ui| {
-        ui.add_space(16.0);
+        ui.add_space(SEARCH_SPACE);
         search_frame.show(ui, |ui| {
             ui.set_max_width(228.0);
             ui.horizontal(|ui| {
                 ui.label(RichText::new("🔍").size(16.0).color(theme.text));
-                ui.add_space(8.0);
+                ui.add_space(SECTION_SPACE);
                 let original_style = ui.style().clone();
                 ui.style_mut().visuals.widgets.inactive.bg_fill = theme.transparent;
                 ui.style_mut().visuals.widgets.active.bg_fill = theme.transparent;
@@ -179,16 +96,68 @@ fn render_search_box(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
                         .hint_text(RichText::new("Search circles...").color(theme.text))
                         .text_color(theme.text)
                         .frame(false)
-                        .margin(Vec2::new(0.0, 0.0))
+                        .margin(Vec2::ZERO)
                         .desired_width(180.0),
                 );
                 ui.set_style(original_style);
             });
         });
-        ui.add_space(16.0);
+        ui.add_space(SEARCH_SPACE);
     });
 }
 
+// Settings button
+fn render_settings_button(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
+    if ui
+        .add(create_settings_button(theme))
+        .on_hover_text(RichText::new("App Settings").size(12.0).color(theme.white))
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .clicked()
+    {
+        app.set_active_feature(ActiveFeature::AppSettings);
+    }
+}
+
+// Circle sections (ALL, FAVORITE, OTHERS)
+fn render_circle_sections(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
+    let circles: Vec<_> = app
+        .circles
+        .iter()
+        .map(|c| (c.id, c.name.clone(), c.circle_type))
+        .collect();
+
+    let (default_circles, user_circles): (Vec<_>, Vec<_>) = circles
+        .into_iter()
+        .partition(|(_, name, _)| name == "WelcomeBot" || name == "CirclesBot");
+
+    let active_circle_id = app.active_circle_id;
+
+    render_circle_section(
+        ui,
+        "ALL",
+        &user_circles,
+        active_circle_id,
+        app,
+        theme,
+        "No circles yet. Click the + button to create one.",
+        true,
+    );
+
+    render_circle_section(
+        ui,
+        "FAVORITE",
+        &[],
+        active_circle_id,
+        app,
+        theme,
+        "No favorites yet",
+        true,
+    );
+
+    render_others_section(ui, &default_circles, active_circle_id, app, theme);
+}
+
+// Individual circle section
 fn render_circle_section(
     ui: &mut Ui,
     title: &str,
@@ -202,7 +171,7 @@ fn render_circle_section(
     egui::CollapsingHeader::new(RichText::new(title).size(14.0).strong().color(theme.accent))
         .default_open(default_open)
         .show(ui, |ui| {
-            ui.add_space(8.0);
+            ui.add_space(SECTION_SPACE);
             if circles.is_empty() {
                 ui.label(
                     RichText::new(empty_message)
@@ -224,11 +193,47 @@ fn render_circle_section(
                     }
                 });
             }
-            ui.add_space(8.0);
+            ui.add_space(SECTION_SPACE);
         });
-    ui.add_space(6.0);
+    ui.add_space(SECTION_GAP);
 }
 
+// Others section for default circles
+fn render_others_section(
+    ui: &mut Ui,
+    default_circles: &[(Uuid, String, crate::models::circle::CircleType)],
+    active_circle_id: Option<Uuid>,
+    app: &mut CircleApp,
+    theme: &Theme,
+) {
+    egui::CollapsingHeader::new(
+        RichText::new("OTHERS")
+            .size(14.0)
+            .strong()
+            .color(theme.accent),
+    )
+    .default_open(true)
+    .show(ui, |ui| {
+        ui.add_space(SECTION_SPACE);
+        if default_circles.is_empty() {
+            ui.label(
+                RichText::new("No system circles available")
+                    .size(13.0)
+                    .color(theme.secondary_text),
+            );
+        } else {
+            ScrollArea::vertical().show(ui, |ui| {
+                for (id, name, circle_type) in default_circles {
+                    render_circle_item(ui, *id, name, *circle_type, active_circle_id, app, theme);
+                }
+            });
+        }
+        ui.add_space(SECTION_SPACE);
+    });
+    ui.add_space(SECTION_GAP);
+}
+
+// Individual circle item
 fn render_circle_item(
     ui: &mut Ui,
     id: Uuid,
@@ -252,21 +257,16 @@ fn render_circle_item(
             theme.transparent
         })
         .inner_margin(Margin::symmetric(8, 6))
-        .corner_radius(4);
-
-    let mut clicked = false;
-    let mut right_clicked = false;
-    let mut click_pos = egui::Pos2::ZERO;
+        .corner_radius(4.0);
 
     circle_frame.show(ui, |ui| {
         ui.horizontal(|ui| {
             ui.set_min_width(ui.available_width());
             let icon_frame = Frame::new()
                 .fill(if is_active { color } else { theme.icon_bg })
-                .corner_radius(12)
+                .corner_radius(12.0)
                 .inner_margin(Margin::same(6));
 
-            // Allocate space for the icon and get its rectangle
             let icon_response = icon_frame.show(ui, |ui| {
                 ui.label(RichText::new(icon).size(16.0).color(if is_active {
                     theme.white
@@ -293,105 +293,101 @@ fn render_circle_item(
                 );
             });
 
-            // Create a rectangle that encompasses the icon and text for interaction
-            let icon_rect = icon_response.response.rect;
-            let text_rect = text_response.response.rect;
-            let clickable_rect = icon_rect.union(text_rect);
-
-            // Interact only with the clickable rectangle
+            let clickable_rect = icon_response
+                .response
+                .rect
+                .union(text_response.response.rect);
             let response = ui.interact(clickable_rect, ui.id().with(id), Sense::click());
-            if response.clicked() {
-                clicked = true;
-            }
+
             if response.hovered() {
                 ui.output_mut(|o| o.cursor_icon = CursorIcon::PointingHand);
             }
 
-            // Show context menu on right-click
+            if response.clicked() {
+                handle_circle_selection(app, id, name);
+            }
+
             response.context_menu(|ui| {
-                // Add to favorites
-                if ui
-                    .button(
-                        RichText::new("Add to favorites")
-                            .size(14.0)
-                            .color(theme.text),
-                    )
-                    .clicked()
-                {
-                    // TODO: Implement add to favorites functionality
-                    ui.memory_mut(|mem| mem.close_popup());
-                }
-
-                ui.separator();
-
-                // Add members
-                if ui
-                    .button(RichText::new("Add members").size(14.0).color(theme.text))
-                    .clicked()
-                {
-                    // TODO: Implement add members functionality
-                    ui.memory_mut(|mem| mem.close_popup());
-                }
-
-                ui.separator();
-
-                // Rename
-                if ui
-                    .button(RichText::new("Rename").size(14.0).color(theme.text))
-                    .clicked()
-                {
-                    // TODO: Implement rename functionality
-                    ui.memory_mut(|mem| mem.close_popup());
-                }
-
-                ui.separator();
-
-                // Mute notifications
-                if ui
-                    .button(
-                        RichText::new("Mute notifications")
-                            .size(14.0)
-                            .color(theme.text),
-                    )
-                    .clicked()
-                {
-                    // TODO: Implement mute notifications functionality
-                    ui.memory_mut(|mem| mem.close_popup());
-                }
-
-                ui.separator();
-
-                // Delete circle (with red text)
-                if ui
-                    .button(RichText::new("Delete circle").size(14.0).color(theme.error))
-                    .clicked()
-                {
-                    // TODO: Implement delete circle functionality
-                    ui.memory_mut(|mem| mem.close_popup());
-                }
+                render_context_menu(ui, theme);
             });
         });
     });
+    ui.add_space(ITEM_SPACE);
+}
 
-    // Perform circle selection only if the specific clickable area was clicked
-    if clicked {
-        app.set_active_circle(id);
-        match name {
-            "CirclesBot" => app.set_active_feature(ActiveFeature::BotChannel),
-            "WelcomeBot" => app.set_active_feature(ActiveFeature::Welcome),
-            _ => {
-                if matches!(
-                    app.active_feature,
-                    ActiveFeature::Welcome | ActiveFeature::BotChannel
-                ) {
-                    app.set_active_feature(ActiveFeature::Mail);
-                }
+// Handle circle selection logic
+fn handle_circle_selection(app: &mut CircleApp, id: Uuid, name: &str) {
+    app.set_active_circle(id);
+    match name {
+        "CirclesBot" => app.set_active_feature(ActiveFeature::BotChannel),
+        "WelcomeBot" => app.set_active_feature(ActiveFeature::Welcome),
+        _ => {
+            if matches!(
+                app.active_feature,
+                ActiveFeature::Welcome | ActiveFeature::BotChannel
+            ) {
+                app.set_active_feature(ActiveFeature::Mail);
             }
         }
     }
-    ui.add_space(4.0);
 }
 
+// Context menu for circle items
+fn render_context_menu(ui: &mut Ui, theme: &Theme) {
+    ui.style_mut().visuals.widgets.hovered.weak_bg_fill = theme.hover;
+    ui.style_mut().visuals.widgets.active.weak_bg_fill = theme.hover;
+    ui.style_mut().spacing.indent = 16.0;
+    ui.style_mut().spacing.item_spacing = Vec2::new(4.0, 4.0);
+    ui.style_mut().spacing.button_padding = Vec2::new(10.0, 10.0);
+    ui.set_min_width(200.0);
+
+    let menu_items = [
+        ("Add to favorites", false),
+        ("Add members", false),
+        ("Rename", false),
+        ("Mute notifications", false),
+        ("Delete circle", true),
+    ];
+
+    for (i, (label, is_destructive)) in menu_items.iter().enumerate() {
+        let button = Button::new(RichText::new(*label).size(14.0).color(if *is_destructive {
+            theme.error
+        } else {
+            theme.text
+        }))
+        .min_size(Vec2::new(180.0, 32.0));
+
+        let button_response = ui.add(button).on_hover_cursor(CursorIcon::PointingHand);
+
+        if button_response.clicked() {
+            // TODO: Implement respective functionality
+            ui.memory_mut(|mem| mem.close_popup());
+        }
+
+        if i < menu_items.len() - 1 {
+            ui.separator();
+        }
+    }
+}
+
+// Helper functions for creating UI elements
+fn create_add_button(theme: &Theme) -> Button {
+    Button::new(RichText::new("➕").size(16.0).color(theme.white))
+        .min_size(Vec2::new(32.0, 32.0))
+        .corner_radius(8.0)
+        .fill(theme.accent)
+        .stroke(Stroke::NONE)
+}
+
+fn create_settings_button(theme: &Theme) -> Button {
+    Button::new(RichText::new("⚙️ Settings").size(14.0).color(theme.text))
+        .min_size(Vec2::new(200.0, 36.0))
+        .corner_radius(8.0)
+        .fill(theme.secondary_background)
+        .stroke(Stroke::new(1.0, theme.border))
+}
+
+// Helper function for circle type name
 fn circle_type_name(circle_type: crate::models::circle::CircleType) -> &'static str {
     match circle_type {
         crate::models::circle::CircleType::Personal => "Personal",
