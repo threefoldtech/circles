@@ -69,6 +69,8 @@ pub enum ActiveFeature {
     Welcome,
     /// Special feature for the Circles Bot Channel
     BotChannel,
+    /// Authentication screen for sign up and sign in
+    Auth,
 }
 
 impl Default for ActiveFeature {
@@ -80,15 +82,22 @@ impl Default for ActiveFeature {
 impl CircleApp {
     /// Initialize a new instance of the application with elegant defaults
     pub fn new(_: &eframe::CreationContext<'_>) -> Self {
-        // Initialize with a sophisticated default user
-        let user_id = Uuid::new_v4();
-        let user = Some(User {
-            id: user_id,
-            name: "Default User".to_string(), // More polished default name
-            email: "user@circleapp.com".to_string(), // Branded email
-            created_at: chrono::Utc::now(),
-            preferences: UserPreferences::default(),
-        });
+        // Check if credentials exist
+        let user = if let Ok(credentials) = crate::ui::features::auth::load_credentials() {
+            // Create user from credentials
+            Some(User {
+                id: Uuid::new_v4(),
+                name: credentials.name,
+                email: credentials.email,
+                created_at: chrono::Utc::now(),
+                preferences: UserPreferences::default(),
+            })
+        } else {
+            None
+        };
+
+        // Get user ID for creating circles
+        let user_id = user.as_ref().map(|u| u.id).unwrap_or_else(Uuid::new_v4);
 
         // Start with an empty circles list
         let mut circles = Vec::new();
@@ -125,8 +134,8 @@ impl CircleApp {
         let active_circle_id = Some(circles[0].id);
         let active_feature_data = circle_feature_data.get(&circles[0].id).cloned();
 
-        // For first-time users, we'll show a welcome screen instead of the default mail feature
-        let is_first_time = true; // Always true for new instances
+        // Determine if this is the first time or if we need to show the auth screen
+        let is_first_time = user.is_none();
 
         // Set active mail folder to inbox if available
         let active_mail_folder_id = active_feature_data.as_ref().and_then(|data| {
@@ -141,9 +150,9 @@ impl CircleApp {
             user,
             circles,
             active_circle_id,
-            // For first-time users, we'll use a special Welcome feature instead of the default Mail
+            // For first-time users, we'll show the auth screen
             active_feature: if is_first_time {
-                ActiveFeature::Welcome
+                ActiveFeature::Auth
             } else {
                 ActiveFeature::default()
             },

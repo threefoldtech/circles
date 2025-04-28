@@ -2,7 +2,7 @@ use super::components::circle_dialog;
 use super::features::{app_settings, settings};
 use crate::app::{ActiveFeature, CircleApp};
 use crate::ui::features::{
-    ai_tools, bot_channel, calendar, chat, documents, mail, video_conf, welcome,
+    ai_tools, auth, bot_channel, calendar, chat, documents, mail, video_conf, welcome,
 };
 use crate::utils::config::Theme;
 use eframe::egui::{CentralPanel, Context, Frame};
@@ -19,6 +19,7 @@ pub fn render_feature_content(
     CentralPanel::default()
         .frame(app_layout.clone())
         .show(ctx, |ui| match app.active_feature {
+            ActiveFeature::Auth => auth::render_auth_screen(app, ui, theme),
             ActiveFeature::Mail => mail::render_mail(app, ui),
             ActiveFeature::Calendar => {
                 // Use egui's memory system to persist the calendar state between frames

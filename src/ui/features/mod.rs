@@ -1,5 +1,6 @@
 pub mod ai_tools;
 pub mod app_settings;
+pub mod auth;
 pub mod bot_channel;
 pub mod calendar;
 pub mod chat;
