@@ -4,6 +4,7 @@ use crate::models::user::{User, UserPreferences};
 use crate::ui::app_layout;
 use crate::ui::components::calendar::event::Event;
 use crate::ui::components::notifications::NotificationManager;
+use crate::ui::footer::UserMenuState;
 use crate::utils::config::Theme;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -51,6 +52,8 @@ pub struct CircleApp {
     pub delete_confirmation_state: crate::models::features::DeleteConfirmationState,
     /// Circle actions state
     pub circle_actions: HashMap<Uuid, crate::models::features::CircleActionState>,
+    /// User menu state
+    pub user_menu_state: UserMenuState,
 }
 
 /// Enum representing available features in the application
@@ -172,6 +175,7 @@ impl CircleApp {
             refresh_start_time: std::time::Instant::now(),
             delete_confirmation_state: crate::models::features::DeleteConfirmationState::default(),
             circle_actions: HashMap::new(),
+            user_menu_state: UserMenuState::default(),
         }
     }
 

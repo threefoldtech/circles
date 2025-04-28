@@ -99,7 +99,7 @@ thread_local! {
 // Render the auth screen
 pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
     // Get the auth state from thread-local storage
-    let mut auth_state = AUTH_STATE.with(|state| state.borrow().clone());
+    let auth_state = AUTH_STATE.with(|state| state.borrow().clone());
 
     // Create local variables for convenience
     let mut name = auth_state.name.clone();
@@ -157,7 +157,7 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                         // Tab buttons
                         ui.horizontal(|ui| {
                             let tab_button_style = |ui: &mut Ui, selected: bool| {
-                                let mut style = ui.style_mut();
+                                let style = ui.style_mut();
                                 if selected {
                                     style.visuals.widgets.active.bg_fill = theme.accent;
                                     style.visuals.widgets.active.fg_stroke.color = theme.white;
