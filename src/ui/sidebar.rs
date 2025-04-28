@@ -1,42 +1,20 @@
 use crate::app::{ActiveFeature, CircleApp};
+use crate::models::dummy_data::{Conversation, Message};
+use crate::models::features::{CircleActionState, DeleteConfirmationState};
 use crate::utils::config::{LayoutConfig, Theme};
-use eframe::egui::{Context, Frame, SidePanel};
+use eframe::egui::{Context, Frame, SidePanel, Window};
 use egui::{
     Align, Button, CursorIcon, Layout, Margin, RichText, ScrollArea, Sense, Stroke, Ui, Vec2,
-    Window,
 };
-use std::collections::HashMap;
-use std::sync::Mutex;
 use uuid::Uuid;
 
-// Constants for spacing and sizes to maintain exact styling
+// Constants for spacing and sizes (unchanged)
 const HEADER_SPACE: f32 = 12.0;
 const SEARCH_SPACE: f32 = 16.0;
 const SECTION_SPACE: f32 = 8.0;
 const BOTTOM_SPACE: f32 = 8.0;
 const SECTION_GAP: f32 = 6.0;
 const ITEM_SPACE: f32 = 4.0;
-
-// State for confirmation dialog
-#[derive(Default)]
-struct DeleteConfirmationState {
-    open: bool,
-    circle_id: Option<Uuid>,
-    circle_name: String,
-}
-
-// State for circle actions
-#[derive(Default, Clone)]
-struct CircleActionState {
-    is_favorite: bool,
-    is_muted: bool,
-}
-
-// Global state for circle actions using lazy_static
-lazy_static::lazy_static! {
-    static ref CIRCLE_ACTIONS: Mutex<HashMap<Uuid, CircleActionState>> = Mutex::new(HashMap::new());
-    static ref DELETE_CONFIRMATION: Mutex<DeleteConfirmationState> = Mutex::new(DeleteConfirmationState::default());
-}
 
 // Sidebar rendering
 pub fn render_sidebar(
@@ -66,7 +44,6 @@ pub fn render_sidebar(
             });
         });
 
-    // Render the delete confirmation dialog if open
     render_delete_confirmation_dialog(ctx, app, theme);
 }
 
@@ -147,27 +124,39 @@ fn render_settings_button(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
 
 // Circle sections (ALL, FAVORITE, OTHERS)
 fn render_circle_sections(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
-    // Get active circle ID
     let active_circle_id = app.active_circle_id;
 
-    // Create vectors to store user and system circles
+    // Categorize circles
     let mut user_circles = Vec::new();
+    let mut favorite_circles = Vec::new();
     let mut system_circles = Vec::new();
 
-    // Populate the vectors
     for circle in &app.circles {
+        let circle_data = (
+            circle.id,
+            circle.name.clone(),
+            circle.circle_type,
+            circle.is_system_circle,
+        );
+        let is_favorite = app
+            .circle_actions
+            .get(&circle.id)
+            .map_or(false, |state| state.is_favorite);
+
+        if is_favorite {
+            favorite_circles.push(circle_data.clone());
+        }
         if circle.is_system_circle {
-            system_circles.push((circle.id, circle.name.clone(), circle.circle_type, true));
+            system_circles.push(circle_data);
         } else {
-            user_circles.push((circle.id, circle.name.clone(), circle.circle_type, false));
+            user_circles.push(circle_data);
         }
     }
 
-    // Render the sections
     render_circle_section(
         ui,
         "ALL",
-        user_circles.as_slice(),
+        &user_circles,
         active_circle_id,
         app,
         theme,
@@ -175,12 +164,10 @@ fn render_circle_sections(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         true,
     );
 
-    // Empty slice for favorites (to be implemented)
-    let empty_favorites: [(Uuid, String, crate::models::circle::CircleType, bool); 0] = [];
     render_circle_section(
         ui,
         "FAVORITE",
-        &empty_favorites,
+        &favorite_circles,
         active_circle_id,
         app,
         theme,
@@ -188,7 +175,7 @@ fn render_circle_sections(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         true,
     );
 
-    render_others_section(ui, system_circles.as_slice(), active_circle_id, app, theme);
+    render_others_section(ui, &system_circles, active_circle_id, app, theme);
 }
 
 // Individual circle section
@@ -377,6 +364,31 @@ fn handle_circle_selection(app: &mut CircleApp, id: Uuid, name: &str) {
     }
 }
 
+// Helper function to add a message to CirclesBot
+fn add_log_to_circles_bot(app: &mut CircleApp, message: String) {
+    let circles_bot = app.circles.iter().find(|c| c.name == "CirclesBot");
+    if let Some(bot) = circles_bot {
+        if let Some(feature_data) = app.circle_feature_data.get_mut(&bot.id) {
+            let conversations = &mut feature_data.chat_data.conversations;
+            if conversations.is_empty() {
+                conversations.push(Conversation {
+                    id: Uuid::new_v4(),
+                    name: "Circles Bot".to_string(),
+                    participants: vec!["Circles Bot".to_string(), "Me".to_string()],
+                    messages: Vec::new(),
+                });
+            }
+            conversations[0].messages.push(Message {
+                id: Uuid::new_v4(),
+                sender: "CirclesBot".to_string(),
+                content: message,
+                timestamp: chrono::Utc::now(),
+                read: false,
+            });
+        }
+    }
+}
+
 // Context menu for circle items
 fn render_context_menu(
     ui: &mut Ui,
@@ -393,22 +405,20 @@ fn render_context_menu(
     ui.style_mut().spacing.button_padding = Vec2::new(10.0, 10.0);
     ui.set_min_width(200.0);
 
-    // Get or initialize circle action state
-    let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
-    let circle_action_state = circle_actions
-        .entry(circle_id)
-        .or_insert_with(CircleActionState::default);
+    // Get favorite and mute status in a scoped block to release the borrow
+    let (is_favorite, is_muted) = {
+        let circle_action_state = app
+            .circle_actions
+            .entry(circle_id)
+            .or_insert_with(CircleActionState::default);
+        (
+            circle_action_state.is_favorite,
+            circle_action_state.is_muted,
+        )
+    };
 
-    let is_favorite = circle_action_state.is_favorite;
-    let is_muted = circle_action_state.is_muted;
-
-    // Drop the lock before UI operations
-    drop(circle_actions);
-
-    // Different menu items based on system circle status
-    if is_system_circle {
-        // System circles only show these two options
-        let menu_items = [
+    let menu_items = if is_system_circle {
+        vec![
             (
                 if is_favorite {
                     "Remove from favorites"
@@ -425,66 +435,9 @@ fn render_context_menu(
                 },
                 false,
             ),
-        ];
-
-        for (i, (label, _)) in menu_items.iter().enumerate() {
-            let button = Button::new(RichText::new(*label).size(14.0).color(theme.text))
-                .min_size(Vec2::new(180.0, 32.0));
-
-            let button_response = ui.add(button).on_hover_cursor(CursorIcon::PointingHand);
-
-            if button_response.clicked() {
-                let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
-                let circle_action_state = circle_actions.get_mut(&circle_id).unwrap();
-                let circle_name = circle_name.to_string(); // Clone the name to avoid borrowing issues
-
-                match i {
-                    0 => {
-                        // Toggle favorite status
-                        let was_favorite = circle_action_state.is_favorite;
-                        circle_action_state.is_favorite = !was_favorite;
-
-                        // Drop the lock before notification
-                        drop(circle_actions);
-
-                        app.notification_manager.add_notification(
-                            format!(
-                                "{} {} to favorites",
-                                if !was_favorite { "Added" } else { "Removed" },
-                                circle_name
-                            ),
-                            if !was_favorite { "✓" } else { "ℹ️" },
-                        );
-                    }
-                    1 => {
-                        // Toggle mute status
-                        let was_muted = circle_action_state.is_muted;
-                        circle_action_state.is_muted = !was_muted;
-
-                        // Drop the lock before notification
-                        drop(circle_actions);
-
-                        app.notification_manager.add_notification(
-                            format!(
-                                "Notifications {} for {}",
-                                if !was_muted { "muted" } else { "unmuted" },
-                                circle_name
-                            ),
-                            "🔔",
-                        );
-                    }
-                    _ => {}
-                }
-                ui.memory_mut(|mem| mem.close_popup());
-            }
-
-            if i < menu_items.len() - 1 {
-                ui.separator();
-            }
-        }
+        ]
     } else {
-        // Regular circles show all options
-        let menu_items = [
+        vec![
             (
                 if is_favorite {
                     "Remove from favorites"
@@ -504,106 +457,109 @@ fn render_context_menu(
                 false,
             ),
             ("Delete circle", true),
-        ];
+        ]
+    };
 
-        for (i, (label, is_destructive)) in menu_items.iter().enumerate() {
-            let button = Button::new(RichText::new(*label).size(14.0).color(if *is_destructive {
-                theme.error
-            } else {
-                theme.text
-            }))
-            .min_size(Vec2::new(180.0, 32.0));
+    for (i, (label, is_destructive)) in menu_items.iter().enumerate() {
+        let button = Button::new(RichText::new(*label).size(14.0).color(if *is_destructive {
+            theme.error
+        } else {
+            theme.text
+        }))
+        .min_size(Vec2::new(180.0, 32.0));
 
-            let button_response = ui.add(button).on_hover_cursor(CursorIcon::PointingHand);
+        let button_response = ui.add(button).on_hover_cursor(CursorIcon::PointingHand);
 
-            if button_response.clicked() {
-                let circle_name = circle_name.to_string(); // Clone the name to avoid borrowing issues
+        if button_response.clicked() {
+            // Re-borrow app.circle_actions mutably for state changes
+            let circle_action_state = app
+                .circle_actions
+                .entry(circle_id)
+                .or_insert_with(CircleActionState::default);
 
-                match i {
-                    0 => {
-                        // Toggle favorite status
-                        let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
-                        let circle_action_state = circle_actions.get_mut(&circle_id).unwrap();
-                        let was_favorite = circle_action_state.is_favorite;
-                        circle_action_state.is_favorite = !was_favorite;
-
-                        // Drop the lock before notification
-                        drop(circle_actions);
-
-                        app.notification_manager.add_notification(
-                            format!(
-                                "{} {} to favorites",
-                                if !was_favorite { "Added" } else { "Removed" },
-                                circle_name
-                            ),
-                            if !was_favorite { "✓" } else { "ℹ️" },
-                        );
-                    }
-                    1 => {
-                        // Add members functionality
-                        app.notification_manager.add_notification(
-                            format!("Add members dialog for {} would open here", circle_name),
-                            "👥",
-                        );
-                    }
-                    2 => {
-                        // Rename functionality
-                        app.notification_manager.add_notification(
-                            format!("Rename dialog for {} would open here", circle_name),
-                            "✏️",
-                        );
-                    }
-                    3 => {
-                        // Toggle mute status
-                        let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
-                        let circle_action_state = circle_actions.get_mut(&circle_id).unwrap();
-                        let was_muted = circle_action_state.is_muted;
-                        circle_action_state.is_muted = !was_muted;
-
-                        // Drop the lock before notification
-                        drop(circle_actions);
-
-                        app.notification_manager.add_notification(
-                            format!(
-                                "Notifications {} for {}",
-                                if !was_muted { "muted" } else { "unmuted" },
-                                circle_name
-                            ),
-                            "🔔",
-                        );
-                    }
-                    4 => {
-                        // Delete circle - show confirmation dialog
-                        let mut delete_confirmation = DELETE_CONFIRMATION.lock().unwrap();
-                        delete_confirmation.open = true;
-                        delete_confirmation.circle_id = Some(circle_id);
-                        delete_confirmation.circle_name = circle_name;
-                    }
-                    _ => {}
+            match (is_system_circle, i) {
+                (true, 0) | (false, 0) => {
+                    // Toggle favorite status
+                    let was_favorite = circle_action_state.is_favorite;
+                    circle_action_state.is_favorite = !was_favorite;
+                    add_log_to_circles_bot(
+                        app,
+                        format!(
+                            "{} {} to favorites",
+                            if !was_favorite { "Added" } else { "Removed" },
+                            circle_name
+                        ),
+                    );
                 }
-                ui.memory_mut(|mem| mem.close_popup());
+                (true, 1) | (false, 3) => {
+                    // Toggle mute status
+                    let was_muted = circle_action_state.is_muted;
+                    circle_action_state.is_muted = !was_muted;
+                    add_log_to_circles_bot(
+                        app,
+                        format!(
+                            "Notifications {} for {}",
+                            if !was_muted { "muted" } else { "unmuted" },
+                            circle_name
+                        ),
+                    );
+                }
+                (false, 1) => {
+                    // Add members
+                    add_log_to_circles_bot(
+                        app,
+                        format!("Add members dialog for {} would open here", circle_name),
+                    );
+                }
+                (false, 2) => {
+                    // Rename
+                    add_log_to_circles_bot(
+                        app,
+                        format!("Rename dialog for {} would open here", circle_name),
+                    );
+                }
+                (false, 4) => {
+                    // Delete circle
+                    app.delete_confirmation_state = DeleteConfirmationState {
+                        open: true,
+                        circle_id: Some(circle_id),
+                        circle_name: circle_name.to_string(),
+                    };
+                }
+                _ => {}
             }
+            ui.memory_mut(|mem| mem.close_popup());
+        }
 
-            if i < menu_items.len() - 1 {
-                ui.separator();
-            }
+        if i < menu_items.len() - 1 {
+            ui.separator();
         }
     }
 }
 
-// Function to render delete confirmation dialog
+// Delete confirmation dialog
 fn render_delete_confirmation_dialog(ctx: &Context, app: &mut CircleApp, theme: &Theme) {
-    let mut delete_confirmation = DELETE_CONFIRMATION.lock().unwrap();
-
-    if delete_confirmation.open {
-        let circle_id = delete_confirmation.circle_id;
-        let circle_name = delete_confirmation.circle_name.clone();
+    if app.delete_confirmation_state.open {
+        let circle_id = app.delete_confirmation_state.circle_id;
+        let circle_name = app.delete_confirmation_state.circle_name.clone();
 
         Window::new("Confirm Delete")
+            .fixed_size([600.0, 620.0]) // Fixed size to match event dialog
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]) // Centered horizontally
             .collapsible(false)
             .resizable(false)
-            .fixed_size([300.0, 150.0])
-            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .frame(
+                egui::Frame::window(&ctx.style())
+                    .fill(theme.background)
+                    .corner_radius(16)
+                    .shadow(egui::epaint::Shadow {
+                        color: theme.shadow,
+                        offset: [0, 4],
+                        blur: 8,
+                        spread: 0,
+                    })
+                    .inner_margin(egui::Margin::same(24)), // Appropriate padding for content
+            )
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
                     ui.add_space(10.0);
@@ -617,8 +573,10 @@ fn render_delete_confirmation_dialog(ctx: &Context, app: &mut CircleApp, theme: 
                     ui.add_space(20.0);
 
                     ui.horizontal(|ui| {
-                        if ui.button("Cancel").clicked() {
-                            delete_confirmation.open = false;
+                        let cancel_button = Button::new(RichText::new("Cancel").color(theme.text))
+                            .fill(theme.accent);
+                        if ui.add(cancel_button).clicked() {
+                            app.delete_confirmation_state = DeleteConfirmationState::default();
                         }
 
                         let delete_button = Button::new(RichText::new("Delete").color(theme.white))
@@ -626,27 +584,21 @@ fn render_delete_confirmation_dialog(ctx: &Context, app: &mut CircleApp, theme: 
 
                         if ui.add(delete_button).clicked() {
                             if let Some(id) = circle_id {
-                                // Remove the circle from the app
                                 app.circles.retain(|c| c.id != id);
-
-                                // If the deleted circle was active, set active to None
+                                app.circle_actions.remove(&id);
                                 if app.active_circle_id == Some(id) {
                                     app.active_circle_id = None;
-
-                                    // Set active feature to Mail if available
                                     if !app.circles.is_empty() {
                                         app.set_active_circle(app.circles[0].id);
                                         app.set_active_feature(ActiveFeature::Mail);
                                     }
                                 }
-
-                                // Show notification
-                                app.notification_manager.add_notification(
+                                add_log_to_circles_bot(
+                                    app,
                                     format!("Circle \"{}\" deleted", circle_name),
-                                    "🗑️",
                                 );
                             }
-                            delete_confirmation.open = false;
+                            app.delete_confirmation_state = DeleteConfirmationState::default();
                         }
                     });
                 });

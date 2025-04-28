@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::ui::components::mail::compose::Attachment;
 
@@ -209,6 +210,40 @@ impl Default for Features {
                     auto_video: false,
                 },
             },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+// State for circle actions (moved from global)
+pub struct CircleActionState {
+    pub is_favorite: bool,
+    pub is_muted: bool,
+}
+
+impl Default for CircleActionState {
+    fn default() -> Self {
+        Self {
+            is_favorite: false,
+            is_muted: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+// State for delete confirmation dialog (moved from global)
+pub struct DeleteConfirmationState {
+    pub open: bool,
+    pub circle_id: Option<Uuid>,
+    pub circle_name: String,
+}
+
+impl Default for DeleteConfirmationState {
+    fn default() -> Self {
+        Self {
+            open: false,
+            circle_id: None,
+            circle_name: String::new(),
         }
     }
 }

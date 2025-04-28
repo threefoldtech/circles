@@ -47,6 +47,10 @@ pub struct CircleApp {
     pub refresh_start_time: std::time::Instant,
     /// Calendar events
     pub calendar_events: Vec<Event>,
+    /// Delete confirmation dialog state
+    pub delete_confirmation_state: crate::models::features::DeleteConfirmationState,
+    /// Circle actions state
+    pub circle_actions: HashMap<Uuid, crate::models::features::CircleActionState>,
 }
 
 /// Enum representing available features in the application
@@ -157,6 +161,8 @@ impl CircleApp {
             is_refreshing: false,
             calendar_events: Vec::new(),
             refresh_start_time: std::time::Instant::now(),
+            delete_confirmation_state: crate::models::features::DeleteConfirmationState::default(),
+            circle_actions: HashMap::new(),
         }
     }
 
