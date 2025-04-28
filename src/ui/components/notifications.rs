@@ -32,6 +32,16 @@ impl NotificationManager {
         self.notifications.push_front(notification);
     }
 
+    pub fn add_notification(&mut self, message: impl Into<String>, icon: &str) {
+        let title = icon.to_string();
+        let notification = AppNotification::new(
+            title,
+            message,
+            crate::models::notification::NotificationPriority::Normal,
+        );
+        self.add(notification);
+    }
+
     pub fn clear(&mut self) {
         self.notifications.clear();
     }

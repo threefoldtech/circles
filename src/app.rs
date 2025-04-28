@@ -171,6 +171,7 @@ impl CircleApp {
         // We'll customize the welcome circle data in the dummy_data generation
         // The document will be added there
 
+        circle.is_system_circle = true;
         circle.settings.visibility = Visibility::Private;
         circle.settings.join_policy = JoinPolicy::InviteOnly;
         circle.settings.notification_settings = NotificationSettings {
@@ -193,6 +194,7 @@ impl CircleApp {
         // We'll customize the bot circle data in the dummy_data generation
         // The chat messages will be added there
 
+        circle.is_system_circle = true;
         circle.settings.visibility = Visibility::Private;
         circle.settings.join_policy = JoinPolicy::InviteOnly;
         circle.settings.notification_settings = NotificationSettings {

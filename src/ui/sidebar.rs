@@ -3,7 +3,10 @@ use crate::utils::config::{LayoutConfig, Theme};
 use eframe::egui::{Context, Frame, SidePanel};
 use egui::{
     Align, Button, CursorIcon, Layout, Margin, RichText, ScrollArea, Sense, Stroke, Ui, Vec2,
+    Window,
 };
+use std::collections::HashMap;
+use std::sync::Mutex;
 use uuid::Uuid;
 
 // Constants for spacing and sizes to maintain exact styling
@@ -13,6 +16,27 @@ const SECTION_SPACE: f32 = 8.0;
 const BOTTOM_SPACE: f32 = 8.0;
 const SECTION_GAP: f32 = 6.0;
 const ITEM_SPACE: f32 = 4.0;
+
+// State for confirmation dialog
+#[derive(Default)]
+struct DeleteConfirmationState {
+    open: bool,
+    circle_id: Option<Uuid>,
+    circle_name: String,
+}
+
+// State for circle actions
+#[derive(Default, Clone)]
+struct CircleActionState {
+    is_favorite: bool,
+    is_muted: bool,
+}
+
+// Global state for circle actions using lazy_static
+lazy_static::lazy_static! {
+    static ref CIRCLE_ACTIONS: Mutex<HashMap<Uuid, CircleActionState>> = Mutex::new(HashMap::new());
+    static ref DELETE_CONFIRMATION: Mutex<DeleteConfirmationState> = Mutex::new(DeleteConfirmationState::default());
+}
 
 // Sidebar rendering
 pub fn render_sidebar(
@@ -41,6 +65,9 @@ pub fn render_sidebar(
                 });
             });
         });
+
+    // Render the delete confirmation dialog if open
+    render_delete_confirmation_dialog(ctx, app, theme);
 }
 
 // Circle header with title and add button
@@ -120,22 +147,27 @@ fn render_settings_button(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
 
 // Circle sections (ALL, FAVORITE, OTHERS)
 fn render_circle_sections(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
-    let circles: Vec<_> = app
-        .circles
-        .iter()
-        .map(|c| (c.id, c.name.clone(), c.circle_type))
-        .collect();
-
-    let (default_circles, user_circles): (Vec<_>, Vec<_>) = circles
-        .into_iter()
-        .partition(|(_, name, _)| name == "WelcomeBot" || name == "CirclesBot");
-
+    // Get active circle ID
     let active_circle_id = app.active_circle_id;
 
+    // Create vectors to store user and system circles
+    let mut user_circles = Vec::new();
+    let mut system_circles = Vec::new();
+
+    // Populate the vectors
+    for circle in &app.circles {
+        if circle.is_system_circle {
+            system_circles.push((circle.id, circle.name.clone(), circle.circle_type, true));
+        } else {
+            user_circles.push((circle.id, circle.name.clone(), circle.circle_type, false));
+        }
+    }
+
+    // Render the sections
     render_circle_section(
         ui,
         "ALL",
-        &user_circles,
+        user_circles.as_slice(),
         active_circle_id,
         app,
         theme,
@@ -143,10 +175,12 @@ fn render_circle_sections(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         true,
     );
 
+    // Empty slice for favorites (to be implemented)
+    let empty_favorites: [(Uuid, String, crate::models::circle::CircleType, bool); 0] = [];
     render_circle_section(
         ui,
         "FAVORITE",
-        &[],
+        &empty_favorites,
         active_circle_id,
         app,
         theme,
@@ -154,14 +188,14 @@ fn render_circle_sections(ui: &mut Ui, app: &mut CircleApp, theme: &Theme) {
         true,
     );
 
-    render_others_section(ui, &default_circles, active_circle_id, app, theme);
+    render_others_section(ui, system_circles.as_slice(), active_circle_id, app, theme);
 }
 
 // Individual circle section
 fn render_circle_section(
     ui: &mut Ui,
     title: &str,
-    circles: &[(Uuid, String, crate::models::circle::CircleType)],
+    circles: &[(Uuid, String, crate::models::circle::CircleType, bool)],
     active_circle_id: Option<Uuid>,
     app: &mut CircleApp,
     theme: &Theme,
@@ -180,12 +214,13 @@ fn render_circle_section(
                 );
             } else {
                 ScrollArea::vertical().show(ui, |ui| {
-                    for (id, name, circle_type) in circles {
+                    for (id, name, circle_type, is_system_circle) in circles {
                         render_circle_item(
                             ui,
                             *id,
                             name,
                             *circle_type,
+                            *is_system_circle,
                             active_circle_id,
                             app,
                             theme,
@@ -198,10 +233,10 @@ fn render_circle_section(
     ui.add_space(SECTION_GAP);
 }
 
-// Others section for default circles
+// Others section for system circles
 fn render_others_section(
     ui: &mut Ui,
-    default_circles: &[(Uuid, String, crate::models::circle::CircleType)],
+    system_circles: &[(Uuid, String, crate::models::circle::CircleType, bool)],
     active_circle_id: Option<Uuid>,
     app: &mut CircleApp,
     theme: &Theme,
@@ -215,7 +250,7 @@ fn render_others_section(
     .default_open(true)
     .show(ui, |ui| {
         ui.add_space(SECTION_SPACE);
-        if default_circles.is_empty() {
+        if system_circles.is_empty() {
             ui.label(
                 RichText::new("No system circles available")
                     .size(13.0)
@@ -223,8 +258,17 @@ fn render_others_section(
             );
         } else {
             ScrollArea::vertical().show(ui, |ui| {
-                for (id, name, circle_type) in default_circles {
-                    render_circle_item(ui, *id, name, *circle_type, active_circle_id, app, theme);
+                for (id, name, circle_type, is_system_circle) in system_circles {
+                    render_circle_item(
+                        ui,
+                        *id,
+                        name,
+                        *circle_type,
+                        *is_system_circle,
+                        active_circle_id,
+                        app,
+                        theme,
+                    );
                 }
             });
         }
@@ -239,6 +283,7 @@ fn render_circle_item(
     id: Uuid,
     name: &str,
     circle_type: crate::models::circle::CircleType,
+    is_system_circle: bool,
     active_circle_id: Option<Uuid>,
     app: &mut CircleApp,
     theme: &Theme,
@@ -308,7 +353,7 @@ fn render_circle_item(
             }
 
             response.context_menu(|ui| {
-                render_context_menu(ui, theme);
+                render_context_menu(ui, app, id, is_system_circle, name, theme);
             });
         });
     });
@@ -333,7 +378,14 @@ fn handle_circle_selection(app: &mut CircleApp, id: Uuid, name: &str) {
 }
 
 // Context menu for circle items
-fn render_context_menu(ui: &mut Ui, theme: &Theme) {
+fn render_context_menu(
+    ui: &mut Ui,
+    app: &mut CircleApp,
+    circle_id: Uuid,
+    is_system_circle: bool,
+    circle_name: &str,
+    theme: &Theme,
+) {
     ui.style_mut().visuals.widgets.hovered.weak_bg_fill = theme.hover;
     ui.style_mut().visuals.widgets.active.weak_bg_fill = theme.hover;
     ui.style_mut().spacing.indent = 16.0;
@@ -341,32 +393,264 @@ fn render_context_menu(ui: &mut Ui, theme: &Theme) {
     ui.style_mut().spacing.button_padding = Vec2::new(10.0, 10.0);
     ui.set_min_width(200.0);
 
-    let menu_items = [
-        ("Add to favorites", false),
-        ("Add members", false),
-        ("Rename", false),
-        ("Mute notifications", false),
-        ("Delete circle", true),
-    ];
+    // Get or initialize circle action state
+    let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
+    let circle_action_state = circle_actions
+        .entry(circle_id)
+        .or_insert_with(CircleActionState::default);
 
-    for (i, (label, is_destructive)) in menu_items.iter().enumerate() {
-        let button = Button::new(RichText::new(*label).size(14.0).color(if *is_destructive {
-            theme.error
-        } else {
-            theme.text
-        }))
-        .min_size(Vec2::new(180.0, 32.0));
+    let is_favorite = circle_action_state.is_favorite;
+    let is_muted = circle_action_state.is_muted;
 
-        let button_response = ui.add(button).on_hover_cursor(CursorIcon::PointingHand);
+    // Drop the lock before UI operations
+    drop(circle_actions);
 
-        if button_response.clicked() {
-            // TODO: Implement respective functionality
-            ui.memory_mut(|mem| mem.close_popup());
+    // Different menu items based on system circle status
+    if is_system_circle {
+        // System circles only show these two options
+        let menu_items = [
+            (
+                if is_favorite {
+                    "Remove from favorites"
+                } else {
+                    "Add to favorites"
+                },
+                false,
+            ),
+            (
+                if is_muted {
+                    "Unmute notifications"
+                } else {
+                    "Mute notifications"
+                },
+                false,
+            ),
+        ];
+
+        for (i, (label, _)) in menu_items.iter().enumerate() {
+            let button = Button::new(RichText::new(*label).size(14.0).color(theme.text))
+                .min_size(Vec2::new(180.0, 32.0));
+
+            let button_response = ui.add(button).on_hover_cursor(CursorIcon::PointingHand);
+
+            if button_response.clicked() {
+                let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
+                let circle_action_state = circle_actions.get_mut(&circle_id).unwrap();
+                let circle_name = circle_name.to_string(); // Clone the name to avoid borrowing issues
+
+                match i {
+                    0 => {
+                        // Toggle favorite status
+                        let was_favorite = circle_action_state.is_favorite;
+                        circle_action_state.is_favorite = !was_favorite;
+
+                        // Drop the lock before notification
+                        drop(circle_actions);
+
+                        app.notification_manager.add_notification(
+                            format!(
+                                "{} {} to favorites",
+                                if !was_favorite { "Added" } else { "Removed" },
+                                circle_name
+                            ),
+                            if !was_favorite { "✓" } else { "ℹ️" },
+                        );
+                    }
+                    1 => {
+                        // Toggle mute status
+                        let was_muted = circle_action_state.is_muted;
+                        circle_action_state.is_muted = !was_muted;
+
+                        // Drop the lock before notification
+                        drop(circle_actions);
+
+                        app.notification_manager.add_notification(
+                            format!(
+                                "Notifications {} for {}",
+                                if !was_muted { "muted" } else { "unmuted" },
+                                circle_name
+                            ),
+                            "🔔",
+                        );
+                    }
+                    _ => {}
+                }
+                ui.memory_mut(|mem| mem.close_popup());
+            }
+
+            if i < menu_items.len() - 1 {
+                ui.separator();
+            }
         }
+    } else {
+        // Regular circles show all options
+        let menu_items = [
+            (
+                if is_favorite {
+                    "Remove from favorites"
+                } else {
+                    "Add to favorites"
+                },
+                false,
+            ),
+            ("Add members", false),
+            ("Rename", false),
+            (
+                if is_muted {
+                    "Unmute notifications"
+                } else {
+                    "Mute notifications"
+                },
+                false,
+            ),
+            ("Delete circle", true),
+        ];
 
-        if i < menu_items.len() - 1 {
-            ui.separator();
+        for (i, (label, is_destructive)) in menu_items.iter().enumerate() {
+            let button = Button::new(RichText::new(*label).size(14.0).color(if *is_destructive {
+                theme.error
+            } else {
+                theme.text
+            }))
+            .min_size(Vec2::new(180.0, 32.0));
+
+            let button_response = ui.add(button).on_hover_cursor(CursorIcon::PointingHand);
+
+            if button_response.clicked() {
+                let circle_name = circle_name.to_string(); // Clone the name to avoid borrowing issues
+
+                match i {
+                    0 => {
+                        // Toggle favorite status
+                        let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
+                        let circle_action_state = circle_actions.get_mut(&circle_id).unwrap();
+                        let was_favorite = circle_action_state.is_favorite;
+                        circle_action_state.is_favorite = !was_favorite;
+
+                        // Drop the lock before notification
+                        drop(circle_actions);
+
+                        app.notification_manager.add_notification(
+                            format!(
+                                "{} {} to favorites",
+                                if !was_favorite { "Added" } else { "Removed" },
+                                circle_name
+                            ),
+                            if !was_favorite { "✓" } else { "ℹ️" },
+                        );
+                    }
+                    1 => {
+                        // Add members functionality
+                        app.notification_manager.add_notification(
+                            format!("Add members dialog for {} would open here", circle_name),
+                            "👥",
+                        );
+                    }
+                    2 => {
+                        // Rename functionality
+                        app.notification_manager.add_notification(
+                            format!("Rename dialog for {} would open here", circle_name),
+                            "✏️",
+                        );
+                    }
+                    3 => {
+                        // Toggle mute status
+                        let mut circle_actions = CIRCLE_ACTIONS.lock().unwrap();
+                        let circle_action_state = circle_actions.get_mut(&circle_id).unwrap();
+                        let was_muted = circle_action_state.is_muted;
+                        circle_action_state.is_muted = !was_muted;
+
+                        // Drop the lock before notification
+                        drop(circle_actions);
+
+                        app.notification_manager.add_notification(
+                            format!(
+                                "Notifications {} for {}",
+                                if !was_muted { "muted" } else { "unmuted" },
+                                circle_name
+                            ),
+                            "🔔",
+                        );
+                    }
+                    4 => {
+                        // Delete circle - show confirmation dialog
+                        let mut delete_confirmation = DELETE_CONFIRMATION.lock().unwrap();
+                        delete_confirmation.open = true;
+                        delete_confirmation.circle_id = Some(circle_id);
+                        delete_confirmation.circle_name = circle_name;
+                    }
+                    _ => {}
+                }
+                ui.memory_mut(|mem| mem.close_popup());
+            }
+
+            if i < menu_items.len() - 1 {
+                ui.separator();
+            }
         }
+    }
+}
+
+// Function to render delete confirmation dialog
+fn render_delete_confirmation_dialog(ctx: &Context, app: &mut CircleApp, theme: &Theme) {
+    let mut delete_confirmation = DELETE_CONFIRMATION.lock().unwrap();
+
+    if delete_confirmation.open {
+        let circle_id = delete_confirmation.circle_id;
+        let circle_name = delete_confirmation.circle_name.clone();
+
+        Window::new("Confirm Delete")
+            .collapsible(false)
+            .resizable(false)
+            .fixed_size([300.0, 150.0])
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(10.0);
+                    ui.heading(RichText::new("Delete Circle?").color(theme.error));
+                    ui.add_space(10.0);
+                    ui.label(format!(
+                        "Are you sure you want to delete \"{}\"?",
+                        circle_name
+                    ));
+                    ui.label("This action cannot be undone.");
+                    ui.add_space(20.0);
+
+                    ui.horizontal(|ui| {
+                        if ui.button("Cancel").clicked() {
+                            delete_confirmation.open = false;
+                        }
+
+                        let delete_button = Button::new(RichText::new("Delete").color(theme.white))
+                            .fill(theme.error);
+
+                        if ui.add(delete_button).clicked() {
+                            if let Some(id) = circle_id {
+                                // Remove the circle from the app
+                                app.circles.retain(|c| c.id != id);
+
+                                // If the deleted circle was active, set active to None
+                                if app.active_circle_id == Some(id) {
+                                    app.active_circle_id = None;
+
+                                    // Set active feature to Mail if available
+                                    if !app.circles.is_empty() {
+                                        app.set_active_circle(app.circles[0].id);
+                                        app.set_active_feature(ActiveFeature::Mail);
+                                    }
+                                }
+
+                                // Show notification
+                                app.notification_manager.add_notification(
+                                    format!("Circle \"{}\" deleted", circle_name),
+                                    "🗑️",
+                                );
+                            }
+                            delete_confirmation.open = false;
+                        }
+                    });
+                });
+            });
     }
 }
 
