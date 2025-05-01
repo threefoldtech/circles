@@ -41,6 +41,9 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
         ctx,
         &theme,
     );
+
+    // Render logout confirmation dialog
+    footer::render_logout_confirmation_dialog(ctx, app, &theme);
 }
 
 // Setup egui style

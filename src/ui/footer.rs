@@ -165,7 +165,7 @@ fn handle_user_menu_click(app: &mut CircleApp, index: usize) {
     }
 }
 
-fn render_user_status(app: &mut CircleApp, _ctx: &Context, ui: &mut Ui, theme: &Theme) {
+fn render_user_status(app: &mut CircleApp, ctx: &Context, ui: &mut Ui, theme: &Theme) {
     let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
     let user_frame = StatusFrameProps::new(theme)
         .with_margin(Margin::symmetric(10, 4))
@@ -175,28 +175,99 @@ fn render_user_status(app: &mut CircleApp, _ctx: &Context, ui: &mut Ui, theme: &
                 let response = ui.label(create_styled_text(user_name, theme.text, 13.0, true));
                 ui.add_space(4.0);
                 render_status_dot(ui, theme, 6.0);
+                
+                // Check if the label was clicked
                 if response.clicked() {
                     app.user_menu_state.show_menu = !app.user_menu_state.show_menu;
                 }
             });
         });
+    
+    // Check if the frame itself was clicked
+    if user_frame.response.clicked() {
+        app.user_menu_state.show_menu = !app.user_menu_state.show_menu;
+    }
+    
     set_hover_cursor(ui, &user_frame.response);
 
     // Show context menu when clicked
-    user_frame.response.context_menu(|ui| {
-        // Use the render_user_status_menu function from sidebar/context_menu.rs
-        let clicked_indices = render_user_status_menu(ui, app, theme);
+    if app.user_menu_state.show_menu {
+        // Use the context_menu method to maintain the original style
+        user_frame.response.context_menu(|ui| {
+            // Use the render_user_status_menu function from sidebar/context_menu.rs
+            let clicked_indices = render_user_status_menu(ui, app, theme);
 
-        // Handle clicked items
-        if !clicked_indices.is_empty() {
-            let index = clicked_indices[0]; // Get the first clicked index
-            handle_user_menu_click(app, index);
-        }
-    });
+            // Handle clicked items
+            if !clicked_indices.is_empty() {
+                let index = clicked_indices[0]; // Get the first clicked index
+                handle_user_menu_click(app, index);
+            }
+        });
+    }
 }
 
-// Handle logout action
+// Render logout confirmation dialog
+pub fn render_logout_confirmation_dialog(ctx: &Context, app: &mut CircleApp, theme: &Theme) {
+    // Only proceed if the dialog should be shown
+    if !app.logout_confirmation_state {
+        return;
+    }
+
+    // Create a simple confirmation dialog
+    egui::Window::new("Confirm Logout")
+        .fixed_size([400.0, 200.0])
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+        .collapsible(false)
+        .resizable(false)
+        .frame(
+            egui::Frame::window(&ctx.style())
+                .fill(theme.background)
+                .corner_radius(16)
+                .shadow(egui::epaint::Shadow {
+                    color: theme.shadow,
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
+                })
+                .inner_margin(egui::Margin::same(24)),
+        )
+        .show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.add_space(10.0);
+                ui.heading(egui::RichText::new("Confirm Logout").color(theme.error));
+                ui.add_space(10.0);
+                ui.label("Are you sure you want to log out? You will need to sign in again to access your circles.");
+                ui.add_space(20.0);
+
+                ui.horizontal(|ui| {
+                    let cancel_button = egui::Button::new(
+                        egui::RichText::new("Cancel").color(theme.text)
+                    ).fill(theme.accent);
+                    
+                    if ui.add(cancel_button).clicked() {
+                        app.logout_confirmation_state = false;
+                    }
+
+                    let confirm_button = egui::Button::new(
+                        egui::RichText::new("Logout").color(theme.white)
+                    ).fill(theme.error);
+
+                    if ui.add(confirm_button).clicked() {
+                        perform_logout(app);
+                        app.logout_confirmation_state = false;
+                    }
+                });
+            });
+        });
+}
+
+// Handle logout menu click - shows confirmation dialog
 fn handle_logout(app: &mut CircleApp) {
+    app.logout_confirmation_state = true;
+}
+
+// Perform the actual logout action
+fn perform_logout(app: &mut CircleApp) {
     // Clear user credentials file
     let mut path = dirs::home_dir().unwrap_or_default();
     path.push(".config");

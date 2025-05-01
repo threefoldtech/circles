@@ -54,6 +54,8 @@ pub struct CircleApp {
     pub circle_actions: HashMap<Uuid, crate::models::features::CircleActionState>,
     /// User menu state
     pub user_menu_state: UserMenuState,
+    /// Logout confirmation dialog state
+    pub logout_confirmation_state: bool,
 }
 
 /// Enum representing available features in the application
@@ -176,6 +178,7 @@ impl CircleApp {
             delete_confirmation_state: crate::models::features::DeleteConfirmationState::default(),
             circle_actions: HashMap::new(),
             user_menu_state: UserMenuState::default(),
+            logout_confirmation_state: false,
         }
     }
 
