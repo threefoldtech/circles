@@ -2,7 +2,6 @@ pub mod bot_message;
 pub mod button;
 pub mod calendar;
 pub mod circle_dialog;
-pub mod confirmation_modal;
 pub mod context_menu;
 pub mod mail;
 pub mod notification_dialog;
