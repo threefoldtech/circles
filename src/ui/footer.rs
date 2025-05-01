@@ -167,7 +167,7 @@ fn handle_user_menu_click(app: &mut CircleApp, index: usize) {
     }
 }
 
-fn render_user_status(app: &mut CircleApp, ctx: &Context, ui: &mut Ui, theme: &Theme) {
+fn render_user_status(app: &mut CircleApp, _: &Context, ui: &mut Ui, theme: &Theme) {
     let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
     let user_frame = StatusFrameProps::new(theme)
         .with_margin(Margin::symmetric(10, 4))

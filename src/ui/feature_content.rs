@@ -18,60 +18,82 @@ pub fn render_feature_content(
     render_circle_dialog(app, ctx, theme);
     CentralPanel::default()
         .frame(app_layout.clone())
-        .show(ctx, |ui| match app.active_feature {
-            ActiveFeature::Auth => auth::render_auth_screen(app, ui, theme),
-            ActiveFeature::Mail => mail::render_mail(app, ui),
-            ActiveFeature::Calendar => {
-                // Use egui's memory system to persist the calendar state between frames
-                let calendar_id = "main_calendar";
-
-                // Get or create the calendar with persisted state
-                let mut calendar = ui.ctx().memory_mut(|mem| {
-                    if let Some(calendar) = mem
-                        .data
-                        .get_persisted::<calendar::Calendar>(egui::Id::new(calendar_id))
-                    {
-                        // If we have a persisted calendar, update its events from the app
-                        let mut calendar = calendar.clone();
-
-                        // Only update events if the app has events and they differ from the calendar
-                        if !app.calendar_events.is_empty()
-                            && app.calendar_events.len() != calendar.get_events().len()
-                        {
-                            calendar = calendar::Calendar::with_events(app.calendar_events.clone());
-                        }
-
-                        calendar
-                    } else {
-                        // Create a new calendar with events if available
-                        if app.calendar_events.is_empty() {
-                            calendar::Calendar::new()
-                        } else {
-                            calendar::Calendar::with_events(app.calendar_events.clone())
+        .show(ctx, |ui| {
+            // Check if the active circle is a system circle
+            if let Some(active_circle) = app.active_circle() {
+                if active_circle.is_system_circle {
+                    // For system circles, show appropriate content based on the circle name
+                    match active_circle.name.as_str() {
+                        "WelcomeBot" => welcome::render_welcome_screen(app, ui, theme),
+                        "CirclesBot" => bot_channel::render_bot_channel(app, ui),
+                        _ => {
+                            // For any other system circles, default to welcome screen
+                            welcome::render_welcome_screen(app, ui, theme)
                         }
                     }
-                });
-
-                // Render the calendar
-                calendar.render(ui, theme);
-
-                // Store the calendar state for the next frame
-                ui.ctx().memory_mut(|mem| {
-                    mem.data
-                        .insert_persisted(egui::Id::new(calendar_id), calendar.clone());
-                });
-
-                // Store any new events back in the app
-                app.calendar_events = calendar.get_events().clone();
+                    return;
+                }
             }
-            ActiveFeature::Chat => chat::render_chat(app, ui, theme),
-            ActiveFeature::Documents => documents::render_documents(app, ui, theme),
-            ActiveFeature::AITools => ai_tools::render_ai_tools(app, ui),
-            ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
-            ActiveFeature::Settings => settings::render_settings(app, ui, ctx),
-            ActiveFeature::AppSettings => app_settings::render_app_settings(app, ui, ctx, theme),
-            ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui, theme),
-            ActiveFeature::BotChannel => bot_channel::render_bot_channel(app, ui),
+
+            // For non-system circles, show the regular feature content
+            match app.active_feature {
+                ActiveFeature::Auth => auth::render_auth_screen(app, ui, theme),
+                ActiveFeature::Mail => mail::render_mail(app, ui),
+                ActiveFeature::Calendar => {
+                    // Use egui's memory system to persist the calendar state between frames
+                    let calendar_id = "main_calendar";
+
+                    // Get or create the calendar with persisted state
+                    let mut calendar = ui.ctx().memory_mut(|mem| {
+                        if let Some(calendar) = mem
+                            .data
+                            .get_persisted::<calendar::Calendar>(egui::Id::new(calendar_id))
+                        {
+                            // If we have a persisted calendar, update its events from the app
+                            let mut calendar = calendar.clone();
+
+                            // Only update events if the app has events and they differ from the calendar
+                            if !app.calendar_events.is_empty()
+                                && app.calendar_events.len() != calendar.get_events().len()
+                            {
+                                calendar =
+                                    calendar::Calendar::with_events(app.calendar_events.clone());
+                            }
+
+                            calendar
+                        } else {
+                            // Create a new calendar with events if available
+                            if app.calendar_events.is_empty() {
+                                calendar::Calendar::new()
+                            } else {
+                                calendar::Calendar::with_events(app.calendar_events.clone())
+                            }
+                        }
+                    });
+
+                    // Render the calendar
+                    calendar.render(ui, theme);
+
+                    // Store the calendar state for the next frame
+                    ui.ctx().memory_mut(|mem| {
+                        mem.data
+                            .insert_persisted(egui::Id::new(calendar_id), calendar.clone());
+                    });
+
+                    // Store any new events back in the app
+                    app.calendar_events = calendar.get_events().clone();
+                }
+                ActiveFeature::Chat => chat::render_chat(app, ui, theme),
+                ActiveFeature::Documents => documents::render_documents(app, ui, theme),
+                ActiveFeature::AITools => ai_tools::render_ai_tools(app, ui),
+                ActiveFeature::VideoConference => video_conf::render_video_conference(app, ui),
+                ActiveFeature::Settings => settings::render_settings(app, ui, ctx),
+                ActiveFeature::AppSettings => {
+                    app_settings::render_app_settings(app, ui, ctx, theme)
+                }
+                ActiveFeature::Welcome => welcome::render_welcome_screen(app, ui, theme),
+                ActiveFeature::BotChannel => bot_channel::render_bot_channel(app, ui),
+            }
         });
 }
 
