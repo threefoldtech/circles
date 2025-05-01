@@ -95,6 +95,8 @@ pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame,
                 render_right_section(app, ctx, ui, theme);
             });
         });
+
+    ctx.request_repaint_after(std::time::Duration::from_secs(1));
 }
 
 fn render_date_time(ui: &mut Ui, theme: &Theme) {
