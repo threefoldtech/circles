@@ -5,10 +5,12 @@ use crate::ui::components::notifications_panel::{
 use crate::utils::config::Theme;
 use chrono::Local;
 use eframe::egui::{
-    Align, Color32, Context, Frame, Id, Layout, Margin, Pos2, Response, RichText, Sense, Stroke,
-    TopBottomPanel, Ui, Vec2, Window,
+    Align, Color32, Context, Frame, Layout, Margin, Pos2, Response, RichText, Sense, Stroke,
+    TopBottomPanel, Ui, Vec2,
 };
 use std::fs;
+
+use super::sidebar::render_user_status_menu;
 
 pub struct StatusFrameProps<'a> {
     theme: &'a Theme,
@@ -135,22 +137,35 @@ fn render_left_section(ui: &mut Ui, theme: &Theme) {
 }
 
 // User menu state
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct UserMenuState {
     pub show_menu: bool,
-    pub menu_rect: Option<eframe::epaint::Rect>,
 }
 
-impl Default for UserMenuState {
-    fn default() -> Self {
-        Self {
-            show_menu: false,
-            menu_rect: None,
+// Handle user menu click based on index
+fn handle_user_menu_click(app: &mut CircleApp, index: usize) {
+    match index {
+        0 => {
+            // Profile
+            // Handle profile action
         }
+        1 => {
+            // Edit Profile
+            // Handle edit profile action
+        }
+        2 => {
+            // Snooze
+            // Handle snooze action
+        }
+        3 => {
+            // Logout
+            handle_logout(app);
+        }
+        _ => {}
     }
 }
 
-fn render_user_status(app: &mut CircleApp, ctx: &Context, ui: &mut Ui, theme: &Theme) {
+fn render_user_status(app: &mut CircleApp, _ctx: &Context, ui: &mut Ui, theme: &Theme) {
     let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
     let user_frame = StatusFrameProps::new(theme)
         .with_margin(Margin::symmetric(10, 4))
@@ -161,128 +176,23 @@ fn render_user_status(app: &mut CircleApp, ctx: &Context, ui: &mut Ui, theme: &T
                 ui.add_space(4.0);
                 render_status_dot(ui, theme, 6.0);
                 if response.clicked() {
-                    println!("The user frame was clicked!");
                     app.user_menu_state.show_menu = !app.user_menu_state.show_menu;
                 }
             });
         });
     set_hover_cursor(ui, &user_frame.response);
 
-    // Show user menu if enabled
-    if app.user_menu_state.show_menu {
-        let menu_id = Id::new("user_menu");
+    // Show context menu when clicked
+    user_frame.response.context_menu(|ui| {
+        // Use the render_user_status_menu function from sidebar/context_menu.rs
+        let clicked_indices = render_user_status_menu(ui, app, theme);
 
-        // Create a menu window
-        Window::new("User Menu")
-            .id(menu_id)
-            .fixed_pos(Pos2::new(
-                user_frame.response.rect.right() - 200.0,
-                user_frame.response.rect.bottom() + 5.0,
-            ))
-            .fixed_size([200.0, 180.0])
-            .title_bar(false)
-            .frame(Frame::window(&ctx.style()).fill(theme.panel))
-            .show(ctx, |ui| {
-                ui.vertical(|ui| {
-                    ui.add_space(5.0);
-
-                    // Profile option
-                    if ui
-                        .add(
-                            egui::Button::new(create_styled_text(
-                                "👤 Profile",
-                                theme.text,
-                                14.0,
-                                false,
-                            ))
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        app.user_menu_state.show_menu = false;
-                        // Handle profile action
-                    }
-
-                    ui.add_space(5.0);
-                    ui.separator();
-                    ui.add_space(5.0);
-
-                    // Edit Profile option
-                    if ui
-                        .add(
-                            egui::Button::new(create_styled_text(
-                                "✏️ Edit Profile",
-                                theme.text,
-                                14.0,
-                                false,
-                            ))
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        app.user_menu_state.show_menu = false;
-                        // Handle edit profile action
-                    }
-
-                    ui.add_space(5.0);
-                    ui.separator();
-                    ui.add_space(5.0);
-
-                    // Snooze option
-                    if ui
-                        .add(
-                            egui::Button::new(create_styled_text(
-                                "💤 Snooze",
-                                theme.text,
-                                14.0,
-                                false,
-                            ))
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        app.user_menu_state.show_menu = false;
-                        // Handle snooze action
-                    }
-
-                    ui.add_space(5.0);
-                    ui.separator();
-                    ui.add_space(5.0);
-
-                    // Logout option
-                    if ui
-                        .add(
-                            egui::Button::new(create_styled_text(
-                                "🚪 Logout",
-                                theme.error,
-                                14.0,
-                                false,
-                            ))
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        app.user_menu_state.show_menu = false;
-                        handle_logout(app);
-                    }
-                });
-
-                // Store the menu rect for click-outside detection
-                app.user_menu_state.menu_rect = Some(ui.min_rect());
-            });
-
-        // Close menu when clicking outside
-        if ui.input(|i| i.pointer.any_released()) {
-            if let Some(pos) = ui.input(|i| i.pointer.interact_pos()) {
-                if let Some(menu_rect) = app.user_menu_state.menu_rect {
-                    let user_rect = user_frame.response.rect.expand(20.0);
-                    if !menu_rect.contains(pos) && !user_rect.contains(pos) {
-                        app.user_menu_state.show_menu = false;
-                    }
-                }
-            }
+        // Handle clicked items
+        if !clicked_indices.is_empty() {
+            let index = clicked_indices[0]; // Get the first clicked index
+            handle_user_menu_click(app, index);
         }
-    }
+    });
 }
 
 // Handle logout action

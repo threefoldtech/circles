@@ -4,7 +4,7 @@ use egui::{CursorIcon, Frame, Margin, RichText, Sense, Ui};
 use uuid::Uuid;
 
 use super::ITEM_SPACE;
-use super::context_menu::render_context_menu;
+use super::context_menu::render_circle_context_menu;
 use super::helpers::circle_type_name;
 
 // Individual circle item
@@ -83,7 +83,7 @@ pub fn render_circle_item(
             }
 
             response.context_menu(|ui| {
-                render_context_menu(ui, app, id, is_system_circle, name, theme);
+                render_circle_context_menu(ui, app, id, is_system_circle, name, theme);
             });
         });
     });

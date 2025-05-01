@@ -4,6 +4,8 @@ use crate::models::user::{User, UserPreferences};
 use crate::utils::config::Theme;
 use chrono::Utc;
 use eframe::egui::{self, Button, Frame, Margin, RichText, TextEdit, Ui, Vec2};
+use egui_phosphor::regular::{EYE, EYE_SLASH};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::fs;
@@ -36,6 +38,8 @@ pub struct AuthState {
     pub confirm_password: String,
     pub error_message: Option<String>,
     pub success_message: Option<String>,
+    pub show_password: bool,
+    pub show_confirm_password: bool,
 }
 
 impl Default for AuthState {
@@ -48,6 +52,8 @@ impl Default for AuthState {
             confirm_password: String::new(),
             error_message: None,
             success_message: None,
+            show_password: false,
+            show_confirm_password: false,
         }
     }
 }
@@ -59,11 +65,6 @@ fn get_credentials_path() -> PathBuf {
     fs::create_dir_all(&path).ok(); // Create .config directory if it doesn't exist
     path.push("circles.json");
     path
-}
-
-// Check if credentials exist
-pub fn credentials_exist() -> bool {
-    get_credentials_path().exists()
 }
 
 // Load credentials from file
@@ -89,6 +90,54 @@ fn create_user_from_credentials(credentials: &Credentials) -> User {
         created_at: Utc::now(),
         preferences: UserPreferences::default(),
     }
+}
+
+// Validate email format
+fn is_valid_email(email: &str) -> bool {
+    // Basic email validation using regex
+    let email_regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
+    email_regex.is_match(email)
+}
+
+// Validate password strength
+fn is_strong_password(password: &str) -> bool {
+    // Password must be at least 8 characters long
+    if password.len() < 8 {
+        return false;
+    }
+
+    // Password must contain at least one digit
+    let has_digit = password.chars().any(|c| c.is_digit(10));
+    if !has_digit {
+        return false;
+    }
+
+    // Password must contain at least one special character
+    let special_chars = "!@#$%^&*()_-+={}[]|:;<>,.?/~`";
+    let has_special = password.chars().any(|c| special_chars.contains(c));
+    if !has_special {
+        return false;
+    }
+
+    // Password must contain at least one uppercase letter
+    let has_uppercase = password.chars().any(|c| c.is_uppercase());
+    if !has_uppercase {
+        return false;
+    }
+
+    true
+}
+
+// Validate name
+fn is_valid_name(name: &str) -> bool {
+    // Name must not be empty
+    if name.trim().is_empty() {
+        return false;
+    }
+
+    // Name must not contain special characters except spaces, hyphens, and apostrophes
+    let name_regex = Regex::new(r"^[a-zA-Z\s\-']+$").unwrap();
+    name_regex.is_match(name)
 }
 
 // Thread-local storage for auth state to persist between renders
@@ -244,36 +293,58 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                 );
                                 ui.add_space(15.0);
 
-                                // Password field
+                                // Password field with toggle visibility
                                 ui.label(RichText::new("Password").size(14.0).color(theme.text));
-                                ui.add(
-                                    TextEdit::singleline(&mut password)
-                                        .password(true)
-                                        .hint_text("Enter your password")
-                                        .desired_width(form_width - 40.0)
-                                        .margin(Vec2::new(10.0, 8.0)),
-                                );
+                                ui.horizontal(|ui| {
+                                    ui.add(
+                                        TextEdit::singleline(&mut password)
+                                            .password(!auth_state.show_password)
+                                            .hint_text("Enter your password")
+                                            .desired_width(form_width - 80.0)
+                                            .margin(Vec2::new(10.0, 8.0)),
+                                    );
+                                    
+                                    // Eye icon to toggle password visibility
+                                    let eye_icon = if auth_state.show_password { EYE } else { EYE_SLASH };
+                                    if ui.add(Button::new(eye_icon.to_owned()).frame(false)).clicked() {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.show_password = !state.show_password;
+                                        });
+                                    }
+                                });
                                 ui.add_space(15.0);
 
-                                // Confirm password field
+                                // Confirm password field with toggle visibility
                                 ui.label(
                                     RichText::new("Confirm Password")
                                         .size(14.0)
                                         .color(theme.text),
                                 );
-                                ui.add(
-                                    TextEdit::singleline(&mut confirm_password)
-                                        .password(true)
-                                        .hint_text("Confirm your password")
-                                        .desired_width(form_width - 40.0)
-                                        .margin(Vec2::new(10.0, 8.0)),
-                                );
+                                ui.horizontal(|ui| {
+                                    ui.add(
+                                        TextEdit::singleline(&mut confirm_password)
+                                            .password(!auth_state.show_confirm_password)
+                                            .hint_text("Confirm your password")
+                                            .desired_width(form_width - 80.0)
+                                            .margin(Vec2::new(10.0, 8.0)),
+                                    );
+                                    
+                                    // Eye icon to toggle password visibility
+                                    let eye_icon = if auth_state.show_confirm_password { EYE } else { EYE_SLASH };
+                                    if ui.add(Button::new(eye_icon.to_owned()).frame(false)).clicked() {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.show_confirm_password = !state.show_confirm_password;
+                                        });
+                                    }
+                                });
                                 ui.add_space(30.0);
 
                                 // Sign Up button
                                 if ui
                                     .add_sized(
-                                        [form_width, 40.0],
+                                        Vec2::new(form_width, 40.0),
                                         Button::new(
                                             RichText::new("Sign Up")
                                                 .size(16.0)
@@ -291,17 +362,35 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                             state.error_message =
                                                 Some("Name is required".to_string());
                                         });
+                                    } else if !is_valid_name(&name) {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.error_message =
+                                                Some("Name can only contain letters, spaces, hyphens, and apostrophes".to_string());
+                                        });
                                     } else if email.trim().is_empty() {
                                         AUTH_STATE.with(|state| {
                                             let mut state = state.borrow_mut();
                                             state.error_message =
                                                 Some("Email is required".to_string());
                                         });
+                                    } else if !is_valid_email(&email) {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.error_message =
+                                                Some("Please enter a valid email address".to_string());
+                                        });
                                     } else if password.trim().is_empty() {
                                         AUTH_STATE.with(|state| {
                                             let mut state = state.borrow_mut();
                                             state.error_message =
                                                 Some("Password is required".to_string());
+                                        });
+                                    } else if !is_strong_password(&password) {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.error_message =
+                                                Some("Password must be at least 8 characters and include uppercase, digit, and special character".to_string());
                                         });
                                     } else if password != confirm_password {
                                         AUTH_STATE.with(|state| {
@@ -370,21 +459,32 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                 );
                                 ui.add_space(15.0);
 
-                                // Password field
+                                // Password field with toggle visibility
                                 ui.label(RichText::new("Password").size(14.0).color(theme.text));
-                                ui.add(
-                                    TextEdit::singleline(&mut password)
-                                        .password(true)
-                                        .hint_text("Enter your password")
-                                        .desired_width(form_width - 40.0)
-                                        .margin(Vec2::new(10.0, 8.0)),
-                                );
+                                ui.horizontal(|ui| {
+                                    ui.add(
+                                        TextEdit::singleline(&mut password)
+                                            .password(!auth_state.show_password)
+                                            .hint_text("Enter your password")
+                                            .desired_width(form_width - 80.0)
+                                            .margin(Vec2::new(10.0, 8.0)),
+                                    );
+                                    
+                                    // Eye icon to toggle password visibility
+                                    let eye_icon = if auth_state.show_password { EYE } else { EYE_SLASH };
+                                    if ui.add(Button::new(eye_icon.to_owned()).frame(false)).clicked() {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.show_password = !state.show_password;
+                                        });
+                                    }
+                                });
                                 ui.add_space(30.0);
 
                                 // Sign In button
                                 if ui
                                     .add_sized(
-                                        [form_width, 40.0],
+                                        Vec2::new(form_width, 40.0),
                                         Button::new(
                                             RichText::new("Sign In")
                                                 .size(16.0)
@@ -402,11 +502,23 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                             state.error_message =
                                                 Some("Email is required".to_string());
                                         });
+                                    } else if !is_valid_email(&email) {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.error_message =
+                                                Some("Please enter a valid email address".to_string());
+                                        });
                                     } else if password.trim().is_empty() {
                                         AUTH_STATE.with(|state| {
                                             let mut state = state.borrow_mut();
                                             state.error_message =
                                                 Some("Password is required".to_string());
+                                        });
+                                    } else if !is_strong_password(&password) {
+                                        AUTH_STATE.with(|state| {
+                                            let mut state = state.borrow_mut();
+                                            state.error_message =
+                                                Some("Password must be at least 8 characters and include uppercase, digit, and special character".to_string());
                                         });
                                     } else {
                                         // Load credentials

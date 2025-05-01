@@ -22,7 +22,8 @@ env_logger = "0.10.1"
 chrono-tz = "0.10.3"
 icalendar = "0.16.13"
 reqwest = "0.12.15"
-egui_extras = "0.31.1"
+egui_extras = { version = "0.31.1", features = ["all_loaders"] }
+egui-phosphor = "0.4.0"
 rfd = "0.15.3"
 notify-rust = "4.11.7"
 open = "5.3.2"
@@ -30,6 +31,7 @@ time = "0.3.41"
 dark-light = "1.0.0"
 lazy_static = "1.4.0"
 dirs = "5.0.1"
+regex = "1.10.3"
 
 # For web support
 [target.'cfg(target_arch = "wasm32")'.dependencies]

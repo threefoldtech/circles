@@ -24,7 +24,7 @@ pub const ITEM_SPACE: f32 = 4.0;
 #[allow(unused_imports)]
 pub use circle_item::{handle_circle_selection, render_circle_item};
 #[allow(unused_imports)]
-pub use context_menu::render_context_menu;
+pub use context_menu::{render_circle_context_menu, render_user_status_menu};
 pub use delete_dialog::render_delete_confirmation_dialog;
 pub use header::render_circle_header;
 #[allow(unused_imports)]
