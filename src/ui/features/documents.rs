@@ -3,7 +3,7 @@ use eframe::egui;
 use crate::app::CircleApp;
 use crate::models::features::documents::{CreateType, ViewMode};
 use crate::ui::app_layout::create_content_frame;
-use crate::ui::components::{button, context_menu};
+use crate::ui::components::button;
 use crate::utils::config::Theme;
 
 /// Render the documents feature
@@ -22,6 +22,9 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
 
             // New button with dropdown
             let new_btn = ui.add(button::create_button("New", "➕", theme));
+            if new_btn.hovered() {
+                ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+            }
             if new_btn.clicked() {
                 app.documents_state.create_dialog.open = true;
                 app.documents_state.create_dialog.create_type = Some(CreateType::Document);
@@ -31,17 +34,22 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
             ui.add_space(8.0);
 
             // Upload button
-            if ui
-                .add(button::create_button("Upload", "📤", theme))
-                .clicked()
-            {
+            let upload_btn = ui.add(button::create_button("Upload", "📤", theme));
+            if upload_btn.hovered() {
+                ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+            }
+            if upload_btn.clicked() {
                 // TODO: Implement upload
             }
-
+            
             ui.add_space(8.0);
-
+            
             // Sort button
-            if ui.add(button::create_button("Sort", "🔄", theme)).clicked() {
+            let sort_btn = ui.add(button::create_button("Sort", "🔄", theme));
+            if sort_btn.hovered() {
+                ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+            }
+            if sort_btn.clicked() {
                 // TODO: Implement sorting
             }
 
@@ -56,8 +64,12 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
 
                 let list_btn = ui.add(
                     egui::Button::new(list_text)
-                        .selected(app.documents_state.view_mode == ViewMode::List),
+                        .selected(app.documents_state.view_mode == ViewMode::List)
                 );
+                
+                if list_btn.hovered() {
+                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                }
 
                 if list_btn.clicked() {
                     app.documents_state.view_mode = ViewMode::List;
@@ -69,8 +81,12 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
 
                 let grid_btn = ui.add(
                     egui::Button::new(grid_text)
-                        .selected(app.documents_state.view_mode == ViewMode::Grid),
+                        .selected(app.documents_state.view_mode == ViewMode::Grid)
                 );
+                
+                if grid_btn.hovered() {
+                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                }
 
                 if grid_btn.clicked() {
                     app.documents_state.view_mode = ViewMode::Grid;
@@ -102,7 +118,11 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                 let home_text = egui::RichText::new("📁 Documents")
                     .color(theme.accent)
                     .size(16.0);
-                if ui.add(egui::Button::new(home_text).frame(false)).clicked() {
+                let home_btn = ui.add(egui::Button::new(home_text).frame(false));
+                if home_btn.hovered() {
+                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                }
+                if home_btn.clicked() {
                     navigate_to_root = true;
                 }
 
@@ -115,7 +135,11 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                     ui.label(egui::RichText::new(" > ").color(theme.secondary_text));
 
                     let crumb_text = egui::RichText::new(&breadcrumb.name).color(theme.accent);
-                    if ui.add(egui::Button::new(crumb_text).frame(false)).clicked() {
+                    let crumb_btn = ui.add(egui::Button::new(crumb_text).frame(false));
+                    if crumb_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if crumb_btn.clicked() {
                         navigate_to_breadcrumb = Some((breadcrumb.id, i));
                     }
                 }
@@ -157,7 +181,11 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                 }
 
                 if !app.documents_state.search_query.is_empty() {
-                    if ui.button("✖").clicked() {
+                    let clear_btn = ui.button("✖");
+                    if clear_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if clear_btn.clicked() {
                         app.documents_state.search_query.clear();
                     }
                 }
@@ -249,10 +277,14 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                                     let folder_text =
                                         egui::RichText::new(&folder_name).strong().size(14.0);
 
-                                    if ui
-                                        .add(egui::Button::new(folder_text).frame(false))
-                                        .clicked()
-                                    {
+                                    let folder_btn = ui
+                                        .add(egui::Button::new(folder_text).frame(false));
+                                    
+                                    if folder_btn.hovered() {
+                                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                                    }
+                                    
+                                    if folder_btn.clicked() {
                                         // Store folder to navigate to
                                         folder_to_navigate = Some((folder_id, folder_name.clone()));
                                     }
@@ -342,7 +374,13 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                                     let doc_text =
                                         egui::RichText::new(&doc.name).strong().size(14.0);
 
-                                    if ui.add(egui::Button::new(doc_text).frame(false)).clicked() {
+                                    let doc_btn = ui.add(egui::Button::new(doc_text).frame(false));
+                                    
+                                    if doc_btn.hovered() {
+                                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                                    }
+                                    
+                                    if doc_btn.clicked() {
                                         // TODO: Open document
                                     }
 
@@ -463,7 +501,13 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                                 ui.add_space(4.0);
 
                                 let name_text = egui::RichText::new(&folder_name).size(14.0);
-                                if ui.add(egui::Button::new(name_text).frame(false)).clicked() {
+                                let folder_btn = ui.add(egui::Button::new(name_text).frame(false));
+                                
+                                if folder_btn.hovered() {
+                                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                                }
+                                
+                                if folder_btn.clicked() {
                                     // Store folder to navigate to
                                     folder_to_navigate = Some((folder_id, folder_name));
                                 }
@@ -516,7 +560,13 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                                 ui.add_space(4.0);
 
                                 let name_text = egui::RichText::new(&doc.name).size(14.0);
-                                if ui.add(egui::Button::new(name_text).frame(false)).clicked() {
+                                let doc_btn = ui.add(egui::Button::new(name_text).frame(false));
+                                
+                                if doc_btn.hovered() {
+                                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                                }
+                                
+                                if doc_btn.clicked() {
                                     // TODO: Open document
                                 }
 
@@ -552,10 +602,15 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
             ui.label("No documents available");
         }
     });
+    
+    // Render dialogs if open
+    render_rename_dialog(app, ui.ctx(), theme);
+    render_delete_dialog(app, ui.ctx(), theme);
+    render_create_dialog(app, ui.ctx(), theme);
 }
 
 /// Render rename dialog
-fn render_rename_dialog(app: &mut CircleApp, ctx: &egui::Context, theme: &Theme) {
+fn render_rename_dialog(app: &mut CircleApp, ctx: &egui::Context, _theme: &Theme) {
     if !app.documents_state.rename_dialog.open {
         return;
     }
@@ -584,11 +639,19 @@ fn render_rename_dialog(app: &mut CircleApp, ctx: &egui::Context, theme: &Theme)
                 ui.add_space(20.0);
                 
                 ui.horizontal(|ui| {
-                    if ui.button("Cancel").clicked() {
+                    let cancel_btn = ui.button("Cancel");
+                    if cancel_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if cancel_btn.clicked() {
                         result = Some(false);
                     }
                     
-                    if ui.button("Rename").clicked() {
+                    let rename_btn = ui.button("Rename");
+                    if rename_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if rename_btn.clicked() {
                         result = Some(true);
                     }
                 });
@@ -652,11 +715,19 @@ fn render_delete_dialog(app: &mut CircleApp, ctx: &egui::Context, theme: &Theme)
                 ui.add_space(20.0);
                 
                 ui.horizontal(|ui| {
-                    if ui.button("Cancel").clicked() {
+                    let cancel_btn = ui.button("Cancel");
+                    if cancel_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if cancel_btn.clicked() {
                         result = Some(false);
                     }
                     
-                    if ui.button("Delete").clicked() {
+                    let delete_btn = ui.button("Delete");
+                    if delete_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if delete_btn.clicked() {
                         result = Some(true);
                     }
                 });
@@ -693,7 +764,7 @@ fn render_delete_dialog(app: &mut CircleApp, ctx: &egui::Context, theme: &Theme)
 }
 
 /// Render create dialog for new document or folder
-fn render_create_dialog(app: &mut CircleApp, ctx: &egui::Context, theme: &Theme) {
+fn render_create_dialog(app: &mut CircleApp, ctx: &egui::Context, _theme: &Theme) {
     if !app.documents_state.create_dialog.open {
         return;
     }
@@ -728,11 +799,19 @@ fn render_create_dialog(app: &mut CircleApp, ctx: &egui::Context, theme: &Theme)
                 ui.add_space(20.0);
                 
                 ui.horizontal(|ui| {
-                    if ui.button("Cancel").clicked() {
+                    let cancel_btn = ui.button("Cancel");
+                    if cancel_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if cancel_btn.clicked() {
                         result = Some(false);
                     }
                     
-                    if ui.button("Create").clicked() {
+                    let create_btn = ui.button("Create");
+                    if create_btn.hovered() {
+                        ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::PointingHand);
+                    }
+                    if create_btn.clicked() {
                         result = Some(true);
                     }
                 });
