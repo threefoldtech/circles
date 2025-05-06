@@ -3,10 +3,13 @@ use uuid::Uuid;
 
 use crate::ui::components::mail::compose::Attachment;
 
+// Export the modules
+pub mod add_member;
+pub mod documents;
+
 // We'll implement these modules later
 // pub mod calendar;
 // pub mod chat;
-// pub mod documents;
 // pub mod mail;
 
 /// Features available in a circle
@@ -247,3 +250,6 @@ impl Default for DeleteConfirmationState {
         }
     }
 }
+
+// Re-export the AddMemberState for easier access
+pub use add_member::AddMemberState;

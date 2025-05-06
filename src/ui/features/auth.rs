@@ -93,7 +93,8 @@ fn create_user_from_credentials(credentials: &Credentials) -> User {
 }
 
 // Validate email format
-fn is_valid_email(email: &str) -> bool {
+// Make this function public and accessible from outside the module
+pub fn is_valid_email(email: &str) -> bool {
     // Basic email validation using regex
     let email_regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
     email_regex.is_match(email)

@@ -50,12 +50,16 @@ pub struct CircleApp {
     pub calendar_events: Vec<Event>,
     /// Delete confirmation dialog state
     pub delete_confirmation_state: crate::models::features::DeleteConfirmationState,
+    /// Add member dialog state
+    pub add_member_state: crate::models::features::AddMemberState,
     /// Circle actions state
     pub circle_actions: HashMap<Uuid, crate::models::features::CircleActionState>,
     /// User menu state
     pub user_menu_state: UserMenuState,
     /// Logout confirmation dialog state
     pub logout_confirmation_state: bool,
+    /// Documents feature state
+    pub documents_state: crate::models::features::documents::DocumentsState,
 }
 
 /// Enum representing available features in the application
@@ -176,9 +180,11 @@ impl CircleApp {
             calendar_events: Vec::new(),
             refresh_start_time: std::time::Instant::now(),
             delete_confirmation_state: crate::models::features::DeleteConfirmationState::default(),
+            add_member_state: crate::models::features::AddMemberState::default(),
             circle_actions: HashMap::new(),
             user_menu_state: UserMenuState::default(),
             logout_confirmation_state: false,
+            documents_state: crate::models::features::documents::DocumentsState::default(),
         }
     }
 

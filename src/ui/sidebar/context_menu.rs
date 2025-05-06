@@ -128,9 +128,16 @@ pub fn render_circle_context_menu(
                     }
                     1 => {
                         // Add members
+                        app.add_member_state = crate::models::features::AddMemberState {
+                            open: true,
+                            circle_id: Some(circle_id),
+                            circle_name: circle_name.to_string(),
+                            member_email: String::new(),
+                            selected_role: crate::models::circle::Role::Read,
+                        };
                         add_log_to_circles_bot(
                             app,
-                            format!("Add members dialog for {} would open here", circle_name),
+                            format!("Opening add members dialog for {}", circle_name),
                         );
                     }
                     2 => {

@@ -1,3 +1,4 @@
+mod add_member_dialog;
 mod circle_item;
 mod context_menu;
 mod delete_dialog;
@@ -21,6 +22,7 @@ pub const ITEM_SPACE: f32 = 4.0;
 
 // Re-export all components
 // These re-exports are for other parts of the codebase that might need these functions
+pub use add_member_dialog::render_add_member_dialog;
 #[allow(unused_imports)]
 pub use circle_item::{handle_circle_selection, render_circle_item};
 #[allow(unused_imports)]
@@ -64,6 +66,7 @@ pub fn render_sidebar(
         });
 
     render_delete_confirmation_dialog(ctx, app, theme);
+    render_add_member_dialog(ctx, app, theme);
 }
 
 // Settings button
