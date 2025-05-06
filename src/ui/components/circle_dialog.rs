@@ -116,14 +116,37 @@ pub fn render_circle_dialog(
                 ui.style_mut().visuals.widgets.active.bg_fill = theme.hover;
                 ui.style_mut().visuals.widgets.hovered.bg_fill = theme.hover;
 
-                // Create text edit with consistent styling
-                ui.add(
-                    egui::TextEdit::singleline(&mut state.name)
-                        .margin(egui::Vec2::new(10.0, 8.0))
-                        .desired_width(f32::INFINITY)
-                        .font(egui::FontId::proportional(16.0)), // Removed trailing comma
-                )
-                .on_hover_text(
+                // Create text edit with consistent styling and request focus
+                let text_edit = egui::TextEdit::singleline(&mut state.name)
+                    .margin(egui::Vec2::new(10.0, 8.0))
+                    .desired_width(f32::INFINITY)
+                    .font(egui::FontId::proportional(16.0));
+                
+                let response = ui.add(text_edit);
+                response.request_focus(); // Request focus on the text field
+                
+                // Check for Enter key press with debug output
+                let enter_pressed = ui.input(|i| i.key_pressed(egui::Key::Enter));
+                if enter_pressed {
+                    if !state.name.trim().is_empty() {
+                        if state.validate() {
+                            let mut circle = Circle::new(state.name.clone(), state.circle_type, creator_id);
+
+                            circle.settings.visibility = state.visibility;
+                            circle.settings.join_policy = state.join_policy;
+                            circle.settings.notification_settings = NotificationSettings {
+                                email_notifications: state.email_notifications,
+                                push_notifications: state.push_notifications,
+                                in_app_notifications: state.in_app_notifications,
+                            };
+
+                            created_circle = Some(circle);
+                            should_close = true;
+                        }
+                    }
+                }
+                
+                response.on_hover_text(
                     egui::RichText::new("Enter a name for your circle").color(theme.text),
                 )
                 .on_hover_cursor(egui::CursorIcon::Text);

@@ -365,25 +365,37 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
 
             // To field
             ui.horizontal(|ui| {
-                ui.label(RichText::new("To:").size(14.0).color(theme.text).strong());
-                ui.add_space(8.0);
-                input_frame.show(ui, |ui| {
-                    ui.set_max_width(500.0);
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("👤").size(16.0).color(theme.icon_fg));
-                        ui.add_space(8.0);
-                        ui.add(
-                            egui::TextEdit::singleline(&mut draft.to)
-                                .hint_text(
-                                    RichText::new("Enter recipient...")
-                                        .color(theme.placeholder_text),
-                                )
-                                .text_color(theme.text)
-                                .frame(false)
-                                .margin(Vec2::new(0.0, 0.0))
-                                .desired_width(400.0)
-                                .font(FontId::new(14.0, FontFamily::Proportional)),
-                        );
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    // Create a fixed-width area for the label
+                    ui.allocate_ui_with_layout(
+                        Vec2::new(80.0, ui.available_height()),
+                        egui::Layout::right_to_left(egui::Align::Center),
+                        |ui| {
+                            ui.add(egui::Label::new(
+                                RichText::new("To:").size(14.0).color(theme.text).strong(),
+                            ))
+                            .on_hover_text("Email recipient");
+                        },
+                    );
+
+                    input_frame.show(ui, |ui| {
+                        ui.set_max_width(500.0);
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("👤").size(16.0).color(theme.icon_fg));
+                            ui.add_space(8.0);
+                            ui.add(
+                                egui::TextEdit::singleline(&mut draft.to)
+                                    .hint_text(
+                                        RichText::new("Enter recipient...")
+                                            .color(theme.placeholder_text),
+                                    )
+                                    .text_color(theme.text)
+                                    .frame(false)
+                                    .margin(Vec2::new(0.0, 0.0))
+                                    .desired_width(400.0)
+                                    .font(FontId::new(14.0, FontFamily::Proportional)),
+                            );
+                        });
                     });
                 });
             });
@@ -391,29 +403,40 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
 
             // Subject field
             ui.horizontal(|ui| {
-                ui.label(
-                    RichText::new("Subject:")
-                        .size(14.0)
-                        .color(theme.text)
-                        .strong(),
-                );
-                ui.add_space(8.0);
-                input_frame.show(ui, |ui| {
-                    ui.set_max_width(500.0);
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("📜").size(16.0).color(theme.icon_fg));
-                        ui.add_space(8.0);
-                        ui.add(
-                            egui::TextEdit::singleline(&mut draft.subject)
-                                .hint_text(
-                                    RichText::new("Enter subject...").color(theme.placeholder_text),
-                                )
-                                .text_color(theme.text)
-                                .frame(false)
-                                .margin(Vec2::new(0.0, 0.0))
-                                .desired_width(400.0)
-                                .font(FontId::new(14.0, FontFamily::Proportional)),
-                        );
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    // Create a fixed-width area for the label
+                    ui.allocate_ui_with_layout(
+                        Vec2::new(80.0, ui.available_height()),
+                        egui::Layout::right_to_left(egui::Align::Center),
+                        |ui| {
+                            ui.add(egui::Label::new(
+                                RichText::new("Subject:")
+                                    .size(14.0)
+                                    .color(theme.text)
+                                    .strong(),
+                            ))
+                            .on_hover_text("Email subject");
+                        },
+                    );
+
+                    input_frame.show(ui, |ui| {
+                        ui.set_max_width(500.0);
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("📜").size(16.0).color(theme.icon_fg));
+                            ui.add_space(8.0);
+                            ui.add(
+                                egui::TextEdit::singleline(&mut draft.subject)
+                                    .hint_text(
+                                        RichText::new("Enter subject...")
+                                            .color(theme.placeholder_text),
+                                    )
+                                    .text_color(theme.text)
+                                    .frame(false)
+                                    .margin(Vec2::new(0.0, 0.0))
+                                    .desired_width(400.0)
+                                    .font(FontId::new(14.0, FontFamily::Proportional)),
+                            );
+                        });
                     });
                 });
             });
@@ -421,25 +444,38 @@ pub fn render_compose_screen(ui: &mut egui::Ui, app: &mut CircleApp, theme: &The
 
             // Message body
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Body:").size(14.0).color(theme.text).strong());
-                ui.add_space(8.0);
-                input_frame.show(ui, |ui| {
-                    ui.set_max_width(500.0);
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("📝").size(16.0).color(theme.icon_fg));
-                        ui.add_space(8.0);
-                        ui.add(
-                            egui::TextEdit::multiline(&mut draft.body)
-                                .hint_text(
-                                    RichText::new("Enter message...").color(theme.placeholder_text),
-                                )
-                                .text_color(theme.text)
-                                .frame(false)
-                                .margin(Vec2::new(0.0, 0.0))
-                                .desired_width(400.0)
-                                .desired_rows(15)
-                                .font(FontId::new(14.0, FontFamily::Proportional)),
-                        );
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    // Create a fixed-width area for the label
+                    ui.allocate_ui_with_layout(
+                        Vec2::new(80.0, ui.available_height()),
+                        egui::Layout::right_to_left(egui::Align::Center),
+                        |ui| {
+                            ui.add(egui::Label::new(
+                                RichText::new("Body:").size(14.0).color(theme.text).strong(),
+                            ))
+                            .on_hover_text("Email content");
+                        },
+                    );
+
+                    input_frame.show(ui, |ui| {
+                        ui.set_max_width(500.0);
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("📝").size(16.0).color(theme.icon_fg));
+                            ui.add_space(8.0);
+                            ui.add(
+                                egui::TextEdit::multiline(&mut draft.body)
+                                    .hint_text(
+                                        RichText::new("Enter message...")
+                                            .color(theme.placeholder_text),
+                                    )
+                                    .text_color(theme.text)
+                                    .frame(false)
+                                    .margin(Vec2::new(0.0, 0.0))
+                                    .desired_width(400.0)
+                                    .desired_rows(15)
+                                    .font(FontId::new(14.0, FontFamily::Proportional)),
+                            );
+                        });
                     });
                 });
             });
