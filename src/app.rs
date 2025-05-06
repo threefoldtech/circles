@@ -141,7 +141,7 @@ impl CircleApp {
         circles.push(bot_circle);
 
         // Set active circle to the welcome circle
-        let active_circle_id = Some(circles[0].id);
+        let mut active_circle_id = Some(circles[0].id);
         let active_feature_data = circle_feature_data.get(&circles[0].id).cloned();
 
         // Determine if this is the first time or if we need to show the auth screen
@@ -156,17 +156,25 @@ impl CircleApp {
                 .map(|folder| folder.id)
         });
 
+        // Find the first non-system circle
+        let first_non_system_circle = circles.iter().find(|circle| !circle.is_system_circle);
+
         // Determine the initial active feature based on user state and circles
         let initial_active_feature = if is_first_time {
             // User is not logged in, show auth screen
             ActiveFeature::Auth
-        } else if circles.is_empty() {
-            // User is logged in but has no circles, show welcome screen
+        } else if first_non_system_circle.is_none() {
+            // User is logged in but has no non-system circles, show welcome screen
             ActiveFeature::Welcome
         } else {
-            // User is logged in and has circles, show the default feature
+            // User is logged in and has non-system circles, show the default feature
             ActiveFeature::default()
         };
+
+        // If we have a non-system circle and the user is logged in, set it as active
+        if !is_first_time && first_non_system_circle.is_some() {
+            active_circle_id = first_non_system_circle.map(|circle| circle.id);
+        }
 
         Self {
             user,

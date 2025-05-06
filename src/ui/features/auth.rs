@@ -432,16 +432,20 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                                     state.confirm_password = String::new();
                                                 });
 
-                                                // Determine which screen to show based on whether the user has circles
-                                                if app.circles.is_empty() {
-                                                    // User has no circles, show welcome screen
-                                                    app.set_active_feature(
-                                                        crate::app::ActiveFeature::Welcome,
-                                                    );
-                                                } else {
-                                                    // User has circles, show the default feature
+                                                // Find the first non-system circle
+                                                let first_non_system_circle = app.circles.iter()
+                                                    .find(|circle| !circle.is_system_circle);
+                                                
+                                                if let Some(circle) = first_non_system_circle {
+                                                    // User has a non-system circle, activate it
+                                                    app.set_active_circle(circle.id);
                                                     app.set_active_feature(
                                                         crate::app::ActiveFeature::default(),
+                                                    );
+                                                } else {
+                                                    // User has no non-system circles, show welcome screen
+                                                    app.set_active_feature(
+                                                        crate::app::ActiveFeature::Welcome,
                                                     );
                                                 }
                                             }
@@ -557,16 +561,20 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                                         state.password = String::new();
                                                     });
 
-                                                    // Determine which screen to show based on whether the user has circles
-                                                    if app.circles.is_empty() {
-                                                        // User has no circles, show welcome screen
-                                                        app.set_active_feature(
-                                                            crate::app::ActiveFeature::Welcome,
-                                                        );
-                                                    } else {
-                                                        // User has circles, show the default feature
+                                                    // Find the first non-system circle
+                                                    let first_non_system_circle = app.circles.iter()
+                                                        .find(|circle| !circle.is_system_circle);
+                                                    
+                                                    if let Some(circle) = first_non_system_circle {
+                                                        // User has a non-system circle, activate it
+                                                        app.set_active_circle(circle.id);
                                                         app.set_active_feature(
                                                             crate::app::ActiveFeature::default(),
+                                                        );
+                                                    } else {
+                                                        // User has no non-system circles, show welcome screen
+                                                        app.set_active_feature(
+                                                            crate::app::ActiveFeature::Welcome,
                                                         );
                                                     }
                                                 } else {
