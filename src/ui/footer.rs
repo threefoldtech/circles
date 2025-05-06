@@ -283,6 +283,13 @@ fn perform_logout(app: &mut CircleApp) {
     // Reset user state
     app.user = None;
     app.is_first_time = true;
+    
+    // Keep system circles but remove user circles
+    app.circles.retain(|circle| circle.is_system_circle);
+    
+    // Set active circle to None
+    app.active_circle_id = None;
+    app.active_feature_data = None;
 
     // Switch to auth screen
     app.set_active_feature(crate::app::ActiveFeature::Auth);

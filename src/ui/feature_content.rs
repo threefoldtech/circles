@@ -19,7 +19,13 @@ pub fn render_feature_content(
     CentralPanel::default()
         .frame(app_layout.clone())
         .show(ctx, |ui| {
-            // Check if the active circle is a system circle
+            // First check if we're in the auth screen
+            if app.active_feature == ActiveFeature::Auth {
+                auth::render_auth_screen(app, ui, theme);
+                return;
+            }
+
+            // Then check if the active circle is a system circle
             if let Some(active_circle) = app.active_circle() {
                 if active_circle.is_system_circle {
                     // For system circles, show appropriate content based on the circle name
@@ -37,7 +43,8 @@ pub fn render_feature_content(
 
             // For non-system circles, show the regular feature content
             match app.active_feature {
-                ActiveFeature::Auth => auth::render_auth_screen(app, ui, theme),
+                // Auth is already handled above
+                ActiveFeature::Auth => auth::render_auth_screen(app, ui, theme), // Fallback, should never be reached
                 ActiveFeature::Mail => mail::render_mail(app, ui),
                 ActiveFeature::Calendar => {
                     // Use egui's memory system to persist the calendar state between frames

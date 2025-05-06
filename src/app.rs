@@ -1,5 +1,6 @@
 use crate::models::circle::Circle;
 use crate::models::dummy_data::{self, CircleFeatureData};
+use crate::models::features::{CircleActionState, DeleteConfirmationState};
 use crate::models::user::{User, UserPreferences};
 use crate::ui::app_layout;
 use crate::ui::components::calendar::event::Event;
@@ -49,11 +50,11 @@ pub struct CircleApp {
     /// Calendar events
     pub calendar_events: Vec<Event>,
     /// Delete confirmation dialog state
-    pub delete_confirmation_state: crate::models::features::DeleteConfirmationState,
+    pub delete_confirmation_state: DeleteConfirmationState,
     /// Add member dialog state
     pub add_member_state: crate::models::features::AddMemberState,
     /// Circle actions state
-    pub circle_actions: HashMap<Uuid, crate::models::features::CircleActionState>,
+    pub circle_actions: HashMap<Uuid, CircleActionState>,
     /// User menu state
     pub user_menu_state: UserMenuState,
     /// Logout confirmation dialog state
@@ -155,16 +156,23 @@ impl CircleApp {
                 .map(|folder| folder.id)
         });
 
+        // Determine the initial active feature based on user state and circles
+        let initial_active_feature = if is_first_time {
+            // User is not logged in, show auth screen
+            ActiveFeature::Auth
+        } else if circles.is_empty() {
+            // User is logged in but has no circles, show welcome screen
+            ActiveFeature::Welcome
+        } else {
+            // User is logged in and has circles, show the default feature
+            ActiveFeature::default()
+        };
+
         Self {
             user,
             circles,
             active_circle_id,
-            // For first-time users, we'll show the auth screen
-            active_feature: if is_first_time {
-                ActiveFeature::Auth
-            } else {
-                ActiveFeature::default()
-            },
+            active_feature: initial_active_feature,
             search_query: String::new(),
             circle_feature_data,
             active_feature_data,

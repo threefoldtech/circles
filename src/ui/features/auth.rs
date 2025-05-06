@@ -432,10 +432,18 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                                     state.confirm_password = String::new();
                                                 });
 
-                                                // Switch to default feature
-                                                app.set_active_feature(
-                                                    crate::app::ActiveFeature::default(),
-                                                );
+                                                // Determine which screen to show based on whether the user has circles
+                                                if app.circles.is_empty() {
+                                                    // User has no circles, show welcome screen
+                                                    app.set_active_feature(
+                                                        crate::app::ActiveFeature::Welcome,
+                                                    );
+                                                } else {
+                                                    // User has circles, show the default feature
+                                                    app.set_active_feature(
+                                                        crate::app::ActiveFeature::default(),
+                                                    );
+                                                }
                                             }
                                             Err(_) => {
                                                 AUTH_STATE.with(|state| {
@@ -549,10 +557,18 @@ pub fn render_auth_screen(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
                                                         state.password = String::new();
                                                     });
 
-                                                    // Switch to default feature
-                                                    app.set_active_feature(
-                                                        crate::app::ActiveFeature::default(),
-                                                    );
+                                                    // Determine which screen to show based on whether the user has circles
+                                                    if app.circles.is_empty() {
+                                                        // User has no circles, show welcome screen
+                                                        app.set_active_feature(
+                                                            crate::app::ActiveFeature::Welcome,
+                                                        );
+                                                    } else {
+                                                        // User has circles, show the default feature
+                                                        app.set_active_feature(
+                                                            crate::app::ActiveFeature::default(),
+                                                        );
+                                                    }
                                                 } else {
                                                     AUTH_STATE.with(|state| {
                                                         let mut state = state.borrow_mut();
