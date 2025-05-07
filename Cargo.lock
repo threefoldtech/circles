@@ -742,6 +742,7 @@ dependencies = [
  "log",
  "notify-rust",
  "open",
+ "rand 0.8.5",
  "regex",
  "reqwest",
  "rfd",

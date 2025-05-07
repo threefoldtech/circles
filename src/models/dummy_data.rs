@@ -132,6 +132,7 @@ pub struct CircleFeatureData {
     pub document_data: DocumentData,
     pub video_conf_data: VideoConfData,
     pub ai_tools_data: AIToolsData,
+    pub video_conf_state: Option<crate::models::features::video_conf::VideoConferenceState>,
 }
 
 /// Generate dummy data for a circle based on its type and name
@@ -165,6 +166,9 @@ pub fn generate_dummy_data_for_circle(
 fn generate_welcome_circle_data(circle_id: Uuid, circle_name: &str) -> CircleFeatureData {
     // Start with basic private circle data
     let mut data = generate_private_circle_data(circle_id, circle_name);
+    
+    // Initialize video conference state
+    data.video_conf_state = Some(crate::models::features::video_conf::VideoConferenceState::default());
 
     // Create welcome document
     let welcome_doc = Document {
@@ -510,6 +514,7 @@ fn generate_personal_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
         },
         video_conf_data: VideoConfData { meetings },
         ai_tools_data: AIToolsData { tools: ai_tools },
+        video_conf_state: None,
     }
 }
 
@@ -732,6 +737,7 @@ fn generate_team_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
         },
         video_conf_data: VideoConfData { meetings },
         ai_tools_data: AIToolsData { tools: ai_tools },
+        video_conf_state: None,
     }
 }
 
@@ -887,5 +893,6 @@ fn generate_private_circle_data(_: Uuid, _: &str) -> CircleFeatureData {
         },
         video_conf_data: VideoConfData { meetings },
         ai_tools_data: AIToolsData { tools: ai_tools },
+        video_conf_state: None,
     }
 }
