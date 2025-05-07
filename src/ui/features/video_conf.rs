@@ -241,7 +241,11 @@ fn render_active_meeting(
 
             // End/Leave button
             let button_text = if is_host { "End Meeting" } else { "Leave" };
-            if ui.button(button_text).clicked() {
+            let button = Button::new(RichText::new(button_text).color(theme.light_color))
+                .fill(theme.button_primary)
+                .min_size(Vec2::new(100.0, 30.0));
+
+            if ui.add(button).clicked() {
                 if is_host {
                     state.end_confirmation_open = true;
                 } else {
@@ -380,7 +384,16 @@ fn render_active_meeting(
         };
         let mic_text = if is_mic_on { "Mute" } else { "Unmute" };
 
-        if ui.button(format!("{} {}", mic_icon, mic_text)).clicked() {
+        if ui
+            .add(
+                Button::new(
+                    RichText::new(format!("{} {}", mic_icon, mic_text)).color(theme.light_color),
+                )
+                .fill(theme.button_primary)
+                .min_size(Vec2::new(100.0, 30.0)),
+            )
+            .clicked()
+        {
             // Toggle microphone
             state.mic_on = !is_mic_on;
 
@@ -401,7 +414,14 @@ fn render_active_meeting(
         };
 
         if ui
-            .button(format!("{} {}", camera_icon, camera_text))
+            .add(
+                Button::new(
+                    RichText::new(format!("{} {}", camera_icon, camera_text))
+                        .color(theme.light_color),
+                )
+                .fill(theme.button_primary)
+                .min_size(Vec2::new(100.0, 30.0)),
+            )
             .clicked()
         {
             // Toggle camera
@@ -418,8 +438,12 @@ fn render_active_meeting(
         // Leave/End meeting button
         let leave_text = if is_host { "End Meeting" } else { "Leave" };
         let leave_button = ui.add(
-            Button::new(format!("{} {}", PHONE_DISCONNECT, leave_text))
-                .fill(Color32::from_rgb(220, 38, 38)),
+            Button::new(
+                RichText::new(format!("{} {}", PHONE_DISCONNECT, leave_text))
+                    .color(theme.light_color),
+            )
+            .fill(theme.destructive)
+            .min_size(Vec2::new(100.0, 30.0)),
         );
 
         if leave_button.clicked() {
@@ -465,15 +489,15 @@ fn render_video_tile(
     let bg_color = if participant.is_active_speaker {
         theme.accent.linear_multiply(0.2)
     } else {
-        Color32::from_rgb(20, 20, 30)
+        theme.video_background
     };
 
     let border_color = if participant.is_active_speaker {
         theme.accent
     } else if is_self {
-        Color32::from_rgb(100, 100, 255)
+        theme.self_video_border
     } else {
-        Color32::from_rgb(60, 60, 80)
+        theme.border
     };
 
     // Draw the video tile background with rounded corners
@@ -512,13 +536,13 @@ fn render_video_tile(
             Align2::CENTER_CENTER,
             "Camera Off",
             egui::FontId::proportional(14.0),
-            Color32::from_rgb(200, 200, 200),
+            theme.secondary_text,
         );
     } else {
         // Camera is on - simulate video feed with a placeholder
         // In a real implementation, this would show the actual video feed
         let video_rect = rect.shrink(10.0);
-        painter.rect_filled(video_rect, 4.0, Color32::from_rgb(40, 40, 60));
+        painter.rect_filled(video_rect, 4.0, theme.video_background.linear_multiply(1.2));
 
         // Draw a simple avatar silhouette to simulate a person
         let head_radius = video_rect.height() / 8.0;
@@ -539,24 +563,20 @@ fn render_video_tile(
             egui::vec2(body_width, body_height),
         );
 
-        painter.rect_filled(body_rect, 4.0, Color32::from_rgb(100, 100, 120));
+        painter.rect_filled(body_rect, 4.0, theme.secondary_background);
     }
 
     // Draw participant name and status indicators at the bottom of the tile
     let bottom_rect = egui::Rect::from_min_max(egui::pos2(rect.min.x, rect.max.y - 30.0), rect.max);
 
-    painter.rect_filled(
-        bottom_rect,
-        0.0,
-        Color32::from_rgba_premultiplied(0, 0, 0, 180),
-    );
+    painter.rect_filled(bottom_rect, 0.0, theme.black.linear_multiply(0.7));
 
     // Allocate UI for the bottom bar
     #[allow(deprecated)]
     ui.allocate_ui_at_rect(bottom_rect, |ui| {
         ui.horizontal(|ui| {
             // Participant name
-            ui.label(RichText::new(&participant.name).color(Color32::WHITE));
+            ui.label(RichText::new(&participant.name).color(theme.light_color));
 
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 // Mic status
@@ -565,7 +585,7 @@ fn render_video_tile(
                 } else {
                     MICROPHONE_SLASH
                 };
-                ui.label(RichText::new(mic_icon).color(Color32::WHITE));
+                ui.label(RichText::new(mic_icon).color(theme.light_color));
 
                 // Host/Co-host badge
                 match participant.role {
@@ -586,7 +606,7 @@ fn render_video_tile(
 fn render_join_meeting_dialog(
     ui: &mut egui::Ui,
     state: &mut VideoConferenceState,
-    _theme: &Theme,
+    theme: &Theme,
     user_id: Uuid,
     user_name: &str,
 ) {
@@ -596,29 +616,55 @@ fn render_join_meeting_dialog(
         .fixed_size([400.0, 200.0])
         .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
         .collapsible(false)
+        .frame(
+            egui::Frame::window(&ctx.style())
+                .fill(theme.panel)
+                .shadow(egui::epaint::Shadow {
+                    color: theme.shadow,
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
+                }),
+        )
         .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                ui.heading("Join Meeting");
+                ui.heading(RichText::new("Join Meeting").color(theme.header_text));
                 ui.add_space(10.0);
 
                 ui.horizontal(|ui| {
-                    ui.label("Meeting ID:");
+                    ui.label(RichText::new("Meeting ID:").color(theme.text));
                     ui.text_edit_singleline(&mut state.meeting_id_input);
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label("Password (if required):");
+                    ui.label(RichText::new("Password (if required):").color(theme.text));
                     ui.text_edit_singleline(&mut state.password_input);
                 });
 
                 ui.add_space(20.0);
 
                 ui.horizontal(|ui| {
-                    if ui.button("Cancel").clicked() {
+                    if ui
+                        .add(
+                            Button::new(RichText::new("Cancel").color(theme.text))
+                                .fill(theme.button_secondary)
+                                .min_size(Vec2::new(80.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         state.join_dialog_open = false;
                     }
 
-                    if ui.button("Join").clicked() {
+                    ui.add_space(10.0);
+
+                    if ui
+                        .add(
+                            Button::new(RichText::new("Join").color(theme.light_color))
+                                .fill(theme.button_primary)
+                                .min_size(Vec2::new(80.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         if !state.meeting_id_input.is_empty() {
                             // Create a new meeting
                             let meeting_id = Uuid::new_v4();
@@ -671,7 +717,7 @@ fn render_join_meeting_dialog(
 fn render_create_meeting_dialog(
     ui: &mut egui::Ui,
     state: &mut VideoConferenceState,
-    _theme: &Theme,
+    theme: &Theme,
     user_id: Uuid,
     user_name: &str,
 ) {
@@ -681,21 +727,33 @@ fn render_create_meeting_dialog(
         .fixed_size([400.0, 250.0])
         .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
         .collapsible(false)
+        .frame(
+            egui::Frame::window(&ctx.style())
+                .fill(theme.panel)
+                .shadow(egui::epaint::Shadow {
+                    color: theme.shadow,
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
+                }),
+        )
         .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                ui.heading("Create Meeting");
+                ui.heading(RichText::new("Create Meeting").color(theme.header_text));
                 ui.add_space(10.0);
 
                 ui.horizontal(|ui| {
-                    ui.label("Meeting Name:");
+                    ui.label(RichText::new("Meeting Name:").color(theme.text));
                     ui.text_edit_singleline(&mut state.meeting_name_input);
                 });
 
+                // Set text color before adding the checkbox
+                ui.style_mut().visuals.override_text_color = Some(theme.text);
                 ui.checkbox(&mut state.require_password, "Require Password");
 
                 if state.require_password {
                     ui.horizontal(|ui| {
-                        ui.label("Password:");
+                        ui.label(RichText::new("Password:").color(theme.text));
                         ui.text_edit_singleline(&mut state.create_password_input);
                     });
                 }
@@ -703,11 +761,27 @@ fn render_create_meeting_dialog(
                 ui.add_space(20.0);
 
                 ui.horizontal(|ui| {
-                    if ui.button("Cancel").clicked() {
+                    if ui
+                        .add(
+                            Button::new(RichText::new("Cancel").color(theme.text))
+                                .fill(theme.button_secondary)
+                                .min_size(Vec2::new(80.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         state.create_dialog_open = false;
                     }
 
-                    if ui.button("Create").clicked() {
+                    ui.add_space(10.0);
+
+                    if ui
+                        .add(
+                            Button::new(RichText::new("Create").color(theme.light_color))
+                                .fill(theme.button_primary)
+                                .min_size(Vec2::new(80.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         if !state.meeting_name_input.is_empty() {
                             // Generate a meeting ID
                             fn generate_meeting_id() -> String {
@@ -919,7 +993,7 @@ fn render_chat_message(ui: &mut egui::Ui, message: &ChatMessage, theme: &Theme, 
         theme.secondary_background
     };
     let text_color = if is_from_me {
-        Color32::WHITE
+        theme.light_color
     } else {
         theme.text
     };
@@ -960,32 +1034,56 @@ fn format_timestamp(timestamp: chrono::DateTime<Utc>) -> String {
 }
 
 /// Render the leave meeting confirmation dialog
-fn render_leave_meeting_dialog(
-    ui: &mut egui::Ui,
-    state: &mut VideoConferenceState,
-    _theme: &Theme,
-) {
+fn render_leave_meeting_dialog(ui: &mut egui::Ui, state: &mut VideoConferenceState, theme: &Theme) {
     let ctx = ui.ctx();
 
     egui::Window::new("Leave Meeting")
         .fixed_size([300.0, 150.0])
         .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
         .collapsible(false)
+        .frame(
+            egui::Frame::window(&ctx.style())
+                .fill(theme.panel)
+                .shadow(egui::epaint::Shadow {
+                    color: theme.shadow,
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
+                }),
+        )
         .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                ui.heading("Leave Meeting");
+                ui.heading(RichText::new("Leave Meeting").color(theme.header_text));
                 ui.add_space(10.0);
 
-                ui.label("Are you sure you want to leave the meeting?");
+                ui.label(
+                    RichText::new("Are you sure you want to leave the meeting?").color(theme.text),
+                );
 
                 ui.add_space(20.0);
 
                 ui.horizontal(|ui| {
-                    if ui.button("Cancel").clicked() {
+                    if ui
+                        .add(
+                            Button::new(RichText::new("Cancel").color(theme.text))
+                                .fill(theme.button_secondary)
+                                .min_size(Vec2::new(80.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         state.leave_confirmation_open = false;
                     }
 
-                    if ui.button("Leave").clicked() {
+                    ui.add_space(10.0);
+
+                    if ui
+                        .add(
+                            Button::new(RichText::new("Leave").color(theme.light_color))
+                                .fill(theme.destructive)
+                                .min_size(Vec2::new(80.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         state.leave_confirmation_open = false;
 
                         // Use the remove_participant method to remove the user from the meeting
@@ -1006,28 +1104,57 @@ fn render_leave_meeting_dialog(
 }
 
 /// Render the end meeting confirmation dialog
-fn render_end_meeting_dialog(ui: &mut egui::Ui, state: &mut VideoConferenceState, _theme: &Theme) {
+fn render_end_meeting_dialog(ui: &mut egui::Ui, state: &mut VideoConferenceState, theme: &Theme) {
     let ctx = ui.ctx();
 
     egui::Window::new("End Meeting")
         .fixed_size([300.0, 150.0])
         .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
         .collapsible(false)
+        .frame(
+            egui::Frame::window(&ctx.style())
+                .fill(theme.panel)
+                .shadow(egui::epaint::Shadow {
+                    color: theme.shadow,
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
+                }),
+        )
         .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                ui.heading("End Meeting");
+                ui.heading(RichText::new("End Meeting").color(theme.header_text));
                 ui.add_space(10.0);
 
-                ui.label("Are you sure you want to end the meeting for all participants?");
+                ui.label(
+                    RichText::new("Are you sure you want to end the meeting for all participants?")
+                        .color(theme.text),
+                );
 
                 ui.add_space(20.0);
 
                 ui.horizontal(|ui| {
-                    if ui.button("Cancel").clicked() {
+                    if ui
+                        .add(
+                            Button::new(RichText::new("Cancel").color(theme.text))
+                                .fill(theme.button_secondary)
+                                .min_size(Vec2::new(80.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         state.end_confirmation_open = false;
                     }
 
-                    if ui.button("End Meeting").clicked() {
+                    ui.add_space(10.0);
+
+                    if ui
+                        .add(
+                            Button::new(RichText::new("End Meeting").color(theme.light_color))
+                                .fill(theme.destructive)
+                                .min_size(Vec2::new(120.0, 30.0)),
+                        )
+                        .clicked()
+                    {
                         state.end_confirmation_open = false;
 
                         // Check if the meeting has reached its time limit

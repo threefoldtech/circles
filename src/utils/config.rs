@@ -29,98 +29,208 @@ impl LayoutConfig {
     }
 }
 
-#[allow(dead_code)]
+/// Theme configuration for the application
+///
+/// This struct defines all the colors used throughout the application.
+/// It provides a consistent way to style UI components and ensures
+/// that the application has a cohesive look and feel.
 #[derive(Clone)]
 pub struct Theme {
+    // Primary colors
+    /// Main accent color used for primary actions, highlights, and active states
     pub accent: Color32,
+    /// Primary background color for the application
     pub background: Color32,
+    /// Background color for panels, cards, and other containers
     pub panel: Color32,
+    /// Primary text color
     pub text: Color32,
+
+    // Text colors
+    /// Color for light text (usually on dark backgrounds)
     pub light_color: Color32,
+    /// Color for dark text (usually on light backgrounds)
     pub dark_color: Color32,
+    /// Color for header text
     pub header_text: Color32,
+    /// Color for secondary or less important text
     pub secondary_text: Color32,
-    pub secondary_background: Color32,
-    pub border: Color32,
-    pub active: Color32,
-    pub hover: Color32,
-    pub shadow: Color32,
-    pub success: Color32,
-    pub team: Color32,
-    pub private: Color32,
-    pub error: Color32,
-    // Additional theme colors
-    pub white: Color32,
-    pub transparent: Color32,
-    pub icon_bg: Color32,
-    pub icon_fg: Color32,
+    /// Color for placeholder text in input fields
     pub placeholder_text: Color32,
+
+    // Background variations
+    /// Secondary background color for alternating sections
+    pub secondary_background: Color32,
+    /// Surface color for cards and elevated elements
+    pub surface: Color32,
+
+    // Interactive elements
+    /// Color for active elements
+    pub active: Color32,
+    /// Color for elements in hover state
+    pub hover: Color32,
+    /// Color for focused elements
+    pub focus: Color32,
+    /// Color for disabled elements
+    pub disabled: Color32,
+    /// Color for primary buttons
     pub button_primary: Color32,
+    /// Color for secondary buttons
+    pub button_secondary: Color32,
+
+    // Borders and dividers
+    /// Color for borders
+    pub border: Color32,
+    /// Color for dividers
+    pub divider: Color32,
+
+    // Status colors
+    /// Color for success states
+    pub success: Color32,
+    /// Color for warning states
+    pub warning: Color32,
+    /// Color for error states
+    pub error: Color32,
+    /// Color for info states
+    pub info: Color32,
+
+    // Special purpose colors
+    /// Color for team-related elements
+    pub team: Color32,
+    /// Color for private/secure elements
+    pub private: Color32,
+    /// Color for shadows
+    pub shadow: Color32,
+    /// Color for today's date in calendar
     pub calendar_today: Color32,
+    /// Color for video backgrounds
+    pub video_background: Color32,
+    /// Color for self-video border
+    pub self_video_border: Color32,
+
+    // Utility colors
+    /// Pure white color
+    pub white: Color32,
+    /// Pure black color
+    pub black: Color32,
+    /// Transparent color
+    pub transparent: Color32,
+    /// Background color for icons
+    pub icon_bg: Color32,
+    /// Foreground color for icons
+    pub icon_fg: Color32,
+    /// Color for destructive actions (like delete)
+    pub destructive: Color32,
 }
 
 impl Theme {
     pub fn light() -> Self {
         Self {
-            light_color: Color32::from_rgb(255, 255, 255), // White
-            dark_color: Color32::from_rgb(30, 41, 59),     // Dark slate
-
+            // Primary colors
             accent: Color32::from_rgb(59, 130, 246), // Royal blue
             background: Color32::from_rgb(248, 250, 252), // Warm cream
             panel: Color32::from_rgb(255, 255, 255), // White
             text: Color32::from_rgb(30, 41, 59),     // Dark slate
-            header_text: Color32::from_rgb(71, 85, 105), // Slate blue
+
+            // Text colors
+            light_color: Color32::from_rgb(255, 255, 255), // White
+            dark_color: Color32::from_rgb(30, 41, 59),     // Dark slate
+            header_text: Color32::from_rgb(71, 85, 105),   // Slate blue
             secondary_text: Color32::from_rgb(100, 116, 139), // Soft gray
+            placeholder_text: Color32::from_rgb(120, 130, 140), // Medium gray for placeholder text
+
+            // Background variations
             secondary_background: Color32::from_rgb(226, 232, 240), // Light blue-gray
-            border: Color32::from_rgb(203, 213, 225), // Subtle gray
+            surface: Color32::from_rgb(255, 255, 255),              // White surface
+
+            // Interactive elements
             active: Color32::from_rgb(96, 165, 250), // Bright blue
             hover: Color32::from_rgb(239, 246, 255), // Pale blue
-            shadow: Color32::from_black_alpha(15),   // Soft shadow
-            success: Color32::from_rgb(52, 211, 153), // Muted green
-            team: Color32::from_rgb(2, 132, 199),    // Vibrant blue
-            private: Color32::from_rgb(168, 85, 247), // Soft purple
-            error: Color32::from_rgb(239, 68, 68),   // Soft red
+            focus: Color32::from_rgb(224, 242, 254), // Light blue focus
+            disabled: Color32::from_rgb(203, 213, 225), // Light gray disabled
+            button_primary: Color32::from_rgb(66, 133, 244), // Blue for primary buttons
+            button_secondary: Color32::from_rgb(226, 232, 240), // Light gray for secondary buttons
 
-            // Additional theme colors
+            // Borders and dividers
+            border: Color32::from_rgb(203, 213, 225), // Subtle gray
+            divider: Color32::from_rgb(226, 232, 240), // Light divider
+
+            // Status colors
+            success: Color32::from_rgb(52, 211, 153), // Muted green
+            warning: Color32::from_rgb(251, 191, 36), // Amber warning
+            error: Color32::from_rgb(239, 68, 68),    // Soft red
+            info: Color32::from_rgb(96, 165, 250),    // Info blue
+
+            // Special purpose colors
+            team: Color32::from_rgb(2, 132, 199), // Vibrant blue
+            private: Color32::from_rgb(168, 85, 247), // Soft purple
+            shadow: Color32::from_black_alpha(15), // Soft shadow
+            calendar_today: Color32::from_rgb(234, 67, 53), // Red for calendar today highlight
+            video_background: Color32::from_rgb(20, 20, 30), // Dark video background
+            self_video_border: Color32::from_rgb(100, 100, 255), // Blue self video border
+
+            // Utility colors
             white: Color32::from_rgb(255, 255, 255), // Pure white
+            black: Color32::from_rgb(0, 0, 0),       // Pure black
             transparent: Color32::TRANSPARENT,       // Transparent
             icon_bg: Color32::from_rgb(230, 235, 240), // Light gray for icon backgrounds
             icon_fg: Color32::from_rgb(70, 80, 90),  // Dark gray for icon foregrounds
-            placeholder_text: Color32::from_rgb(120, 130, 140), // Medium gray for placeholder text
-            button_primary: Color32::from_rgb(66, 133, 244), // Blue for primary buttons
-            calendar_today: Color32::from_rgb(234, 67, 53), // Red for calendar today highlight
+            destructive: Color32::from_rgb(220, 38, 38), // Red for destructive actions
         }
     }
 
     pub fn dark() -> Self {
         Self {
-            light_color: Color32::from_rgb(241, 245, 249), // Very light gray
-            dark_color: Color32::from_rgb(15, 23, 42),     // Very dark slate
-
+            // Primary colors
             accent: Color32::from_rgb(96, 165, 250), // Bright blue
             background: Color32::from_rgb(15, 23, 42), // Very dark slate
             panel: Color32::from_rgb(30, 41, 59),    // Dark slate
             text: Color32::from_rgb(241, 245, 249),  // Very light gray
+
+            // Text colors
+            light_color: Color32::from_rgb(241, 245, 249), // Very light gray
+            dark_color: Color32::from_rgb(15, 23, 42),     // Very dark slate
             header_text: Color32::from_rgb(226, 232, 240), // Light gray
             secondary_text: Color32::from_rgb(148, 163, 184), // Medium gray
+            placeholder_text: Color32::from_rgb(148, 163, 184), // Medium gray for placeholder text
+
+            // Background variations
             secondary_background: Color32::from_rgb(30, 41, 59), // Darker slate
-            border: Color32::from_rgb(51, 65, 85),   // Dark gray
+            surface: Color32::from_rgb(30, 41, 59),              // Dark surface
+
+            // Interactive elements
             active: Color32::from_rgb(59, 130, 246), // Royal blue
             hover: Color32::from_rgb(51, 65, 85),    // Medium slate
-            shadow: Color32::from_black_alpha(50),   // Darker shadow
-            success: Color32::from_rgb(34, 197, 94), // Green
-            team: Color32::from_rgb(2, 132, 199),    // Vibrant blue
-            private: Color32::from_rgb(168, 85, 247), // Soft purple
-            error: Color32::from_rgb(239, 68, 68),   // Soft red
+            focus: Color32::from_rgb(30, 58, 138),   // Deep blue focus
+            disabled: Color32::from_rgb(71, 85, 105), // Dark gray disabled
+            button_primary: Color32::from_rgb(59, 130, 246), // Blue for primary buttons
+            button_secondary: Color32::from_rgb(51, 65, 85), // Dark gray for secondary buttons
 
-            // Additional theme colors
+            // Borders and dividers
+            border: Color32::from_rgb(51, 65, 85),  // Dark gray
+            divider: Color32::from_rgb(51, 65, 85), // Dark divider
+
+            // Status colors
+            success: Color32::from_rgb(34, 197, 94),  // Green
+            warning: Color32::from_rgb(251, 191, 36), // Amber warning
+            error: Color32::from_rgb(239, 68, 68),    // Soft red
+            info: Color32::from_rgb(96, 165, 250),    // Info blue
+
+            // Special purpose colors
+            team: Color32::from_rgb(2, 132, 199), // Vibrant blue
+            private: Color32::from_rgb(168, 85, 247), // Soft purple
+            shadow: Color32::from_black_alpha(50), // Darker shadow
+            calendar_today: Color32::from_rgb(234, 67, 53), // Red for calendar today highlight
+            video_background: Color32::from_rgb(10, 10, 20), // Darker video background
+            self_video_border: Color32::from_rgb(100, 100, 255), // Blue self video border
+
+            // Utility colors
             white: Color32::from_rgb(255, 255, 255), // Pure white
+            black: Color32::from_rgb(0, 0, 0),       // Pure black
             transparent: Color32::TRANSPARENT,       // Transparent
             icon_bg: Color32::from_rgb(51, 65, 85),  // Darker slate for icon backgrounds
             icon_fg: Color32::from_rgb(180, 190, 200), // Light gray for icon foregrounds
-            placeholder_text: Color32::from_rgb(120, 130, 140), // Medium gray for placeholder text
-            button_primary: Color32::from_rgb(59, 130, 246), // Blue for primary buttons
-            calendar_today: Color32::from_rgb(234, 67, 53), // Red for calendar today highlight
+            destructive: Color32::from_rgb(220, 38, 38), // Red for destructive actions
         }
     }
 
@@ -163,27 +273,40 @@ impl Theme {
         }
     }
 
+    /// Convert the theme to egui Visuals
+    ///
+    /// This method converts our theme to egui's Visuals struct,
+    /// which is used by egui to style the UI.
     pub fn to_visuals(&self) -> egui::Visuals {
         let mut visuals = egui::Visuals::default();
 
+        // Text colors
         visuals.override_text_color = Some(self.text);
+
+        // Widget colors
         visuals.widgets.noninteractive.bg_fill = self.background;
         visuals.widgets.inactive.bg_fill = self.panel;
         visuals.widgets.hovered.bg_fill = self.hover;
         visuals.widgets.active.bg_fill = self.active;
-        visuals.selection.bg_fill = self.accent;
+        visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, self.text);
+        visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, self.text);
+        visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.5, self.text);
+        visuals.widgets.active.fg_stroke = egui::Stroke::new(2.0, self.text);
 
-        // Set additional visual properties based on theme
+        // Selection
+        visuals.selection.bg_fill = self.accent;
+        visuals.selection.stroke = egui::Stroke::new(1.0, self.accent);
+
+        // Window and panel colors
         visuals.window_fill = self.panel;
         visuals.panel_fill = self.panel;
         visuals.faint_bg_color = self.secondary_background;
         visuals.extreme_bg_color = self.background;
 
-        // Adjust widgets
-        visuals.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, self.text);
-        visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, self.text);
-        visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.5, self.text);
-        visuals.widgets.active.fg_stroke = egui::Stroke::new(2.0, self.text);
+        // Misc colors
+        visuals.hyperlink_color = self.accent;
+        visuals.warn_fg_color = self.warning;
+        visuals.error_fg_color = self.error;
 
         visuals
     }
