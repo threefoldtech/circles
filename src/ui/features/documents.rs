@@ -295,6 +295,11 @@ pub fn render_documents(app: &mut CircleApp, ui: &mut egui::Ui, theme: &Theme) {
                             
                             // Add context menu
                             response.context_menu(|ui| {
+                                // Set the selected item when right-clicking
+                                app.documents_state.selected_item = Some(
+                                    crate::models::features::documents::SelectedItem::Folder(folder_id)
+                                );
+                                
                                 let menu_items = vec![
                                     crate::ui::components::context_menu::MenuItem::new("Open").with_icon("📁"),
                                     crate::ui::components::context_menu::MenuItem::new("Rename").with_icon("✏️"),

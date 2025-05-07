@@ -2,11 +2,15 @@ use crate::models::circle::Circle;
 use crate::models::dummy_data::{self, CircleFeatureData};
 use crate::models::features::{CircleActionState, DeleteConfirmationState};
 use crate::models::user::{User, UserPreferences};
+use crate::services::auth_service::AuthService;
+use crate::services::automation_service::AutomationService;
+use crate::services::circle_manager::CircleManager;
 use crate::ui::app_layout;
 use crate::ui::components::calendar::event::Event;
 use crate::ui::components::notifications::NotificationManager;
 use crate::ui::footer::UserMenuState;
 use crate::utils::config::Theme;
+use crate::utils::naming::NameRegistry;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -61,6 +65,16 @@ pub struct CircleApp {
     pub logout_confirmation_state: bool,
     /// Documents feature state
     pub documents_state: crate::models::features::documents::DocumentsState,
+    /// Authentication service
+    pub auth_service: AuthService,
+    /// Circle manager service
+    pub circle_manager: CircleManager,
+    /// Automation service
+    pub automation_service: AutomationService,
+    /// Name registry
+    pub name_registry: NameRegistry,
+    /// Current user session ID
+    pub session_id: Option<Uuid>,
 }
 
 /// Enum representing available features in the application
@@ -92,6 +106,13 @@ impl Default for ActiveFeature {
 impl CircleApp {
     /// Initialize a new instance of the application with elegant defaults
     pub fn new(_: &eframe::CreationContext<'_>) -> Self {
+        // Initialize services
+        let auth_service = AuthService::new();
+        let circle_manager = CircleManager::new();
+        let mut automation_service = AutomationService::new();
+        let name_registry = NameRegistry::new();
+        let session_id = None;
+
         // Check if credentials exist
         let user = if let Ok(credentials) = crate::ui::features::auth::load_credentials() {
             // Create user from credentials
@@ -176,6 +197,11 @@ impl CircleApp {
             active_circle_id = first_non_system_circle.map(|circle| circle.id);
         }
 
+        // Boot circles with automation service
+        for circle in &circles {
+            automation_service.boot_circle(circle);
+        }
+
         Self {
             user,
             circles,
@@ -201,6 +227,11 @@ impl CircleApp {
             user_menu_state: UserMenuState::default(),
             logout_confirmation_state: false,
             documents_state: crate::models::features::documents::DocumentsState::default(),
+            auth_service,
+            circle_manager,
+            automation_service,
+            name_registry,
+            session_id,
         }
     }
 
@@ -307,7 +338,18 @@ impl CircleApp {
         self.circle_feature_data.insert(circle.id, feature_data);
 
         // Add the circle to the list
-        self.circles.push(circle);
+        self.circles.push(circle.clone());
+
+        // Register the circle with the circle manager
+        if let Some(_) = &self.user {
+            // Register the circle name in the name registry
+            if let Ok(circle_name) = crate::utils::naming::CircleName::new(&circle.name) {
+                let _ = self.name_registry.register_name(circle_name, circle.id);
+            }
+        }
+
+        // Boot the circle with the automation service
+        self.automation_service.boot_circle(&circle);
 
         // If this is the first circle, make it active
         if self.active_circle_id.is_none() && !self.circles.is_empty() {
@@ -354,10 +396,183 @@ impl CircleApp {
             Theme::light() // Default to light theme when no user is logged in
         }
     }
+
+    /// Check if a user has permission to perform an action in a circle
+    pub fn check_permission(
+        &self,
+        circle_id: Uuid,
+        user_id: Uuid,
+        required_role: crate::models::circle::Role,
+    ) -> bool {
+        match self
+            .circle_manager
+            .check_permission(circle_id, user_id, required_role)
+        {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
+    /// Create an access token for external access to a circle
+    pub fn create_access_token(
+        &mut self,
+        circle_id: Uuid,
+        role: crate::models::circle::Role,
+    ) -> Option<String> {
+        if let Some(current_user) = &self.user {
+            match self
+                .circle_manager
+                .create_access_token(circle_id, role, current_user.id)
+            {
+                Ok(token) => Some(token),
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Get a circle using an access token
+    pub fn get_circle_by_token(
+        &self,
+        token: &str,
+    ) -> Option<(&Circle, crate::models::circle::Role)> {
+        match self.circle_manager.get_circle_by_token(token) {
+            Ok((circle, role)) => Some((circle, role)),
+            Err(_) => None,
+        }
+    }
+
+    /// Add a member to a circle
+    pub fn add_member_to_circle(
+        &mut self,
+        circle_id: Uuid,
+        email: &str,
+        role: crate::models::circle::Role,
+    ) -> bool {
+        // First, find the user by email
+        let user_result = self.auth_service.find_user_by_email(email);
+
+        if let (Some((user_id, user)), Some(current_user)) = (user_result, &self.user) {
+            // Try to add the member
+            match self
+                .circle_manager
+                .add_member(circle_id, user, role, current_user.id)
+            {
+                Ok(_) => {
+                    // Update the circle in our local list
+                    if let Some(circle) = self.circles.iter_mut().find(|c| c.id == circle_id) {
+                        // Add the member to the circle
+                        circle.members.push(crate::models::circle::Member {
+                            user_id,
+                            name: email.to_string(),
+                            role,
+                            joined_at: chrono::Utc::now(),
+                        });
+                    }
+                    true
+                }
+                Err(_) => false,
+            }
+        } else {
+            false
+        }
+    }
+
+    /// Create a new automation rule for a circle
+    pub fn create_automation_rule(
+        &mut self,
+        circle_id: Uuid,
+        name: String,
+        description: String,
+        trigger: crate::services::automation_service::RuleTrigger,
+        actions: Vec<crate::services::automation_service::RuleAction>,
+    ) -> Option<Uuid> {
+        if let Some(current_user) = &self.user {
+            // Create the rule
+            let rule = crate::services::automation_service::AutomationRule {
+                id: Uuid::new_v4(),
+                name,
+                description,
+                trigger,
+                actions,
+                enabled: true,
+                circle_id,
+                created_by: current_user.id,
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+                last_executed: None,
+            };
+
+            // Add the rule to the automation service
+            Some(self.automation_service.create_rule(rule))
+        } else {
+            None
+        }
+    }
 }
 
 impl eframe::App for CircleApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Process automation events
+        self.automation_service.process_events();
+
+        // Check scheduled rules
+        self.automation_service.check_scheduled_rules();
+
+        // Check for user authentication
+        if let Some(user) = &self.user {
+            // If we have a user but no session, create one
+            if self.session_id.is_none() {
+                // In a real implementation, this would use the auth_service to create a session
+                self.session_id = Some(Uuid::new_v4());
+
+                // Use the circle manager to get the user's circles
+                if self.circles.is_empty() {
+                    // Get user info before borrowing self
+                    let user_id = user.id;
+                    let user_name = user.name.clone();
+
+                    // Create a personal circle for the user using our utility function
+                    // This avoids borrow checker issues
+                    let (circle, rule) =
+                        crate::utils::circle_utils::create_personal_circle(user_id, &user_name);
+
+                    // Register the name in our registry
+                    if let Ok(circle_name) = crate::utils::naming::CircleName::new(&circle.name) {
+                        let _ = self.name_registry.register_name(circle_name, circle.id);
+                    }
+
+                    // Generate feature data for the new circle
+                    let feature_data = dummy_data::generate_dummy_data_for_circle(
+                        circle.id,
+                        &circle.name,
+                        circle.circle_type,
+                    );
+
+                    // Add the feature data to the map
+                    self.circle_feature_data
+                        .insert(circle.id, feature_data.clone());
+
+                    // Add the circle to our list
+                    self.circles.push(circle.clone());
+
+                    // Boot the circle with the automation service
+                    self.automation_service.boot_circle(&circle);
+
+                    // If this is the first circle, make it active
+                    if self.active_circle_id.is_none() {
+                        self.active_circle_id = Some(circle.id);
+                        self.active_feature_data = Some(feature_data);
+                    }
+
+                    // Add the rule to the automation service
+                    self.automation_service.create_rule(rule);
+                }
+            }
+        }
+
+        // Render the UI
         app_layout::render(self, ctx);
     }
 }

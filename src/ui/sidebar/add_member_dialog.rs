@@ -60,7 +60,7 @@ pub fn render_add_member_dialog(ctx: &Context, app: &mut CircleApp, theme: &Them
                 ui.style_mut().visuals.widgets.hovered.bg_fill = theme.hover;
                 
                 // Create text edit with consistent styling
-                let email_response = ui.add(
+                let _email_response = ui.add(
                     TextEdit::singleline(&mut app.add_member_state.member_email)
                         .margin(egui::Vec2::new(10.0, 8.0))
                         .desired_width(f32::INFINITY)

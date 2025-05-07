@@ -29,57 +29,63 @@ pub fn render_year_view(ui: &mut Ui, state: &mut CalendarState, theme: &Theme) {
                 );
                 ui.add_space(16.0);
             });
-            
+
             // Scrollable area for the months
             ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     // Get the total available width
                     let available_width = ui.available_width();
-                    
+
                     // Divide the available width into three equal parts
                     let column_width = (available_width / 3.0) - 16.0;
-                    
+
                     // Render each row of months
                     for row in 0..4 {
                         ui.horizontal(|ui| {
                             ui.set_width(available_width);
-                            
+
                             // First column
                             let month1 = row * 3 + 1;
                             if month1 <= 12 {
-                                let month_date = Local.with_ymd_and_hms(year, month1 as u32, 1, 0, 0, 0).unwrap();
+                                let month_date = Local
+                                    .with_ymd_and_hms(year, month1 as u32, 1, 0, 0, 0)
+                                    .unwrap();
                                 ui.scope(|ui| {
                                     ui.set_width(column_width);
                                     render_mini_month(ui, state, month_date, theme, column_width);
                                 });
                             }
-                            
+
                             ui.add_space(16.0);
-                            
+
                             // Second column
                             let month2 = row * 3 + 2;
                             if month2 <= 12 {
-                                let month_date = Local.with_ymd_and_hms(year, month2 as u32, 1, 0, 0, 0).unwrap();
+                                let month_date = Local
+                                    .with_ymd_and_hms(year, month2 as u32, 1, 0, 0, 0)
+                                    .unwrap();
                                 ui.scope(|ui| {
                                     ui.set_width(column_width);
                                     render_mini_month(ui, state, month_date, theme, column_width);
                                 });
                             }
-                            
+
                             ui.add_space(16.0);
-                            
+
                             // Third column
                             let month3 = row * 3 + 3;
                             if month3 <= 12 {
-                                let month_date = Local.with_ymd_and_hms(year, month3 as u32, 1, 0, 0, 0).unwrap();
+                                let month_date = Local
+                                    .with_ymd_and_hms(year, month3 as u32, 1, 0, 0, 0)
+                                    .unwrap();
                                 ui.scope(|ui| {
                                     ui.set_width(column_width);
                                     render_mini_month(ui, state, month_date, theme, column_width);
                                 });
                             }
                         });
-                        
+
                         // Add spacing between rows
                         ui.add_space(24.0);
                     }
@@ -92,7 +98,7 @@ pub fn render_mini_month(
     state: &mut CalendarState,
     date: chrono::DateTime<Local>,
     theme: &Theme,
-    width: f32,
+    _width: f32,
 ) {
     let month_name = date.format("%B").to_string();
     let current_date = Local::now().date_naive();
@@ -167,12 +173,10 @@ pub fn render_mini_month(
                                         );
 
                                         // Use responsive size for day buttons with fixed constraints
-                                        let button_size = Vec2::new(cell_size - 2.0, cell_size - 2.0);
+                                        let button_size =
+                                            Vec2::new(cell_size - 2.0, cell_size - 2.0);
                                         let response = ui.add(
-                                            Button::new(text)
-                                                .frame(false)
-                                                .min_size(button_size)
-                                                // .max_size(button_size),
+                                            Button::new(text).frame(false).min_size(button_size), // .max_size(button_size),
                                         );
 
                                         // Hover effect

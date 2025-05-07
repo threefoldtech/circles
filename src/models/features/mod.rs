@@ -266,5 +266,3 @@ impl Default for DeleteConfirmationState {
 
 // Re-export the AddMemberState for easier access
 pub use add_member::AddMemberState;
-// Re-export the VideoConferenceState for easier access
-pub use video_conf::VideoConferenceState;
