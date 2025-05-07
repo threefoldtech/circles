@@ -7,3 +7,4 @@ pub mod mail;
 pub mod notification_dialog;
 pub mod notifications;
 pub mod notifications_panel;
+pub mod video_conf;
