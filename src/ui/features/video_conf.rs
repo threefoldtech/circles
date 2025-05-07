@@ -7,7 +7,7 @@ use rand::prelude::*;
 
 use crate::app::CircleApp;
 use crate::models::features::video_conf::{
-    Meeting, Participant, ParticipantRole, VideoConferenceState,
+    ChatMessage, Meeting, Participant, ParticipantRole, SidePanelTab, VideoConferenceState,
 };
 use crate::ui::app_layout::create_content_frame;
 use crate::utils::config::Theme;
@@ -225,6 +225,20 @@ fn render_active_meeting(
         ui.label(format!("Duration: {}", meeting.get_duration_string()));
 
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            // Side panel toggle button
+            if ui
+                .button(if state.side_panel_open {
+                    "Hide Panel"
+                } else {
+                    "Show Panel"
+                })
+                .clicked()
+            {
+                state.side_panel_open = !state.side_panel_open;
+            }
+
+            ui.add_space(10.0);
+
             // End/Leave button
             let button_text = if is_host { "End Meeting" } else { "Leave" };
             if ui.button(button_text).clicked() {
@@ -238,58 +252,114 @@ fn render_active_meeting(
     });
     ui.separator();
 
-    // Video grid - Zoom-like layout
-    let available_width = ui.available_width();
-    let available_height = ui.available_height() - 60.0; // Leave space for bottom bar
-
-    ui.vertical(|ui| {
-        ui.add_space(10.0);
-
-        // Display participants in a grid
-        let participants = &meeting.participants;
-        if participants.is_empty() {
-            ui.vertical_centered(|ui| {
-                ui.add_space(available_height / 3.0);
-                ui.label(
-                    RichText::new("No participants in the meeting")
-                        .size(18.0)
-                        .color(theme.secondary_text),
-                );
-            });
+    // Main content with optional side panel
+    ui.horizontal(|ui| {
+        // Main content area with video grid
+        let main_width = if state.side_panel_open {
+            ui.available_width() * 0.7
         } else {
-            // Calculate grid dimensions
-            let participant_count = participants.len();
-            let (cols, rows) = calculate_grid_dimensions(participant_count);
+            ui.available_width()
+        };
+        let available_height = ui.available_height() - 60.0; // Leave space for bottom bar
 
-            // Calculate video tile size
-            let padding = 8.0;
-            let tile_width = (available_width / cols as f32) - padding;
-            let tile_height = (available_height / rows as f32) - padding;
-            let tile_size = Vec2::new(tile_width, tile_height);
+        ui.set_max_width(main_width);
+        egui::Frame::none().fill(theme.background).show(ui, |ui| {
+            ui.vertical(|ui| {
+                ui.add_space(10.0);
 
-            // Render video grid
-            let mut row = 0;
-            let mut col = 0;
+                // Display participants in a grid
+                let participants = &meeting.participants;
+                if participants.is_empty() {
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(available_height / 3.0);
+                        ui.label(
+                            RichText::new("No participants in the meeting")
+                                .size(18.0)
+                                .color(theme.secondary_text),
+                        );
+                    });
+                } else {
+                    // Calculate grid dimensions
+                    let participant_count = participants.len();
+                    let (cols, rows) = calculate_grid_dimensions(participant_count);
 
-            for participant in participants {
-                if col >= cols {
-                    col = 0;
-                    row += 1;
+                    // Calculate video tile size
+                    let padding = 8.0;
+                    let local_width = ui.available_width();
+                    let tile_width = (local_width / cols as f32) - padding;
+                    let tile_height = (available_height / rows as f32) - padding;
+                    let tile_size = Vec2::new(tile_width, tile_height);
+
+                    // Render video grid
+                    let mut row = 0;
+                    let mut col = 0;
+
+                    for participant in participants {
+                        if col >= cols {
+                            col = 0;
+                            row += 1;
+                        }
+
+                        let rect = egui::Rect::from_min_size(
+                            egui::Pos2::new(
+                                ui.min_rect().min.x + col as f32 * (tile_width + padding),
+                                ui.min_rect().min.y + row as f32 * (tile_height + padding),
+                            ),
+                            tile_size,
+                        );
+
+                        // Draw video tile
+                        render_video_tile(ui, rect, participant, theme, participant.id == user_id);
+
+                        col += 1;
+                    }
                 }
+            });
+        });
 
-                let rect = egui::Rect::from_min_size(
-                    egui::Pos2::new(
-                        ui.min_rect().min.x + col as f32 * (tile_width + padding),
-                        ui.min_rect().min.y + row as f32 * (tile_height + padding),
-                    ),
-                    tile_size,
-                );
+        // Side panel
+        if state.side_panel_open {
+            ui.separator();
+            let side_panel_width = ui.available_width();
 
-                // Draw video tile
-                render_video_tile(ui, rect, participant, theme, participant.id == user_id);
+            egui::Frame::none()
+                .fill(theme.secondary_background)
+                .show(ui, |ui| {
+                    ui.set_max_width(side_panel_width);
 
-                col += 1;
-            }
+                    // Tab selection
+                    ui.horizontal(|ui| {
+                        if ui
+                            .selectable_label(
+                                state.side_panel_tab == SidePanelTab::Participants,
+                                "Participants",
+                            )
+                            .clicked()
+                        {
+                            state.side_panel_tab = SidePanelTab::Participants;
+                        }
+                        if ui
+                            .selectable_label(state.side_panel_tab == SidePanelTab::Chat, "Chat")
+                            .clicked()
+                        {
+                            state.side_panel_tab = SidePanelTab::Chat;
+                        }
+                    });
+
+                    ui.separator();
+
+                    // Tab content
+                    match state.side_panel_tab {
+                        SidePanelTab::Participants => {
+                            render_participants_tab(ui, meeting, theme, user_id, is_host)
+                        }
+                        SidePanelTab::Chat => {
+                            let mut chat_input = state.chat_input.clone();
+                            render_chat_tab(ui, &mut chat_input, meeting, theme, user_id);
+                            state.chat_input = chat_input;
+                        }
+                    }
+                });
         }
     });
 
@@ -691,6 +761,204 @@ fn render_create_meeting_dialog(
         });
 }
 
+/// Render the participants tab in the side panel
+fn render_participants_tab(
+    ui: &mut egui::Ui,
+    meeting: &mut Meeting,
+    theme: &Theme,
+    user_id: Uuid,
+    is_host: bool,
+) {
+    ui.heading("Participants");
+    ui.add_space(10.0);
+
+    // Participants count
+    ui.label(format!("{} participants", meeting.participants.len()));
+    ui.separator();
+
+    // List of participants
+    egui::ScrollArea::vertical().show(ui, |ui| {
+        for (index, participant) in meeting.participants.iter().enumerate() {
+            ui.horizontal(|ui| {
+                // Name with role indicator
+                let role_indicator = match participant.role {
+                    ParticipantRole::Host => " (Host)",
+                    ParticipantRole::CoHost => " (Co-Host)",
+                    ParticipantRole::Participant => "",
+                };
+
+                let name_text = format!("{}{}", participant.name, role_indicator);
+                ui.label(RichText::new(name_text).strong());
+
+                // Status indicators
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    // Only show remove button for host and if not removing themselves
+                    if is_host && participant.id != user_id {
+                        if ui.button("Remove").clicked() {
+                            // We'll implement this in the leave meeting dialog
+                            // This is where we would use the remove_participant method
+                            // But we need to handle it outside this function due to borrowing rules
+                            // We'll set a flag or store the ID to remove
+                        }
+                    }
+
+                    // Mic status
+                    let mic_status = if participant.mic_on { "🎤" } else { "🔇" };
+                    ui.label(mic_status);
+
+                    // Camera status
+                    let camera_status = if participant.camera_on {
+                        "📹"
+                    } else {
+                        "🚫"
+                    };
+                    ui.label(camera_status);
+                });
+            });
+            ui.separator();
+        }
+    });
+}
+
+/// Render the chat tab in the side panel
+fn render_chat_tab(
+    ui: &mut egui::Ui,
+    chat_input: &mut String,
+    meeting: &mut Meeting,
+    theme: &Theme,
+    user_id: Uuid,
+) {
+    ui.heading("Chat");
+    ui.add_space(10.0);
+
+    // Messages area
+    let available_height = ui.available_height() - 60.0; // Reserve space for input
+    egui::ScrollArea::vertical()
+        .auto_shrink([false, false])
+        .stick_to_bottom(true)
+        .max_height(available_height)
+        .show(ui, |ui| {
+            if meeting.chat_messages.is_empty() {
+                ui.vertical_centered(|ui| {
+                    ui.label(
+                        RichText::new("No messages yet")
+                            .color(theme.secondary_text)
+                            .italics(),
+                    );
+                });
+            } else {
+                for message in &meeting.chat_messages {
+                    render_chat_message(ui, message, theme, user_id);
+                    ui.add_space(8.0);
+                }
+            }
+        });
+
+    ui.separator();
+
+    // Input area
+    ui.horizontal(|ui| {
+        let text_edit_response = ui.add(
+            egui::TextEdit::singleline(chat_input)
+                .hint_text("Type a message...")
+                .desired_width(ui.available_width() - 60.0),
+        );
+
+        let send_button = ui.button("Send");
+
+        // Check for Enter key or button click
+        let send_message = (ui.ctx().input(|i| i.key_pressed(egui::Key::Enter))
+            && !chat_input.is_empty())
+            || (send_button.clicked() && !chat_input.is_empty());
+
+        if send_message {
+            // Get user name from participants
+            let sender_name = meeting
+                .participants
+                .iter()
+                .find(|p| p.id == user_id)
+                .map(|p| p.name.clone())
+                .unwrap_or_else(|| "You".to_string());
+
+            // Create and add the message
+            let new_message = ChatMessage {
+                id: Uuid::new_v4(),
+                sender_id: user_id,
+                sender_name,
+                content: chat_input.clone(),
+                sent_at: chrono::Utc::now(),
+                is_private: false,
+                recipient_id: None,
+                attachment: None,
+            };
+
+            // Use the add_chat_message method
+            meeting.add_chat_message(new_message);
+
+            // Clear input
+            chat_input.clear();
+        }
+    });
+}
+
+/// Render a chat message
+fn render_chat_message(ui: &mut egui::Ui, message: &ChatMessage, theme: &Theme, user_id: Uuid) {
+    let is_from_me = message.sender_id == user_id;
+
+    // Use different alignment based on sender
+    let align = if is_from_me {
+        Align::RIGHT
+    } else {
+        Align::LEFT
+    };
+
+    // Colors based on sender
+    let bg_color = if is_from_me {
+        theme.accent.linear_multiply(0.7)
+    } else {
+        theme.secondary_background
+    };
+    let text_color = if is_from_me {
+        Color32::WHITE
+    } else {
+        theme.text
+    };
+
+    ui.with_layout(egui::Layout::top_down(align), |ui| {
+        // Add sender name for messages from others
+        if !is_from_me {
+            ui.label(
+                RichText::new(&message.sender_name)
+                    .size(12.0)
+                    .strong()
+                    .color(theme.secondary_text),
+            );
+            ui.add_space(2.0);
+        }
+
+        // Message bubble
+        egui::Frame::none()
+            .fill(bg_color)
+            .rounding(8.0)
+            .inner_margin(8.0)
+            .show(ui, |ui| {
+                ui.label(RichText::new(&message.content).color(text_color));
+            });
+
+        // Timestamp
+        ui.label(
+            RichText::new(format_timestamp(message.sent_at))
+                .size(10.0)
+                .color(theme.secondary_text),
+        );
+    });
+}
+
+/// Format a timestamp for display
+fn format_timestamp(timestamp: chrono::DateTime<Utc>) -> String {
+    timestamp.format("%H:%M").to_string()
+}
+
 /// Render the leave meeting confirmation dialog
 fn render_leave_meeting_dialog(
     ui: &mut egui::Ui,
@@ -720,8 +988,14 @@ fn render_leave_meeting_dialog(
                     if ui.button("Leave").clicked() {
                         state.leave_confirmation_open = false;
 
-                        // In a real implementation, we would remove the participant from the meeting
-                        // but we'll simplify it to avoid borrow issues
+                        // Use the remove_participant method to remove the user from the meeting
+                        if let Some(meeting) = &mut state.current_meeting {
+                            // Get the user ID from the first participant (assuming it's the current user)
+                            if let Some(participant) = meeting.participants.first() {
+                                let user_id = participant.id;
+                                meeting.remove_participant(user_id);
+                            }
+                        }
 
                         state.in_meeting = false;
                         state.current_meeting = None;
@@ -761,6 +1035,18 @@ fn render_end_meeting_dialog(ui: &mut egui::Ui, state: &mut VideoConferenceState
                             if meeting.is_time_limit_reached() {
                                 // If time limit reached, we would show a notification
                                 println!("Meeting has reached its time limit");
+                            }
+                        }
+
+                        // Remove all participants from the meeting
+                        if let Some(meeting) = &mut state.current_meeting {
+                            // Get a list of all participant IDs
+                            let participant_ids: Vec<Uuid> =
+                                meeting.participants.iter().map(|p| p.id).collect();
+
+                            // Remove each participant
+                            for id in participant_ids {
+                                meeting.remove_participant(id);
                             }
                         }
 

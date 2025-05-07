@@ -1,3 +1,8 @@
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
+#![allow(deprecated)]
+
 use eframe::egui;
 // Using a more specific import to avoid warnings
 use env_logger::init as init_logger;
