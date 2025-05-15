@@ -1,5 +1,5 @@
 use crate::{app::CircleApp, utils::config::Theme};
-use eframe::egui::{self, Color32, Frame, Order, Pos2, Rect, RichText, Vec2};
+use eframe::egui::{self, Frame, Order, Pos2, Rect, RichText, Vec2};
 use egui::{Area, Id, Margin, Stroke};
 
 pub struct NotificationsPanelProps<'a> {
@@ -19,7 +19,7 @@ pub fn render_notifications_panel(
         .order(Order::Middle)
         .show(ctx, |ui| {
             ui.painter()
-                .rect_filled(overlay_rect, 0.0, Color32::from_black_alpha(90));
+                .rect_filled(overlay_rect, 0.0, props.theme.shadow);
         });
 
     // Fixed width of 300px for the panel

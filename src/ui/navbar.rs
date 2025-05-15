@@ -59,7 +59,13 @@ pub fn render_top_panel(
                     });
 
                     // Render the navigation bar with feature buttons
-                    if !app.is_first_time {
+                    // Only show buttons if:
+                    // 1. Not first time user
+                    // 2. Active circle is not a system circle
+                    let is_system_circle =
+                        app.active_circle().map_or(false, |c| c.is_system_circle);
+
+                    if !app.is_first_time && !is_system_circle {
                         // === Centered Buttons (if circle is active) ===
                         ui.add_space(280.0); // Set any space to center the buttons
                         ui.with_layout(

@@ -1,6 +1,6 @@
 use crate::{app::CircleApp, models::dummy_data::Email, utils::config::Theme};
 use chrono::{DateTime, Utc};
-use egui::{Color32, FontFamily, FontId, Margin, RichText, Stroke, epaint};
+use egui::{FontFamily, FontId, Margin, RichText, Stroke, epaint};
 
 #[allow(dead_code)]
 /// Renders an email card, the email card is a card that contains the email subject and the email body used in the mail feature to list the emails
@@ -27,7 +27,7 @@ pub fn render_email_card(
                 ui.painter().circle_filled(
                     ui.cursor().min + egui::vec2(4.0, 8.0),
                     3.0,
-                    Color32::from_rgb(150, 200, 255),
+                    theme.accent,
                 );
                 ui.add_space(8.0);
             } else {

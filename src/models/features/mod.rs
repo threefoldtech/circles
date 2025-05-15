@@ -1,11 +1,16 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::ui::components::mail::compose::Attachment;
+
+// Export the modules
+pub mod add_member;
+pub mod documents;
+pub mod video_conf;
 
 // We'll implement these modules later
 // pub mod calendar;
 // pub mod chat;
-// pub mod documents;
 // pub mod mail;
 
 /// Features available in a circle
@@ -165,6 +170,14 @@ pub struct VideoConfSettings {
     pub auto_mute: bool,
     /// Whether to automatically enable video on join
     pub auto_video: bool,
+    /// Default video quality
+    pub default_video_quality: video_conf::VideoQuality,
+    /// Whether to enable waiting room by default
+    pub enable_waiting_room: bool,
+    /// Whether to allow participants to unmute themselves
+    pub participants_can_unmute: bool,
+    /// Whether to allow participants to share screen
+    pub participants_can_share_screen: bool,
 }
 
 impl Default for Features {
@@ -207,8 +220,49 @@ impl Default for Features {
                 settings: VideoConfSettings {
                     auto_mute: true,
                     auto_video: false,
+                    default_video_quality: video_conf::VideoQuality::Medium,
+                    enable_waiting_room: false,
+                    participants_can_unmute: true,
+                    participants_can_share_screen: true,
                 },
             },
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+// State for circle actions (moved from global)
+pub struct CircleActionState {
+    pub is_favorite: bool,
+    pub is_muted: bool,
+}
+
+impl Default for CircleActionState {
+    fn default() -> Self {
+        Self {
+            is_favorite: false,
+            is_muted: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+// State for delete confirmation dialog (moved from global)
+pub struct DeleteConfirmationState {
+    pub open: bool,
+    pub circle_id: Option<Uuid>,
+    pub circle_name: String,
+}
+
+impl Default for DeleteConfirmationState {
+    fn default() -> Self {
+        Self {
+            open: false,
+            circle_id: None,
+            circle_name: String::new(),
+        }
+    }
+}
+
+// Re-export the AddMemberState for easier access
+pub use add_member::AddMemberState;

@@ -10,23 +10,30 @@ use super::feature_content;
 
 // Main rendering function
 pub fn render(app: &mut CircleApp, ctx: &Context) {
-    let theme = app.get_current_theme();
+    // Use the context-aware theme method to properly detect system theme
+    let theme = app.get_current_theme_with_context(ctx);
     let config = LayoutConfig::new();
 
     setup_style(ctx, &theme, &config);
     let app_layout = create_app_layout(&theme);
 
-    // Render the navbar at the top with app name/logo on right and active circle on left
-    navbar::render_top_panel(app, ctx, &app_layout, &theme, &config);
+    // Check if we're in the auth screen
+    if app.active_feature == crate::app::ActiveFeature::Auth {
+        // For auth screen, only render the content area without navbar, sidebar, or footer
+        feature_content::render_feature_content(app, ctx, &app_layout, &theme);
+    } else {
+        // Render the navbar at the top with app name/logo on right and active circle on left
+        navbar::render_top_panel(app, ctx, &app_layout, &theme, &config);
 
-    // Render the sidebar with available circles
-    sidebar::render_sidebar(app, ctx, &app_layout, &theme, &config);
+        // Render the sidebar with available circles
+        sidebar::render_sidebar(app, ctx, &app_layout, &theme, &config);
 
-    // Render the main content area
-    feature_content::render_feature_content(app, ctx, &app_layout, &theme);
+        // Render the main content area
+        feature_content::render_feature_content(app, ctx, &app_layout, &theme);
 
-    // Render the footer with connection status, user status, date, and notifications
-    footer::render_status_bar(app, ctx, &app_layout, &theme);
+        // Render the footer with connection status, user status, date, and notifications
+        footer::render_status_bar(app, ctx, &app_layout, &theme);
+    }
 
     // Render notification dialog at the app level to prevent interaction issues
     render_notification_dialog(
@@ -34,6 +41,9 @@ pub fn render(app: &mut CircleApp, ctx: &Context) {
         ctx,
         &theme,
     );
+
+    // Render logout confirmation dialog
+    footer::render_logout_confirmation_dialog(ctx, app, &theme);
 }
 
 // Setup egui style

@@ -8,6 +8,9 @@ use eframe::egui::{
     Align, Color32, Context, Frame, Layout, Margin, Pos2, Response, RichText, Sense, Stroke,
     TopBottomPanel, Ui, Vec2,
 };
+use std::fs;
+
+use super::sidebar::render_user_status_menu;
 
 pub struct StatusFrameProps<'a> {
     theme: &'a Theme,
@@ -92,6 +95,8 @@ pub fn render_status_bar(app: &mut CircleApp, ctx: &Context, app_layout: &Frame,
                 render_right_section(app, ctx, ui, theme);
             });
         });
+
+    ctx.request_repaint_after(std::time::Duration::from_secs(1));
 }
 
 fn render_date_time(ui: &mut Ui, theme: &Theme) {
@@ -133,20 +138,161 @@ fn render_left_section(ui: &mut Ui, theme: &Theme) {
     render_date_time(ui, theme);
 }
 
-fn render_user_status(app: &mut CircleApp, ui: &mut Ui, theme: &Theme) {
+// User menu state
+#[derive(Debug, Default)]
+pub struct UserMenuState {
+    pub show_menu: bool,
+}
+
+// Handle user menu click based on index
+fn handle_user_menu_click(app: &mut CircleApp, index: usize) {
+    match index {
+        0 => {
+            // Profile
+            // Handle profile action
+        }
+        1 => {
+            // Edit Profile
+            // Handle edit profile action
+        }
+        2 => {
+            // Snooze
+            // Handle snooze action
+        }
+        3 => {
+            // Logout
+            handle_logout(app);
+        }
+        _ => {}
+    }
+}
+
+fn render_user_status(app: &mut CircleApp, _: &Context, ui: &mut Ui, theme: &Theme) {
     let user_name = app.user.as_ref().map_or("Guest", |u| &u.name);
     let user_frame = StatusFrameProps::new(theme)
         .with_margin(Margin::symmetric(10, 4))
         .build()
         .show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label(create_styled_text(user_name, theme.text, 13.0, true));
+                let response = ui.label(create_styled_text(user_name, theme.text, 13.0, true));
                 ui.add_space(4.0);
                 render_status_dot(ui, theme, 6.0);
+                
+                // Check if the label was clicked
+                if response.clicked() {
+                    app.user_menu_state.show_menu = !app.user_menu_state.show_menu;
+                }
             });
         });
-
+    
+    // Check if the frame itself was clicked
+    if user_frame.response.clicked() {
+        app.user_menu_state.show_menu = !app.user_menu_state.show_menu;
+    }
+    
     set_hover_cursor(ui, &user_frame.response);
+
+    // Show context menu when clicked
+    if app.user_menu_state.show_menu {
+        // Use the context_menu method to maintain the original style
+        user_frame.response.context_menu(|ui| {
+            // Use the render_user_status_menu function from sidebar/context_menu.rs
+            let clicked_indices = render_user_status_menu(ui, app, theme);
+
+            // Handle clicked items
+            if !clicked_indices.is_empty() {
+                let index = clicked_indices[0]; // Get the first clicked index
+                handle_user_menu_click(app, index);
+            }
+        });
+    }
+}
+
+// Render logout confirmation dialog
+pub fn render_logout_confirmation_dialog(ctx: &Context, app: &mut CircleApp, theme: &Theme) {
+    // Only proceed if the dialog should be shown
+    if !app.logout_confirmation_state {
+        return;
+    }
+
+    // Create a simple confirmation dialog
+    egui::Window::new("Confirm Logout")
+        .fixed_size([400.0, 200.0])
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+        .collapsible(false)
+        .resizable(false)
+        .frame(
+            egui::Frame::window(&ctx.style())
+                .fill(theme.background)
+                .corner_radius(16)
+                .shadow(egui::epaint::Shadow {
+                    color: theme.shadow,
+                    offset: [0, 4],
+                    blur: 8,
+                    spread: 0,
+                })
+                .inner_margin(egui::Margin::same(24)),
+        )
+        .show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.add_space(10.0);
+                ui.heading(egui::RichText::new("Confirm Logout").color(theme.error));
+                ui.add_space(10.0);
+                ui.label("Are you sure you want to log out? You will need to sign in again to access your circles.");
+                ui.add_space(20.0);
+
+                ui.horizontal(|ui| {
+                    let cancel_button = egui::Button::new(
+                        egui::RichText::new("Cancel").color(theme.text)
+                    ).fill(theme.accent);
+                    
+                    if ui.add(cancel_button).clicked() {
+                        app.logout_confirmation_state = false;
+                    }
+
+                    let confirm_button = egui::Button::new(
+                        egui::RichText::new("Logout").color(theme.white)
+                    ).fill(theme.error);
+
+                    if ui.add(confirm_button).clicked() {
+                        perform_logout(app);
+                        app.logout_confirmation_state = false;
+                    }
+                });
+            });
+        });
+}
+
+// Handle logout menu click - shows confirmation dialog
+fn handle_logout(app: &mut CircleApp) {
+    app.logout_confirmation_state = true;
+}
+
+// Perform the actual logout action
+fn perform_logout(app: &mut CircleApp) {
+    // Clear user credentials file
+    let mut path = dirs::home_dir().unwrap_or_default();
+    path.push(".config");
+    path.push("circles.json");
+
+    // Delete the file if it exists
+    if path.exists() {
+        let _ = fs::remove_file(path);
+    }
+
+    // Reset user state
+    app.user = None;
+    app.is_first_time = true;
+    
+    // Keep system circles but remove user circles
+    app.circles.retain(|circle| circle.is_system_circle);
+    
+    // Set active circle to None
+    app.active_circle_id = None;
+    app.active_feature_data = None;
+
+    // Switch to auth screen
+    app.set_active_feature(crate::app::ActiveFeature::Auth);
 }
 
 fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut Ui, theme: &Theme) {
@@ -156,7 +302,7 @@ fn render_right_section(app: &mut CircleApp, ctx: &Context, ui: &mut Ui, theme: 
         let notif_response = render_notification_bell(app, ui, theme);
         handle_notifications_panel(app, ctx, ui, theme, notif_response.rect);
         ui.add_space(12.0);
-        render_user_status(app, ui, theme);
+        render_user_status(app, ctx, ui, theme);
     });
 }
 

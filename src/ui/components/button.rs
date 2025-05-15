@@ -1,5 +1,5 @@
 use crate::utils::config::Theme;
-use egui::{Button, Color32, Response, RichText, Stroke, Ui, Vec2};
+use egui::{Button, Response, RichText, Stroke, Ui, Vec2};
 
 /// Renders a button with consistent styling across the app
 ///
@@ -26,7 +26,7 @@ pub fn render_button(
     };
 
     let text = RichText::new(text_content).size(14.0).color(if is_active {
-        Color32::WHITE
+        theme.white
     } else {
         theme.text
     });
@@ -48,14 +48,17 @@ pub fn render_button(
 
 /// Legacy function for backward compatibility
 /// Consider using render_button instead for new code
-pub fn create_button<'a>(text: &'a str, icon: &'a str) -> Button<'a> {
+pub fn create_button<'a>(text: &'a str, icon: &'a str, theme: &Theme) -> Button<'a> {
+    let text_color = theme.white;
+    let button_color = theme.button_primary;
+
     Button::new(
         RichText::new(format!("{} {}", icon, text))
             .size(14.0)
-            .color(Color32::WHITE),
+            .color(text_color),
     )
     .corner_radius(20)
-    .fill(Color32::from_rgb(66, 133, 244))
+    .fill(button_color)
     .stroke(Stroke::NONE)
     .min_size(Vec2::new(100.0, 36.0))
 }

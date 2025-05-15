@@ -1,7 +1,7 @@
 use crate::models::circle::{Circle, CircleType, JoinPolicy, NotificationSettings, Visibility};
 use crate::ui::components::button::render_button;
 use crate::utils::config::Theme;
-use eframe::egui::{self, Color32, RichText, Vec2};
+use eframe::egui::{self, RichText, Vec2};
 
 /// State for the circle creation dialog
 #[derive(Debug)]
@@ -69,23 +69,23 @@ pub fn render_circle_dialog(
     let mut created_circle = None;
     let mut should_close = false;
 
-    // Create a modal dialog with increased width and height
+    // Create a modal dialog with standardized width and height
     egui::Window::new("Create New Circle")
-        .fixed_size([520.0, 620.0]) // Increased width and height for better content display
-        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]) // Point 2: Already centered
+        .fixed_size([600.0, 620.0]) // Fixed size to match event dialog
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0]) // Centered horizontally
         .collapsible(false)
         .resizable(false)
         .frame(
             egui::Frame::window(&ctx.style())
-                .fill(theme.panel)
-                .corner_radius(12)
+                .fill(theme.background)
+                .corner_radius(16)
                 .shadow(egui::epaint::Shadow {
-                    color: Color32::from_black_alpha(25),
+                    color: theme.shadow,
                     offset: [0, 4],
                     blur: 8,
                     spread: 0,
                 })
-                .inner_margin(egui::Margin::same(24)), // Further increased padding for better spacing
+                .inner_margin(egui::Margin::same(24)), // Appropriate padding for content
         )
         .show(ctx, |ui| {
             // Main layout
@@ -116,14 +116,37 @@ pub fn render_circle_dialog(
                 ui.style_mut().visuals.widgets.active.bg_fill = theme.hover;
                 ui.style_mut().visuals.widgets.hovered.bg_fill = theme.hover;
 
-                // Create text edit with consistent styling
-                ui.add(
-                    egui::TextEdit::singleline(&mut state.name)
-                        .margin(egui::Vec2::new(10.0, 8.0))
-                        .desired_width(f32::INFINITY)
-                        .font(egui::FontId::proportional(16.0)), // Removed trailing comma
-                )
-                .on_hover_text(
+                // Create text edit with consistent styling and request focus
+                let text_edit = egui::TextEdit::singleline(&mut state.name)
+                    .margin(egui::Vec2::new(10.0, 8.0))
+                    .desired_width(f32::INFINITY)
+                    .font(egui::FontId::proportional(16.0));
+                
+                let response = ui.add(text_edit);
+                response.request_focus(); // Request focus on the text field
+                
+                // Check for Enter key press with debug output
+                let enter_pressed = ui.input(|i| i.key_pressed(egui::Key::Enter));
+                if enter_pressed {
+                    if !state.name.trim().is_empty() {
+                        if state.validate() {
+                            let mut circle = Circle::new(state.name.clone(), state.circle_type, creator_id);
+
+                            circle.settings.visibility = state.visibility;
+                            circle.settings.join_policy = state.join_policy;
+                            circle.settings.notification_settings = NotificationSettings {
+                                email_notifications: state.email_notifications,
+                                push_notifications: state.push_notifications,
+                                in_app_notifications: state.in_app_notifications,
+                            };
+
+                            created_circle = Some(circle);
+                            should_close = true;
+                        }
+                    }
+                }
+                
+                response.on_hover_text(
                     egui::RichText::new("Enter a name for your circle").color(theme.text),
                 )
                 .on_hover_cursor(egui::CursorIcon::Text);
@@ -134,9 +157,7 @@ pub fn render_circle_dialog(
                 // Error message directly below the Circle Name field
                 if let Some(error) = &state.error_message {
                     ui.label(
-                        RichText::new(error)
-                            .color(Color32::from_rgb(200, 40, 40))
-                            .size(14.0), // Optimized error message font size
+                        RichText::new(error).color(theme.error).size(14.0), // Optimized error message font size
                     );
                     ui.add_space(8.0);
                 } else {

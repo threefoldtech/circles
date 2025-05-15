@@ -14,6 +14,8 @@ pub struct Circle {
     pub name: String,
     /// Type of the circle
     pub circle_type: CircleType,
+    /// Whether this is a system circle (e.g., WelcomeBot, CirclesBot)
+    pub is_system_circle: bool,
     /// List of members in the circle
     pub members: Vec<Member>,
     /// Features available in the circle
@@ -124,6 +126,7 @@ impl Circle {
             id: Uuid::new_v4(),
             name,
             circle_type,
+            is_system_circle: false,
             members: vec![creator],
             features: Features::default(),
             settings: CircleSettings {

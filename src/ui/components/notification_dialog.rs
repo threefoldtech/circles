@@ -2,7 +2,7 @@ use crate::models::notification::AppNotification;
 use crate::ui::components::button::render_button;
 use crate::utils::config::Theme;
 use chrono::{DateTime, Local, Utc};
-use eframe::egui::{Color32, RichText};
+use eframe::egui::RichText;
 
 /// State for the notification dialog
 #[derive(Debug)]
@@ -46,18 +46,18 @@ pub fn render_notification_dialog(
     let notification = state.notification.as_ref().unwrap();
     let mut should_close = false;
 
-    // Create a modal dialog
+    // Create a standardized modal dialog
     egui::Window::new("Notification Details")
-        .fixed_size([500.0, 300.0])
+        .fixed_size([600.0, 620.0]) // Fixed size to match other dialogs
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
         .collapsible(false)
         .resizable(false)
         .frame(
             egui::Frame::window(&ctx.style())
-                .fill(theme.panel)
-                .corner_radius(12)
+                .fill(theme.background)
+                .corner_radius(16)
                 .shadow(egui::epaint::Shadow {
-                    color: Color32::from_black_alpha(25),
+                    color: theme.shadow,
                     offset: [0, 4],
                     blur: 8,
                     spread: 0,
@@ -95,7 +95,7 @@ pub fn render_notification_dialog(
                     ui.label(
                         RichText::new(timestamp.format("%d %b %Y at %H:%M").to_string())
                             .size(14.0)
-                            .color(Color32::from_rgb(120, 130, 140))
+                            .color(theme.placeholder_text)
                             .italics(),
                     );
                 });
@@ -104,15 +104,9 @@ pub fn render_notification_dialog(
 
                 // Priority indicator
                 let priority_color = match notification.priority {
-                    crate::models::notification::NotificationPriority::Low => {
-                        Color32::from_rgb(100, 180, 100)
-                    }
-                    crate::models::notification::NotificationPriority::Normal => {
-                        Color32::from_rgb(100, 150, 220)
-                    }
-                    crate::models::notification::NotificationPriority::High => {
-                        Color32::from_rgb(220, 100, 100)
-                    }
+                    crate::models::notification::NotificationPriority::Low => theme.success,
+                    crate::models::notification::NotificationPriority::Normal => theme.accent,
+                    crate::models::notification::NotificationPriority::High => theme.error,
                 };
 
                 let priority_text = match notification.priority {

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local, Utc};
-use egui::{Align, Button, Color32, Frame, Layout, Margin, RichText, Stroke, Vec2};
+use egui::{Align, Button, Frame, Layout, Margin, RichText, Stroke, Vec2};
 use std::collections::VecDeque;
 
 use crate::{
@@ -95,7 +95,7 @@ impl NotificationManager {
         ui.horizontal(|ui| {
             // Left side - Clear All button
             let clear_button = ui.add(
-                egui::Button::new(RichText::new("Clear All").size(13.0).color(Color32::WHITE))
+                egui::Button::new(RichText::new("Clear All").size(13.0).color(theme.white))
                     .corner_radius(6)
                     .fill(theme.error)
                     .stroke(Stroke::NONE)
@@ -113,15 +113,11 @@ impl NotificationManager {
 
             // Mark All Read button
             let mark_read_button = ui.add(
-                egui::Button::new(
-                    RichText::new("Mark All Read")
-                        .size(13.0)
-                        .color(Color32::WHITE),
-                )
-                .corner_radius(6)
-                .fill(theme.active)
-                .stroke(Stroke::NONE)
-                .min_size(Vec2::new(100.0, 36.0)),
+                egui::Button::new(RichText::new("Mark All Read").size(13.0).color(theme.white))
+                    .corner_radius(6)
+                    .fill(theme.active)
+                    .stroke(Stroke::NONE)
+                    .min_size(Vec2::new(100.0, 36.0)),
             );
             if mark_read_button.hovered() {
                 ui.output_mut(|o| o.cursor_icon = eframe::egui::CursorIcon::PointingHand);
@@ -182,7 +178,7 @@ impl NotificationManager {
                             ui.label(
                                 RichText::new(timestamp.format("%H:%M").to_string())
                                     .size(12.0)
-                                    .color(Color32::from_rgb(120, 130, 140))
+                                    .color(theme.placeholder_text)
                                     .italics(),
                             );
                         });

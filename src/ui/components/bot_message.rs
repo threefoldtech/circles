@@ -1,5 +1,6 @@
+use crate::utils::config::Theme;
 use chrono::{DateTime, Utc};
-use eframe::egui::{self, Color32, RichText, Vec2};
+use eframe::egui::{self, RichText, Vec2};
 
 /// Different types of bot messages
 #[derive(Debug, Clone)]
@@ -41,11 +42,7 @@ impl BotMessage {
     }
 
     /// Render the bot message content (without the frame)
-    pub fn render(&self, ui: &mut egui::Ui) {
-        // Use theme colors from the UI style
-        let text_color = ui.style().visuals.text_color();
-        let secondary_text_color = ui.style().visuals.weak_text_color();
-
+    pub fn render(&self, ui: &mut egui::Ui, theme: &Theme) {
         // Render the message content based on type
         match &self.message_type {
             BotMessageType::Welcome => {
@@ -57,12 +54,12 @@ impl BotMessage {
                             RichText::new("Circles Bot")
                                 .size(16.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
                         ui.label(
                             RichText::new("Welcome to the Circles Bot Channel!")
                                 .size(14.0)
-                                .color(text_color),
+                                .color(theme.text),
                         );
                     });
 
@@ -70,7 +67,7 @@ impl BotMessage {
                         ui.label(
                             RichText::new("Just now")
                                 .size(12.0)
-                                .color(secondary_text_color),
+                                .color(theme.secondary_text),
                         );
                     });
                 });
@@ -80,7 +77,7 @@ impl BotMessage {
                 ui.label(
                     RichText::new("I'll keep you updated on system changes, new connections, and helpful tips. You'll only receive messages from me in this channel - it's a one-way communication channel for important announcements.")
                         .size(14.0)
-                        .color(text_color)
+                        .color(theme.text)
                 );
             }
             BotMessageType::Update { version, changes } => {
@@ -92,13 +89,13 @@ impl BotMessage {
                             RichText::new("Circles Bot")
                                 .size(16.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
                         ui.label(
                             RichText::new(format!("System Update: Version {}", version))
                                 .size(14.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
                     });
 
@@ -106,7 +103,7 @@ impl BotMessage {
                         ui.label(
                             RichText::new(format_timestamp(self.timestamp))
                                 .size(12.0)
-                                .color(secondary_text_color),
+                                .color(theme.secondary_text),
                         );
                     });
                 });
@@ -117,13 +114,13 @@ impl BotMessage {
                     RichText::new("What's new:")
                         .size(14.0)
                         .strong()
-                        .color(text_color),
+                        .color(theme.text),
                 );
 
                 for change in changes {
                     ui.horizontal(|ui| {
-                        ui.label(RichText::new("•").size(14.0).color(text_color));
-                        ui.label(RichText::new(change).size(14.0).color(text_color));
+                        ui.label(RichText::new("•").size(14.0).color(theme.text));
+                        ui.label(RichText::new(change).size(14.0).color(theme.text));
                     });
                 }
             }
@@ -136,13 +133,13 @@ impl BotMessage {
                             RichText::new("Circles Bot")
                                 .size(16.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
                         ui.label(
                             RichText::new("New Connection")
                                 .size(14.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
                     });
 
@@ -150,7 +147,7 @@ impl BotMessage {
                         ui.label(
                             RichText::new(format_timestamp(self.timestamp))
                                 .size(12.0)
-                                .color(secondary_text_color),
+                                .color(theme.secondary_text),
                         );
                     });
                 });
@@ -160,7 +157,7 @@ impl BotMessage {
                 ui.label(
                     RichText::new(format!("You've been connected to the \"{}\" circle. You can now collaborate with other members of this circle.", circle_name))
                         .size(14.0)
-                        .color(text_color)
+                        .color(theme.text)
                 );
             }
             BotMessageType::FeatureAnnouncement {
@@ -175,13 +172,13 @@ impl BotMessage {
                             RichText::new("Circles Bot")
                                 .size(16.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
                         ui.label(
                             RichText::new(format!("New Feature: {}", feature_name))
                                 .size(14.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
                     });
 
@@ -189,14 +186,14 @@ impl BotMessage {
                         ui.label(
                             RichText::new(format_timestamp(self.timestamp))
                                 .size(12.0)
-                                .color(secondary_text_color),
+                                .color(theme.secondary_text),
                         );
                     });
                 });
 
                 ui.add_space(8.0);
 
-                ui.label(RichText::new(description).size(14.0).color(text_color));
+                ui.label(RichText::new(description).size(14.0).color(theme.text));
 
                 ui.add_space(8.0);
 
@@ -204,7 +201,7 @@ impl BotMessage {
                 let feature_button = egui::Button::new(
                     RichText::new(format!("Try {} Now", feature_name))
                         .size(14.0)
-                        .color(Color32::WHITE),
+                        .color(theme.white),
                 )
                 .min_size(Vec2::new(150.0, 32.0))
                 .corner_radius(16)
@@ -221,23 +218,23 @@ impl BotMessage {
                             RichText::new("Circles Bot")
                                 .size(16.0)
                                 .strong()
-                                .color(text_color),
+                                .color(theme.text),
                         );
-                        ui.label(RichText::new("Tip").size(14.0).strong().color(text_color));
+                        ui.label(RichText::new("Tip").size(14.0).strong().color(theme.text));
                     });
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                         ui.label(
                             RichText::new("Today")
                                 .size(12.0)
-                                .color(secondary_text_color),
+                                .color(theme.secondary_text),
                         );
                     });
                 });
 
                 ui.add_space(8.0);
 
-                ui.label(RichText::new(tip).size(14.0).color(text_color));
+                ui.label(RichText::new(tip).size(14.0).color(theme.text));
             }
         }
     }

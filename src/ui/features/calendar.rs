@@ -44,16 +44,37 @@ impl Calendar {
     }
 
     pub fn render(&mut self, ui: &mut Ui, theme: &Theme) {
-        render_toolbar(ui, &mut self.state, theme);
-        ui.add_space(16.0);
+        // Use the full available width for the calendar
+        ui.set_width(ui.available_width());
 
+        // Create a container for the entire calendar
         egui::Frame::new()
             .fill(theme.background)
-            .show(ui, |ui| match self.state.view_mode {
-                CalendarViewMode::Year => render_year_view(ui, &mut self.state, theme),
-                CalendarViewMode::Month => render_month_view(ui, &mut self.state, theme),
-                CalendarViewMode::Week => render_week_view(ui, &mut self.state, theme),
-                CalendarViewMode::Day => render_day_view(ui, &mut self.state, theme),
+            .outer_margin(0.0)
+            .show(ui, |ui| {
+                // Center the toolbar at the top
+                ui.vertical_centered(|ui| {
+                    render_toolbar(ui, &mut self.state, theme);
+                });
+
+                ui.add_space(16.0);
+
+                // Calendar content with full width
+                egui::Frame::new()
+                    .fill(theme.background)
+                    .outer_margin(0.0)
+                    .show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+
+                        match self.state.view_mode {
+                            CalendarViewMode::Year => render_year_view(ui, &mut self.state, theme),
+                            CalendarViewMode::Month => {
+                                render_month_view(ui, &mut self.state, theme)
+                            }
+                            CalendarViewMode::Week => render_week_view(ui, &mut self.state, theme),
+                            CalendarViewMode::Day => render_day_view(ui, &mut self.state, theme),
+                        }
+                    });
             });
 
         if self.state.show_event_dialog {

@@ -1,10 +1,16 @@
 use crate::models::circle::Circle;
 use crate::models::dummy_data::{self, CircleFeatureData};
+use crate::models::features::{CircleActionState, DeleteConfirmationState};
 use crate::models::user::{User, UserPreferences};
+use crate::services::auth_service::AuthService;
+use crate::services::automation_service::AutomationService;
+use crate::services::circle_manager::CircleManager;
 use crate::ui::app_layout;
 use crate::ui::components::calendar::event::Event;
 use crate::ui::components::notifications::NotificationManager;
+use crate::ui::footer::UserMenuState;
 use crate::utils::config::Theme;
+use crate::utils::naming::NameRegistry;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -43,8 +49,32 @@ pub struct CircleApp {
     pub notification_manager: NotificationManager,
     /// Flag to track if the app is currently refreshing
     pub is_refreshing: bool,
+    /// Start time of the last refresh action
+    pub refresh_start_time: std::time::Instant,
     /// Calendar events
     pub calendar_events: Vec<Event>,
+    /// Delete confirmation dialog state
+    pub delete_confirmation_state: DeleteConfirmationState,
+    /// Add member dialog state
+    pub add_member_state: crate::models::features::AddMemberState,
+    /// Circle actions state
+    pub circle_actions: HashMap<Uuid, CircleActionState>,
+    /// User menu state
+    pub user_menu_state: UserMenuState,
+    /// Logout confirmation dialog state
+    pub logout_confirmation_state: bool,
+    /// Documents feature state
+    pub documents_state: crate::models::features::documents::DocumentsState,
+    /// Authentication service
+    pub auth_service: AuthService,
+    /// Circle manager service
+    pub circle_manager: CircleManager,
+    /// Automation service
+    pub automation_service: AutomationService,
+    /// Name registry
+    pub name_registry: NameRegistry,
+    /// Current user session ID
+    pub session_id: Option<Uuid>,
 }
 
 /// Enum representing available features in the application
@@ -57,10 +87,14 @@ pub enum ActiveFeature {
     AITools,
     VideoConference,
     Settings,
+    /// App-wide settings screen
+    AppSettings,
     /// Special welcome screen for first-time users
     Welcome,
     /// Special feature for the Circles Bot Channel
     BotChannel,
+    /// Authentication screen for sign up and sign in
+    Auth,
 }
 
 impl Default for ActiveFeature {
@@ -72,15 +106,29 @@ impl Default for ActiveFeature {
 impl CircleApp {
     /// Initialize a new instance of the application with elegant defaults
     pub fn new(_: &eframe::CreationContext<'_>) -> Self {
-        // Initialize with a sophisticated default user
-        let user_id = Uuid::new_v4();
-        let user = Some(User {
-            id: user_id,
-            name: "Default User".to_string(), // More polished default name
-            email: "user@circleapp.com".to_string(), // Branded email
-            created_at: chrono::Utc::now(),
-            preferences: UserPreferences::default(),
-        });
+        // Initialize services
+        let auth_service = AuthService::new();
+        let circle_manager = CircleManager::new();
+        let mut automation_service = AutomationService::new();
+        let name_registry = NameRegistry::new();
+        let session_id = None;
+
+        // Check if credentials exist
+        let user = if let Ok(credentials) = crate::ui::features::auth::load_credentials() {
+            // Create user from credentials
+            Some(User {
+                id: Uuid::new_v4(),
+                name: credentials.name,
+                email: credentials.email,
+                created_at: chrono::Utc::now(),
+                preferences: UserPreferences::default(),
+            })
+        } else {
+            None
+        };
+
+        // Get user ID for creating circles
+        let user_id = user.as_ref().map(|u| u.id).unwrap_or_else(Uuid::new_v4);
 
         // Start with an empty circles list
         let mut circles = Vec::new();
@@ -114,11 +162,11 @@ impl CircleApp {
         circles.push(bot_circle);
 
         // Set active circle to the welcome circle
-        let active_circle_id = Some(circles[0].id);
+        let mut active_circle_id = Some(circles[0].id);
         let active_feature_data = circle_feature_data.get(&circles[0].id).cloned();
 
-        // For first-time users, we'll show a welcome screen instead of the default mail feature
-        let is_first_time = true; // Always true for new instances
+        // Determine if this is the first time or if we need to show the auth screen
+        let is_first_time = user.is_none();
 
         // Set active mail folder to inbox if available
         let active_mail_folder_id = active_feature_data.as_ref().and_then(|data| {
@@ -129,16 +177,36 @@ impl CircleApp {
                 .map(|folder| folder.id)
         });
 
+        // Find the first non-system circle
+        let first_non_system_circle = circles.iter().find(|circle| !circle.is_system_circle);
+
+        // Determine the initial active feature based on user state and circles
+        let initial_active_feature = if is_first_time {
+            // User is not logged in, show auth screen
+            ActiveFeature::Auth
+        } else if first_non_system_circle.is_none() {
+            // User is logged in but has no non-system circles, show welcome screen
+            ActiveFeature::Welcome
+        } else {
+            // User is logged in and has non-system circles, show the default feature
+            ActiveFeature::default()
+        };
+
+        // If we have a non-system circle and the user is logged in, set it as active
+        if !is_first_time && first_non_system_circle.is_some() {
+            active_circle_id = first_non_system_circle.map(|circle| circle.id);
+        }
+
+        // Boot circles with automation service
+        for circle in &circles {
+            automation_service.boot_circle(circle);
+        }
+
         Self {
             user,
             circles,
             active_circle_id,
-            // For first-time users, we'll use a special Welcome feature instead of the default Mail
-            active_feature: if is_first_time {
-                ActiveFeature::Welcome
-            } else {
-                ActiveFeature::default()
-            },
+            active_feature: initial_active_feature,
             search_query: String::new(),
             circle_feature_data,
             active_feature_data,
@@ -152,6 +220,18 @@ impl CircleApp {
             notification_manager: NotificationManager::new(50), // Keep last 50 notifications
             is_refreshing: false,
             calendar_events: Vec::new(),
+            refresh_start_time: std::time::Instant::now(),
+            delete_confirmation_state: crate::models::features::DeleteConfirmationState::default(),
+            add_member_state: crate::models::features::AddMemberState::default(),
+            circle_actions: HashMap::new(),
+            user_menu_state: UserMenuState::default(),
+            logout_confirmation_state: false,
+            documents_state: crate::models::features::documents::DocumentsState::default(),
+            auth_service,
+            circle_manager,
+            automation_service,
+            name_registry,
+            session_id,
         }
     }
 
@@ -166,6 +246,7 @@ impl CircleApp {
         // We'll customize the welcome circle data in the dummy_data generation
         // The document will be added there
 
+        circle.is_system_circle = true;
         circle.settings.visibility = Visibility::Private;
         circle.settings.join_policy = JoinPolicy::InviteOnly;
         circle.settings.notification_settings = NotificationSettings {
@@ -188,6 +269,7 @@ impl CircleApp {
         // We'll customize the bot circle data in the dummy_data generation
         // The chat messages will be added there
 
+        circle.is_system_circle = true;
         circle.settings.visibility = Visibility::Private;
         circle.settings.join_policy = JoinPolicy::InviteOnly;
         circle.settings.notification_settings = NotificationSettings {
@@ -256,7 +338,18 @@ impl CircleApp {
         self.circle_feature_data.insert(circle.id, feature_data);
 
         // Add the circle to the list
-        self.circles.push(circle);
+        self.circles.push(circle.clone());
+
+        // Register the circle with the circle manager
+        if let Some(_) = &self.user {
+            // Register the circle name in the name registry
+            if let Ok(circle_name) = crate::utils::naming::CircleName::new(&circle.name) {
+                let _ = self.name_registry.register_name(circle_name, circle.id);
+            }
+        }
+
+        // Boot the circle with the automation service
+        self.automation_service.boot_circle(&circle);
 
         // If this is the first circle, make it active
         if self.active_circle_id.is_none() && !self.circles.is_empty() {
@@ -269,24 +362,13 @@ impl CircleApp {
         self.circle_dialog_state.is_open = true;
     }
 
-    /// Set the theme for the application
-    pub fn set_theme(&mut self, ctx: &egui::Context, theme: crate::models::user::Theme) {
-        if let Some(user) = &mut self.user {
-            user.preferences.theme = theme;
-            // Apply the theme immediately
-            self.apply_theme(ctx);
-        }
-    }
-
-    fn apply_theme(&mut self, ctx: &egui::Context) {
+    pub fn apply_theme(&mut self, ctx: &egui::Context) {
         // Force a UI refresh to apply the new theme
         self.is_refreshing = true;
 
-        // If you're using eframe, you might also want to update the native window
-        let theme = self.get_current_theme();
+        // Use the context-aware theme method to properly detect system theme
+        let theme = self.get_current_theme_with_context(ctx);
         ctx.set_visuals(theme.to_visuals());
-        // if let Some(ctx) = &mut ctx {
-        // }
     }
 
     pub fn save_user_preferences(&mut self, ctx: &egui::Context) {
@@ -300,15 +382,197 @@ impl CircleApp {
     /// Get the current theme of the application
     pub fn get_current_theme(&self) -> Theme {
         if let Some(user) = &self.user {
-            Theme::from_mode(&user.preferences.theme)
+            Theme::from_mode(&user.preferences.theme, None)
         } else {
             Theme::light() // Default to light theme when no user is logged in
+        }
+    }
+
+    /// Get the current theme of the application with context for system theme detection
+    pub fn get_current_theme_with_context(&self, ctx: &egui::Context) -> Theme {
+        if let Some(user) = &self.user {
+            Theme::from_mode(&user.preferences.theme, Some(ctx))
+        } else {
+            Theme::light() // Default to light theme when no user is logged in
+        }
+    }
+
+    /// Check if a user has permission to perform an action in a circle
+    pub fn check_permission(
+        &self,
+        circle_id: Uuid,
+        user_id: Uuid,
+        required_role: crate::models::circle::Role,
+    ) -> bool {
+        match self
+            .circle_manager
+            .check_permission(circle_id, user_id, required_role)
+        {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
+    /// Create an access token for external access to a circle
+    pub fn create_access_token(
+        &mut self,
+        circle_id: Uuid,
+        role: crate::models::circle::Role,
+    ) -> Option<String> {
+        if let Some(current_user) = &self.user {
+            match self
+                .circle_manager
+                .create_access_token(circle_id, role, current_user.id)
+            {
+                Ok(token) => Some(token),
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Get a circle using an access token
+    pub fn get_circle_by_token(
+        &self,
+        token: &str,
+    ) -> Option<(&Circle, crate::models::circle::Role)> {
+        match self.circle_manager.get_circle_by_token(token) {
+            Ok((circle, role)) => Some((circle, role)),
+            Err(_) => None,
+        }
+    }
+
+    /// Add a member to a circle
+    pub fn add_member_to_circle(
+        &mut self,
+        circle_id: Uuid,
+        email: &str,
+        role: crate::models::circle::Role,
+    ) -> bool {
+        // First, find the user by email
+        let user_result = self.auth_service.find_user_by_email(email);
+
+        if let (Some((user_id, user)), Some(current_user)) = (user_result, &self.user) {
+            // Try to add the member
+            match self
+                .circle_manager
+                .add_member(circle_id, user, role, current_user.id)
+            {
+                Ok(_) => {
+                    // Update the circle in our local list
+                    if let Some(circle) = self.circles.iter_mut().find(|c| c.id == circle_id) {
+                        // Add the member to the circle
+                        circle.members.push(crate::models::circle::Member {
+                            user_id,
+                            name: email.to_string(),
+                            role,
+                            joined_at: chrono::Utc::now(),
+                        });
+                    }
+                    true
+                }
+                Err(_) => false,
+            }
+        } else {
+            false
+        }
+    }
+
+    /// Create a new automation rule for a circle
+    pub fn create_automation_rule(
+        &mut self,
+        circle_id: Uuid,
+        name: String,
+        description: String,
+        trigger: crate::services::automation_service::RuleTrigger,
+        actions: Vec<crate::services::automation_service::RuleAction>,
+    ) -> Option<Uuid> {
+        if let Some(current_user) = &self.user {
+            // Create the rule
+            let rule = crate::services::automation_service::AutomationRule {
+                id: Uuid::new_v4(),
+                name,
+                description,
+                trigger,
+                actions,
+                enabled: true,
+                circle_id,
+                created_by: current_user.id,
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+                last_executed: None,
+            };
+
+            // Add the rule to the automation service
+            Some(self.automation_service.create_rule(rule))
+        } else {
+            None
         }
     }
 }
 
 impl eframe::App for CircleApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Process automation events
+        self.automation_service.process_events();
+
+        // Check scheduled rules
+        self.automation_service.check_scheduled_rules();
+
+        // Check for user authentication
+        if let Some(user) = &self.user {
+            // If we have a user but no session, create one
+            if self.session_id.is_none() {
+                // In a real implementation, this would use the auth_service to create a session
+                self.session_id = Some(Uuid::new_v4());
+
+                // Use the circle manager to get the user's circles
+                if self.circles.is_empty() {
+                    // Get user info before borrowing self
+                    let user_id = user.id;
+                    let user_name = user.name.clone();
+
+                    // Create a personal circle for the user using our utility function
+                    // This avoids borrow checker issues
+                    let (circle, rule) =
+                        crate::utils::circle_utils::create_personal_circle(user_id, &user_name);
+
+                    // Register the name in our registry
+                    if let Ok(circle_name) = crate::utils::naming::CircleName::new(&circle.name) {
+                        let _ = self.name_registry.register_name(circle_name, circle.id);
+                    }
+
+                    // Generate feature data for the new circle
+                    let feature_data = dummy_data::generate_dummy_data_for_circle(
+                        circle.id,
+                        &circle.name,
+                        circle.circle_type,
+                    );
+
+                    // Add the feature data to the map
+                    self.circle_feature_data
+                        .insert(circle.id, feature_data.clone());
+
+                    // Add the circle to our list
+                    self.circles.push(circle.clone());
+
+                    // Boot the circle with the automation service
+                    self.automation_service.boot_circle(&circle);
+
+                    // If this is the first circle, make it active
+                    if self.active_circle_id.is_none() {
+                        self.active_circle_id = Some(circle.id);
+                        self.active_feature_data = Some(feature_data);
+                    }
+
+                    // Add the rule to the automation service
+                    self.automation_service.create_rule(rule);
+                }
+            }
+        }
+
+        // Render the UI
         app_layout::render(self, ctx);
     }
 }
